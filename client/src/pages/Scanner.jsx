@@ -583,12 +583,16 @@ function Scanner() {
           
           {/* AR Scanner button */}
           <motion.button
-            onClick={() => window.location.href = '/ar-scanner.html'}
-            className="mt-4 px-6 py-3 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-400 text-sm font-medium flex items-center gap-2"
+            onClick={() => {
+              // Get base path for GitHub Pages
+              const basePath = import.meta.env.BASE_URL || '/'
+              window.location.href = basePath + 'ar-scanner.html'
+            }}
+            className="mt-4 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-bold flex items-center gap-2 shadow-lg"
             whileTap={{ scale: 0.95 }}
           >
             <Target size={18} />
-            Open AR Scanner (MindAR)
+            🎯 AR Image Scanner
           </motion.button>
         </div>
       )}

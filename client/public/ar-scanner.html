@@ -234,7 +234,7 @@
   </div>
 
   <a-scene 
-    mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 10;" 
+    mindar-image="imageTargetSrc: https://raw.githubusercontent.com/postptacek/street-art-ctf/main/client/targets.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 10;" 
     color-space="sRGB" 
     renderer="colorManagement: true" 
     vr-mode-ui="enabled: false" 
@@ -373,8 +373,10 @@
     }
     
     function goBack() {
-      // Go back to main app
-      window.location.href = window.location.origin + window.location.pathname.replace('ar-scanner.html', '') + '#/scanner';
+      // Go back to main app - handle both local and GitHub Pages
+      const path = window.location.pathname;
+      const basePath = path.substring(0, path.lastIndexOf('/') + 1);
+      window.location.href = basePath + 'index.html#/scanner';
     }
   </script>
 </body>
