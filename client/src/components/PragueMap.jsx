@@ -68,6 +68,47 @@ function FlyToHood({ hood }) {
   return null
 }
 
+// Fly to last capture and show highlight
+function LastCaptureHighlight({ onShow }) {
+  const map = useMap()
+  const [lastCapture, setLastCapture] = useState(null)
+  
+  useEffect(() => {
+    const stored = localStorage.getItem('streetart-ctf-lastCapture')
+    if (stored) {
+      const data = JSON.parse(stored)
+      setLastCapture(data)
+      // Clear after reading
+      localStorage.removeItem('streetart-ctf-lastCapture')
+      // Fly to the location
+      if (data.location) {
+        setTimeout(() => {
+          map.flyTo(data.location, 17, { duration: 1.5 })
+          if (onShow) onShow(data)
+        }, 500)
+      }
+    }
+  }, [map, onShow])
+  
+  if (!lastCapture) return null
+  
+  const color = lastCapture.team === 'red' ? '#ff6b6b' : '#4dabf7'
+  
+  return (
+    <CircleMarker
+      center={lastCapture.location}
+      radius={30}
+      pathOptions={{
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.3,
+        weight: 3,
+        className: 'capture-pulse'
+      }}
+    />
+  )
+}
+
 // Location button component
 function LocationButton() {
   const map = useMap()
@@ -367,6 +408,7 @@ export default function PragueMap() {
         <LocationButton />
         <ZoomDisplay devMode={devMode} />
         <FlyToHood hood={currentHood} />
+        <LastCaptureHighlight />
         
         {/* Metro B line */}
         <Polyline
