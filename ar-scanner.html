@@ -236,6 +236,11 @@
       font-weight: 600;
     }
     
+    #alignment-text.cooldown {
+      color: #f59e0b;
+      font-weight: 500;
+    }
+    
     /* Capture button */
     #capture-area {
       position: absolute;
@@ -688,6 +693,38 @@
     const playerTeam = playerData.team || 'red';
     const teamColors = { red: '#ff6b6b', blue: '#4dabf7' };
     
+    // Cooldown: 10 minutes between scans of same piece
+    const COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+    const scanCooldowns = JSON.parse(localStorage.getItem('streetart-ctf-cooldowns') || '{}');
+    const captures = JSON.parse(localStorage.getItem('streetart-ctf-captures') || '{}');
+    
+    function canScanArt(artId) {
+      const lastScan = scanCooldowns[artId];
+      const capturedBy = captures[artId];
+      
+      // If not scanned before, allow
+      if (!lastScan) return { canScan: true, reason: null };
+      
+      // If captured by enemy, allow recapture
+      if (capturedBy && capturedBy !== playerTeam) {
+        return { canScan: true, reason: 'recapture' };
+      }
+      
+      // Check cooldown
+      const timeSince = Date.now() - lastScan;
+      if (timeSince < COOLDOWN_MS) {
+        const minsLeft = Math.ceil((COOLDOWN_MS - timeSince) / 60000);
+        return { canScan: false, reason: `Wait ${minsLeft}m to scan again` };
+      }
+      
+      return { canScan: true, reason: null };
+    }
+    
+    function recordScan(artId) {
+      scanCooldowns[artId] = Date.now();
+      localStorage.setItem('streetart-ctf-cooldowns', JSON.stringify(scanCooldowns));
+    }
+    
     // UI Elements
     const loadingOverlay = document.getElementById('loading-overlay');
     const targetInfo = document.getElementById('target-info');
@@ -706,46 +743,14 @@
     const sceneEl = document.querySelector('a-scene');
     
     sceneEl.addEventListener('loaded', () => {
-      // Create target entities with AR overlay markers for each target
+      // Create simple target entities (no overlay - was too glitchy)
       for (let i = 0; i <= 20; i++) {
         const entity = document.createElement('a-entity');
         entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
         entity.setAttribute('data-target-index', i);
-        
-        // Add AR overlay markers to each target
-        entity.innerHTML = `
-          <!-- Corner markers -->
-          <a-entity position="-0.4 0.4 0" geometry="primitive: plane; width: 0.08; height: 0.08" 
-                    material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
-          <a-entity position="0.4 0.4 0" geometry="primitive: plane; width: 0.08; height: 0.08" 
-                    material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
-          <a-entity position="-0.4 -0.4 0" geometry="primitive: plane; width: 0.08; height: 0.08" 
-                    material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
-          <a-entity position="0.4 -0.4 0" geometry="primitive: plane; width: 0.08; height: 0.08" 
-                    material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
-          
-          <!-- Center crosshair -->
-          <a-entity position="0 0 0">
-            <a-entity geometry="primitive: plane; width: 0.12; height: 0.02" 
-                      material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
-            <a-entity geometry="primitive: plane; width: 0.02; height: 0.12" 
-                      material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
-          </a-entity>
-          
-          <!-- Border frame -->
-          <a-entity geometry="primitive: plane; width: 0.84; height: 0.02" position="0 0.42 0"
-                    material="color: #22c55e; opacity: 0.5; transparent: true; side: double"></a-entity>
-          <a-entity geometry="primitive: plane; width: 0.84; height: 0.02" position="0 -0.42 0"
-                    material="color: #22c55e; opacity: 0.5; transparent: true; side: double"></a-entity>
-          <a-entity geometry="primitive: plane; width: 0.02; height: 0.84" position="0.42 0 0"
-                    material="color: #22c55e; opacity: 0.5; transparent: true; side: double"></a-entity>
-          <a-entity geometry="primitive: plane; width: 0.02; height: 0.84" position="-0.42 0 0"
-                    material="color: #22c55e; opacity: 0.5; transparent: true; side: double"></a-entity>
-        `;
-        
         sceneEl.appendChild(entity);
       }
-      console.log('✅ AR Scanner ready with overlay markers');
+      console.log('✅ AR Scanner ready');
     });
     
     sceneEl.addEventListener('arReady', () => {
@@ -768,17 +773,25 @@
       if (currentArtId && ART_DATA[currentArtId]) {
         const art = ART_DATA[currentArtId];
         
+        // Check cooldown
+        const scanCheck = canScanArt(currentArtId);
+        
         // Update UI
         document.getElementById('art-name').textContent = art.name;
         document.getElementById('art-area').textContent = art.area;
         document.getElementById('art-hood').textContent = art.hood;
-        document.getElementById('art-points').textContent = art.points;
+        document.getElementById('art-points').textContent = scanCheck.canScan ? art.points : '⏱️';
         
         targetInfo.classList.add('found');
         scanningHint.style.display = 'none';
         
-        // Align corners (simulated - in real AR would track position)
-        setAligned(true);
+        if (scanCheck.canScan) {
+          setAligned(true, scanCheck.reason === 'recapture' ? '⚔️ Recapture!' : null);
+        } else {
+          setAligned(false);
+          alignmentText.textContent = scanCheck.reason;
+          alignmentText.classList.add('cooldown');
+        }
       }
     });
     
@@ -794,13 +807,14 @@
       resetHold();
     });
     
-    function setAligned(aligned) {
+    function setAligned(aligned, customMessage = null) {
       isAligned = aligned;
       corners.forEach(c => c.classList.toggle('aligned', aligned));
       centerMarker.classList.toggle('aligned', aligned);
       captureBtn.classList.toggle('ready', aligned);
-      alignmentText.textContent = aligned ? 'Hold to capture!' : 'Searching...';
+      alignmentText.textContent = customMessage || (aligned ? 'Hold to capture!' : 'Searching...');
       alignmentText.classList.toggle('ready', aligned);
+      alignmentText.classList.remove('cooldown');
     }
     
     // Hold to capture
@@ -849,10 +863,13 @@
       
       const art = ART_DATA[currentArtId] || { points: 100, name: 'Unknown', hood: 'Vysočany' };
       
+      // Record scan time for cooldown
+      recordScan(currentArtId);
+      
       // Save capture locally
-      const captures = JSON.parse(localStorage.getItem('streetart-ctf-captures') || '{}');
-      captures[currentArtId] = playerTeam;
-      localStorage.setItem('streetart-ctf-captures', JSON.stringify(captures));
+      const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures') || '{}');
+      localCaptures[currentArtId] = playerTeam;
+      localStorage.setItem('streetart-ctf-captures', JSON.stringify(localCaptures));
       
       // Update player locally
       const player = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
