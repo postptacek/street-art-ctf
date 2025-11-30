@@ -12,8 +12,9 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000; }
     
-    a-scene { position: fixed !important; top: 0; left: 0; width: 100% !important; height: 100% !important; z-index: 1; background: transparent !important; }
-    a-scene video { position: fixed !important; top: 0; left: 0; width: 100% !important; height: 100% !important; object-fit: cover !important; }
+    a-scene { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 1; }
+    a-scene canvas { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; }
+    a-scene video { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; transform: none !important; }
     
     #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
     #loading.hidden { display: none; }
