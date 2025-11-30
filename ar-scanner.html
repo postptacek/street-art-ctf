@@ -616,6 +616,7 @@
     device-orientation-permission-ui="enabled: false">
     
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <!-- Target entities with AR overlay markers created dynamically in script -->
   </a-scene>
 
   <script>
@@ -705,14 +706,46 @@
     const sceneEl = document.querySelector('a-scene');
     
     sceneEl.addEventListener('loaded', () => {
-      // Create target entities
+      // Create target entities with AR overlay markers for each target
       for (let i = 0; i <= 20; i++) {
         const entity = document.createElement('a-entity');
         entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
         entity.setAttribute('data-target-index', i);
+        
+        // Add AR overlay markers to each target
+        entity.innerHTML = `
+          <!-- Corner markers -->
+          <a-entity position="-0.4 0.4 0" geometry="primitive: plane; width: 0.08; height: 0.08" 
+                    material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
+          <a-entity position="0.4 0.4 0" geometry="primitive: plane; width: 0.08; height: 0.08" 
+                    material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
+          <a-entity position="-0.4 -0.4 0" geometry="primitive: plane; width: 0.08; height: 0.08" 
+                    material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
+          <a-entity position="0.4 -0.4 0" geometry="primitive: plane; width: 0.08; height: 0.08" 
+                    material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
+          
+          <!-- Center crosshair -->
+          <a-entity position="0 0 0">
+            <a-entity geometry="primitive: plane; width: 0.12; height: 0.02" 
+                      material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
+            <a-entity geometry="primitive: plane; width: 0.02; height: 0.12" 
+                      material="color: #22c55e; opacity: 0.9; transparent: true; side: double"></a-entity>
+          </a-entity>
+          
+          <!-- Border frame -->
+          <a-entity geometry="primitive: plane; width: 0.84; height: 0.02" position="0 0.42 0"
+                    material="color: #22c55e; opacity: 0.5; transparent: true; side: double"></a-entity>
+          <a-entity geometry="primitive: plane; width: 0.84; height: 0.02" position="0 -0.42 0"
+                    material="color: #22c55e; opacity: 0.5; transparent: true; side: double"></a-entity>
+          <a-entity geometry="primitive: plane; width: 0.02; height: 0.84" position="0.42 0 0"
+                    material="color: #22c55e; opacity: 0.5; transparent: true; side: double"></a-entity>
+          <a-entity geometry="primitive: plane; width: 0.02; height: 0.84" position="-0.42 0 0"
+                    material="color: #22c55e; opacity: 0.5; transparent: true; side: double"></a-entity>
+        `;
+        
         sceneEl.appendChild(entity);
       }
-      console.log('✅ AR Scanner ready');
+      console.log('✅ AR Scanner ready with overlay markers');
     });
     
     sceneEl.addEventListener('arReady', () => {
