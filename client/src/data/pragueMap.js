@@ -303,6 +303,53 @@ export function generateTeamTerritories(artPoints) {
   return territories
 }
 
+// Generate lines connecting nearby points of the same team
+export function generateTeamLines(artPoints, maxDistance = 0.008) {
+  const lines = {}
+  TEAMS.forEach(team => lines[team] = [])
+  
+  // Group points by team
+  const teamPoints = {}
+  TEAMS.forEach(team => teamPoints[team] = [])
+  
+  artPoints.forEach(point => {
+    if (point.capturedBy && teamPoints[point.capturedBy]) {
+      teamPoints[point.capturedBy].push(point)
+    }
+  })
+  
+  // For each team, connect nearby points
+  TEAMS.forEach(team => {
+    const points = teamPoints[team]
+    const connected = new Set()
+    
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        const p1 = points[i]
+        const p2 = points[j]
+        const key = `${p1.id}-${p2.id}`
+        
+        // Calculate distance
+        const dx = p1.location[0] - p2.location[0]
+        const dy = (p1.location[1] - p2.location[1]) * 1.6
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        
+        // Connect if within range
+        if (dist <= maxDistance && !connected.has(key)) {
+          connected.add(key)
+          lines[team].push({
+            from: p1.location,
+            to: p2.location,
+            distance: dist
+          })
+        }
+      }
+    }
+  })
+  
+  return lines
+}
+
 // Get team color
 export function getTeamColor(team) {
   const colors = {

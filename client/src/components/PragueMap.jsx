@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapContainer, TileLayer, Polygon, CircleMarker, Polyline, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, CircleMarker, Polyline, useMap, useMapEvents, Tooltip } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useGame } from '../context/GameContext'
@@ -15,6 +15,7 @@ import {
   METRO_B,
   HOODS,
   generateTeamTerritories,
+  generateTeamLines,
   calculateTeamScores,
   getTeamColor,
   getPointValue
@@ -258,9 +259,9 @@ export default function PragueMap() {
   // Use local points for dev mode, context points otherwise
   const displayPoints = devMode ? localArtPoints : artPoints
   
-  // Generate territories dynamically based on captured points
-  const territories = useMemo(() => {
-    return generateTeamTerritories(displayPoints)
+  // Generate lines connecting team points
+  const teamLines = useMemo(() => {
+    return generateTeamLines(displayPoints)
   }, [displayPoints])
   
   // Calculate scores
@@ -435,20 +436,19 @@ export default function PragueMap() {
           />
         ))}
         
-        {/* Dynamic team territories - rendered first (below points) */}
-        {/* Low opacity so overlapping circles create brighter zones */}
-        {Object.entries(territories).map(([team, teamTerritories]) => 
-          teamTerritories.map((territory, idx) => (
-            <Polygon
-              key={`${team}-territory-${idx}`}
-              positions={territory.polygon}
+        {/* Team connection lines - connects nearby captured points */}
+        {Object.entries(teamLines).map(([team, lines]) => 
+          lines.map((line, idx) => (
+            <Polyline
+              key={`${team}-line-${idx}`}
+              positions={[line.from, line.to]}
               pathOptions={{
                 color: getTeamColor(team),
-                fillColor: getTeamColor(team),
-                fillOpacity: 0.15, // Low opacity - stacks when overlapping
-                weight: 0, // No border for smooth blending
-                opacity: 0,
-                interactive: false
+                weight: 3,
+                opacity: 0.6,
+                dashArray: null,
+                lineCap: 'round',
+                lineJoin: 'round'
               }}
             />
           ))
