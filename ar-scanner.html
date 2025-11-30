@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>AR Scanner</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000; }
+    #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+    #loading.hidden { display: none; }
+    .spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #header { position: fixed; top: 0; left: 0; right: 0; padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+    .back-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border: none; color: white; font-size: 24px; cursor: pointer; }
+    .team-badge { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 20px; color: white; font-size: 14px; }
+    .team-dot { width: 12px; height: 12px; border-radius: 50%; }
+    #target-info { position: fixed; top: 80px; left: 16px; right: 16px; background: rgba(0,0,0,0.7); backdrop-filter: blur(20px); border-radius: 16px; padding: 16px; display: flex; align-items: center; justify-content: space-between; z-index: 100; opacity: 0; transform: translateY(-20px); transition: all 0.3s; }
+    #target-info.found { opacity: 1; transform: translateY(0); }
+    .art-title { color: white; font-size: 18px; font-weight: 700; }
+    .art-sub { color: rgba(255,255,255,0.6); font-size: 13px; }
+    .points { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 8px 16px; border-radius: 12px; font-size: 20px; font-weight: 700; }
+    .points.cooldown { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    #hint { position: fixed; bottom: 140px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.7); font-size: 14px; z-index: 100; }
+    #capture-area { position: fixed; bottom: 32px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: max(20px, env(safe-area-inset-bottom)); z-index: 100; }
+    #status { margin-bottom: 12px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.6); }
+    #status.ready { color: #22c55e; }
+    #status.cooldown { color: #f59e0b; }
+    #capture-btn { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 4px solid rgba(255,255,255,0.3); color: white; font-size: 32px; cursor: pointer; opacity: 0.5; transition: all 0.2s; }
+    #capture-btn.ready { border-color: #22c55e; opacity: 1; }
+    #capture-btn.ready:active { background: rgba(34,197,94,0.3); transform: scale(0.95); }
+    #capture-btn:disabled { opacity: 0.3; }
+    #success { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
+    #success.show { display: flex; }
+    .success-icon { width: 96px; height: 96px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 48px; margin-bottom: 24px; }
+    .success-title { color: white; font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .success-sub { color: rgba(255,255,255,0.6); margin-bottom: 16px; }
+    .success-pts { font-size: 56px; font-weight: 700; margin-bottom: 8px; }
+    .success-team { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 32px; }
+    .success-nav { color: rgba(255,255,255,0.4); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div id="loading"><div class="spinner"></div><div style="color:white">Loading AR Scanner...</div></div>
+  <div id="header">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <div class="team-badge"><div class="team-dot" id="team-dot"></div><span id="team-name">Team</span></div>
+  </div>
+  <div id="target-info">
+    <div><div class="art-title" id="art-name">-</div><div class="art-sub"><span id="art-area">-</span></div></div>
+    <div class="points" id="art-points">+0</div>
+  </div>
+  <div id="hint">Point camera at street art to scan</div>
+  <div id="capture-area">
+    <div id="status">Searching...</div>
+    <button id="capture-btn" disabled>📷</button>
+  </div>
+  <div id="success">
+    <div class="success-icon" id="s-icon">🎯</div>
+    <div class="success-title">Territory Captured!</div>
+    <div class="success-sub" id="s-name">-</div>
+    <div class="success-pts" id="s-pts">+0</div>
+    <div class="success-team" id="s-team">Points added</div>
+    <div class="success-nav">📍 Opening map...</div>
+  </div>
+  <a-scene mindar-image="imageTargetSrc: https://raw.githubusercontent.com/postptacek/street-art-ctf/main/client/targets.mind; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 1000;" color-space="sRGB" renderer="colorManagement: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  </a-scene>
+  <script>
+    firebase.initializeApp({apiKey:"AIzaSyCES_Zfi78paxI--dycL2LmBK0-g4fvvEM",authDomain:"famu-nodes.firebaseapp.com",projectId:"famu-nodes",storageBucket:"famu-nodes.firebasestorage.app",messagingSenderId:"67316044555",appId:"1:67316044555:web:72a88c28871236912f480e"});
+    const db = firebase.firestore();
+    const ART = {'art-01':{name:'Kolbenova 1',area:'Vysočany',points:100,loc:[50.110192,14.503811]},'art-02':{name:'Kolbenova 2',area:'Vysočany',points:50,loc:[50.110203,14.503764]},'art-03':{name:'Kolbenova 3',area:'Vysočany',points:100,loc:[50.109847,14.504250]},'art-04':{name:'Kolbenova 4',area:'Vysočany',points:25,loc:[50.109981,14.504933]},'art-05':{name:'Kolbenova 5',area:'Vysočany',points:200,loc:[50.109764,14.505742]},'art-06':{name:'Kolbenova 6',area:'Vysočany',points:100,loc:[50.109672,14.505847]},'art-07':{name:'Hloubětín 1',area:'Hloubětín',points:100,loc:[50.110383,14.508192]},'art-08':{name:'Hloubětín 2',area:'Hloubětín',points:200,loc:[50.110508,14.509567]},'art-09':{name:'Vysočany 1',area:'Vysočany',points:100,loc:[50.110817,14.505475]},'art-10':{name:'Vysočany 2',area:'Vysočany',points:50,loc:[50.110986,14.504672]}};
+    const MAP = {0:'art-01',1:'art-02',2:'art-03',3:'art-04',4:'art-05',5:'art-06',6:'art-07',7:'art-08',8:'art-09',9:'art-10'};
+    const COOLDOWN = 10*60*1000;
+    let currentId = null, canCap = false;
+    const player = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
+    const team = player.team||'red', pid = player.id||'anon', pname = player.name||'Player';
+    const colors = {red:'#ff6b6b',blue:'#4dabf7'};
+    document.getElementById('team-dot').style.backgroundColor = colors[team];
+    document.getElementById('team-name').textContent = team;
+    function goBack() { window.location.href = window.location.pathname.replace('/ar-scanner.html','')+'/#/'; }
+    async function checkScan(id) {
+      try {
+        const cap = await db.collection('streetart-captures').doc(id).get();
+        const scan = await db.collection('streetart-scans').doc(pid+'_'+id).get();
+        if (cap.exists && cap.data().capturedBy && cap.data().capturedBy !== team) return {ok:true,msg:'recapture'};
+        if (scan.exists) { const t = Date.now() - scan.data().timestamp?.toMillis(); if (t < COOLDOWN) return {ok:false,msg:'Wait '+Math.ceil((COOLDOWN-t)/60000)+'m'}; }
+        return {ok:true,msg:null};
+      } catch(e) { return {ok:true,msg:null}; }
+    }
+    async function capture() {
+      if (!currentId || !canCap) return;
+      const art = ART[currentId]; if (!art) return;
+      document.getElementById('capture-btn').disabled = true;
+      try {
+        await db.collection('streetart-scans').doc(pid+'_'+currentId).set({timestamp:firebase.firestore.FieldValue.serverTimestamp(),artId:currentId,playerId:pid});
+        await db.collection('streetart-captures').doc(currentId).set({artId:currentId,capturedBy:team,capturedAt:firebase.firestore.FieldValue.serverTimestamp(),playerId:pid,playerName:pname,points:art.points});
+        await db.collection('streetart-teams').doc(team).set({score:firebase.firestore.FieldValue.increment(art.points),lastCapture:currentId,lastCaptureAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+        await db.collection('streetart-players').doc(pid).set({name:pname,team:team,score:firebase.firestore.FieldValue.increment(art.points),lastActive:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+        document.getElementById('s-icon').style.cssText = 'background:'+colors[team]+'30;border:3px solid '+colors[team];
+        document.getElementById('s-name').textContent = art.name+' - '+art.area;
+        document.getElementById('s-pts').textContent = '+'+art.points;
+        document.getElementById('s-pts').style.color = colors[team];
+        document.getElementById('s-team').textContent = 'Points added to Team '+(team==='red'?'Red':'Blue');
+        document.getElementById('success').classList.add('show');
+        localStorage.setItem('streetart-ctf-lastCapture',JSON.stringify({artId:currentId,location:art.loc,team:team}));
+        setTimeout(function() { window.location.href = window.location.pathname.replace('/ar-scanner.html','')+'/#/map'; }, 2500);
+      } catch(e) { console.error(e); document.getElementById('capture-btn').disabled = false; }
+    }
+    var scene = document.querySelector('a-scene');
+    scene.addEventListener('loaded', function() {
+      for (var i = 0; i < 10; i++) {
+        (function(idx) {
+          var e = document.createElement('a-entity');
+          e.setAttribute('mindar-image-target','targetIndex:'+idx);
+          scene.appendChild(e);
+          e.addEventListener('targetFound', async function() {
+            console.log('Found:',idx);
+            var id = MAP[idx]; if (!id || !ART[id]) return;
+            currentId = id; var art = ART[id];
+            document.getElementById('art-name').textContent = art.name;
+            document.getElementById('art-area').textContent = art.area;
+            var chk = await checkScan(id);
+            canCap = chk.ok;
+            var pts = document.getElementById('art-points');
+            var btn = document.getElementById('capture-btn');
+            var st = document.getElementById('status');
+            if (chk.ok) { pts.textContent = '+'+art.points; pts.classList.remove('cooldown'); btn.classList.add('ready'); btn.disabled = false; st.textContent = chk.msg==='recapture'?'Recapture!':'Tap to capture!'; st.className = 'ready'; }
+            else { pts.textContent = 'wait'; pts.classList.add('cooldown'); btn.classList.remove('ready'); btn.disabled = true; st.textContent = chk.msg; st.className = 'cooldown'; }
+            document.getElementById('target-info').classList.add('found');
+            document.getElementById('hint').style.display = 'none';
+          });
+          e.addEventListener('targetLost', function() {
+            currentId = null; canCap = false;
+            document.getElementById('target-info').classList.remove('found');
+            document.getElementById('hint').style.display = 'block';
+            document.getElementById('capture-btn').classList.remove('ready');
+            document.getElementById('capture-btn').disabled = true;
+            document.getElementById('status').textContent = 'Searching...';
+            document.getElementById('status').className = '';
+          });
+        })(i);
+      }
+    });
+    scene.addEventListener('arReady', function() { document.getElementById('loading').classList.add('hidden'); });
+    scene.addEventListener('arError', function() { document.getElementById('loading').innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:20px"><div style="font-size:48px;margin-bottom:16px">!</div><div>Camera access required</div><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer">Retry</button></div>'; });
+    document.getElementById('capture-btn').addEventListener('click', capture);
+  </script>
+</body>
+</html>
