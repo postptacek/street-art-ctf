@@ -117,14 +117,14 @@
   </div>
   
   <a-scene 
-    mindar-image="imageTargetSrc: https://raw.githubusercontent.com/postptacek/street-art-ctf/main/client/targets.mind; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 1000; uiLoading: no; uiScanning: no; uiError: no" 
+    mindar-image="imageTargetSrc: https://raw.githubusercontent.com/postptacek/street-art-ctf/main/client/targets.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 100; uiLoading: no; uiScanning: no; uiError: no" 
     color-space="sRGB" 
-    renderer="colorManagement: true; antialias: true" 
+    renderer="colorManagement: true" 
     vr-mode-ui="enabled: false" 
     device-orientation-permission-ui="enabled: false"
     loading-screen="enabled: false"
     style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;">
-    <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
   </a-scene>
   
   <script>
@@ -190,15 +190,19 @@
     var scene = document.querySelector('a-scene');
     
     scene.addEventListener('loaded', function() {
-      console.log('Scene loaded');
+      console.log('Scene loaded, creating target entities...');
+      var arSystem = scene.systems['mindar-image-system'];
+      console.log('AR System:', arSystem);
+      
       for (var i = 0; i < 10; i++) {
         (function(idx) {
           var e = document.createElement('a-entity');
-          e.setAttribute('mindar-image-target','targetIndex:'+idx);
+          e.setAttribute('mindar-image-target', 'targetIndex: '+idx);
           scene.appendChild(e);
+          console.log('Created target entity:', idx);
           
           e.addEventListener('targetFound', async function() {
-            console.log('Target found:',idx);
+            console.log('TARGET FOUND:', idx);
             var id = MAP[idx]; if (!id || !ART[id]) return;
             currentId = id; var art = ART[id];
             document.getElementById('art-name').textContent = art.name;
