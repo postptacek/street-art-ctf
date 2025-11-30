@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import { Sparkles, Users, Map, Camera, ChevronRight, Shuffle } from 'lucide-react'
+import { Users, Map, Camera, ChevronRight, Shuffle, Target, Zap } from 'lucide-react'
+import ChumpAnimation from '../components/ChumpAnimation'
 
 // Random name generator
 const ADJECTIVES = ['Swift', 'Bold', 'Neon', 'Urban', 'Wild', 'Cosmic', 'Pixel', 'Mystic', 'Shadow', 'Electric']
@@ -54,14 +55,14 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-b from-[#0a0a0f] via-[#12121a] to-[#0a0a0f] flex flex-col overflow-hidden">
+    <div className="h-screen bg-[#0a0a0f] flex flex-col overflow-hidden">
       {/* Progress dots */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
         {[0, 1, 2, 3].map(i => (
           <div 
             key={i}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              i === step ? 'bg-white w-6' : i < step ? 'bg-white/60' : 'bg-white/20'
+            className={`h-1.5 rounded-sm transition-all duration-300 ${
+              i === step ? 'bg-white w-8' : i < step ? 'bg-white/60 w-1.5' : 'bg-white/20 w-1.5'
             }`}
           />
         ))}
@@ -81,45 +82,44 @@ export default function Onboarding() {
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: 'spring' }}
-              className="w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-8 shadow-2xl shadow-purple-500/30"
+              className="mb-6"
             >
-              <Sparkles size={48} className="text-white" />
+              <ChumpAnimation size={140} />
             </motion.div>
             
-            <h1 className="text-3xl font-bold mb-4">Street Art CTF</h1>
-            <p className="text-white/60 text-lg mb-2">Capture the Flag</p>
+            <h1 className="text-3xl font-bold mb-3">Street Art CTF</h1>
             <p className="text-white/40 max-w-xs mb-8">
               Scan real street art to capture territory for your team. The city is your battlefield.
             </p>
             
-            <div className="flex flex-col gap-4 w-full max-w-xs">
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                  <Camera size={24} className="text-blue-400" />
+            <div className="flex flex-col gap-3 w-full max-w-xs">
+              <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Camera size={20} className="text-white/70" />
                 </div>
                 <div className="text-left">
-                  <div className="font-medium">Scan Art</div>
-                  <div className="text-sm text-white/50">Find & capture street art</div>
+                  <div className="font-medium text-sm">Scan Art</div>
+                  <div className="text-xs text-white/40">Find and capture street art</div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
-                <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-                  <Map size={24} className="text-green-400" />
+              <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Map size={20} className="text-white/70" />
                 </div>
                 <div className="text-left">
-                  <div className="font-medium">Control Territory</div>
-                  <div className="text-sm text-white/50">Expand your team's area</div>
+                  <div className="font-medium text-sm">Control Territory</div>
+                  <div className="text-xs text-white/40">Expand your team's area</div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
-                <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                  <Users size={24} className="text-yellow-400" />
+              <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Users size={20} className="text-white/70" />
                 </div>
                 <div className="text-left">
-                  <div className="font-medium">Win Together</div>
-                  <div className="text-sm text-white/50">Lead your team to victory</div>
+                  <div className="font-medium text-sm">Win Together</div>
+                  <div className="text-xs text-white/40">Lead your team to victory</div>
                 </div>
               </div>
             </div>
@@ -136,7 +136,7 @@ export default function Onboarding() {
             className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
           >
             <h1 className="text-2xl font-bold mb-2">What's your name?</h1>
-            <p className="text-white/50 mb-8">This is how others will see you</p>
+            <p className="text-white/40 mb-8">This is how others will see you</p>
             
             <div className="w-full max-w-xs mb-4">
               <input
@@ -145,13 +145,13 @@ export default function Onboarding() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your name..."
                 maxLength={20}
-                className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-center text-xl font-medium placeholder:text-white/30 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                className="w-full px-4 py-4 rounded-lg bg-white/5 border border-white/10 text-center text-xl font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30"
               />
             </div>
             
             <button
               onClick={handleGenerateName}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 hover:bg-white/10 transition-colors"
             >
               <Shuffle size={16} />
               Generate random name
@@ -169,49 +169,49 @@ export default function Onboarding() {
             className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
           >
             <h1 className="text-2xl font-bold mb-2">Choose your team</h1>
-            <p className="text-white/50 mb-8">Fight for territory together</p>
+            <p className="text-white/40 mb-8">Fight for territory together</p>
             
             <div className="flex gap-4 w-full max-w-sm">
               {/* Red Team */}
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedTeam('red')}
-                className={`flex-1 p-6 rounded-2xl border-2 transition-all ${
+                className={`flex-1 p-5 rounded-lg border-2 transition-all ${
                   selectedTeam === 'red' 
-                    ? 'bg-red-500/20 border-red-500 shadow-lg shadow-red-500/30' 
+                    ? 'bg-red-500/20 border-red-500' 
                     : 'bg-white/5 border-white/10 hover:border-red-500/50'
                 }`}
               >
-                <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${
+                <div className={`w-14 h-14 mx-auto rounded-lg flex items-center justify-center mb-3 ${
                   selectedTeam === 'red' ? 'bg-red-500' : 'bg-red-500/30'
                 }`}>
-                  <span className="text-3xl">🔴</span>
+                  <div className="w-6 h-6 rounded-full bg-white/90" />
                 </div>
                 <div className="font-bold text-lg mb-1" style={{ color: '#ff6b6b' }}>
                   Red Team
                 </div>
-                <div className="text-sm text-white/50">The Flames</div>
+                <div className="text-xs text-white/40">The Flames</div>
               </motion.button>
               
               {/* Blue Team */}
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedTeam('blue')}
-                className={`flex-1 p-6 rounded-2xl border-2 transition-all ${
+                className={`flex-1 p-5 rounded-lg border-2 transition-all ${
                   selectedTeam === 'blue' 
-                    ? 'bg-blue-500/20 border-blue-500 shadow-lg shadow-blue-500/30' 
+                    ? 'bg-blue-500/20 border-blue-500' 
                     : 'bg-white/5 border-white/10 hover:border-blue-500/50'
                 }`}
               >
-                <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${
+                <div className={`w-14 h-14 mx-auto rounded-lg flex items-center justify-center mb-3 ${
                   selectedTeam === 'blue' ? 'bg-blue-500' : 'bg-blue-500/30'
                 }`}>
-                  <span className="text-3xl">🔵</span>
+                  <div className="w-6 h-6 rounded-full bg-white/90" />
                 </div>
                 <div className="font-bold text-lg mb-1" style={{ color: '#4dabf7' }}>
                   Blue Team
                 </div>
-                <div className="text-sm text-white/50">The Waves</div>
+                <div className="text-xs text-white/40">The Waves</div>
               </motion.button>
             </div>
           </motion.div>
@@ -226,37 +226,44 @@ export default function Onboarding() {
             exit={{ opacity: 0, y: -20 }}
             className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
           >
-            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 ${
-              selectedTeam === 'red' ? 'bg-red-500/20' : 'bg-blue-500/20'
-            }`}>
-              <span className="text-4xl">{selectedTeam === 'red' ? '🔴' : '🔵'}</span>
+            <div className="mb-4">
+              <ChumpAnimation size={100} />
             </div>
             
             <h1 className="text-2xl font-bold mb-2">Welcome, {name}!</h1>
-            <p className="text-white/50 mb-8">
+            <p className="text-white/40 mb-8">
               You're on Team <span style={{ color: selectedTeam === 'red' ? '#ff6b6b' : '#4dabf7' }} className="font-bold">
                 {selectedTeam === 'red' ? 'Red' : 'Blue'}
               </span>
             </p>
             
-            <div className="w-full max-w-xs space-y-4 mb-8">
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-left">
-                <div className="font-medium mb-1">🎯 How to Play</div>
-                <div className="text-sm text-white/50">
+            <div className="w-full max-w-xs space-y-3 mb-8">
+              <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-left">
+                <div className="font-medium mb-1 flex items-center gap-2">
+                  <Target size={14} className="text-white/50" />
+                  How to Play
+                </div>
+                <div className="text-xs text-white/40">
                   Find street art around you. Point your camera at it to scan and capture it for your team.
                 </div>
               </div>
               
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-left">
-                <div className="font-medium mb-1">📍 Check the Map</div>
-                <div className="text-sm text-white/50">
+              <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-left">
+                <div className="font-medium mb-1 flex items-center gap-2">
+                  <Map size={14} className="text-white/50" />
+                  Check the Map
+                </div>
+                <div className="text-xs text-white/40">
                   See which art is nearby and which territories each team controls.
                 </div>
               </div>
               
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-left">
-                <div className="font-medium mb-1">⚡ Score Points</div>
-                <div className="text-sm text-white/50">
+              <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-left">
+                <div className="font-medium mb-1 flex items-center gap-2">
+                  <Zap size={14} className="text-white/50" />
+                  Score Points
+                </div>
+                <div className="text-xs text-white/40">
                   Each capture earns points. Big murals = more points. Steal from enemies for bonus!
                 </div>
               </div>
@@ -271,13 +278,13 @@ export default function Onboarding() {
           whileTap={{ scale: 0.98 }}
           onClick={handleNext}
           disabled={!canProceed()}
-          className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
+          className={`w-full py-4 rounded-lg font-bold text-lg flex items-center justify-center gap-2 transition-all ${
             canProceed()
               ? 'bg-white text-black'
               : 'bg-white/10 text-white/30 cursor-not-allowed'
           }`}
         >
-          {step === 3 ? "Let's Go!" : 'Continue'}
+          {step === 3 ? "Let's Go" : 'Continue'}
           <ChevronRight size={20} />
         </motion.button>
       </div>

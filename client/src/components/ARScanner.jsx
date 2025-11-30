@@ -1,438 +1,142 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
-import { doc, setDoc, getDoc, serverTimestamp, increment } from 'firebase/firestore'
-import { db } from '../config/firebase'
+import { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useGame } from '../context/GameContext'
-import { MapPin, ChevronLeft } from 'lucide-react'
 
-// Import A-Frame and MindAR (must be imported in this order)
-import 'aframe'
-import 'mind-ar/dist/mindar-image-aframe.prod.js'
+/**
+ * MindAR-based AR Scanner Component
+ * 
+ * This component integrates MindAR for image recognition.
+ * In production, you would:
+ * 1. Generate .mind files from street art images using MindAR's compiler
+ * 2. Load these targets into the AR system
+ * 3. Trigger capture when art is recognized
+ * 
+ * For the demo, we simulate recognition with the camera feed.
+ */
 
-// Art data mapping (MindAR target index → art info)
-const ART_DATA = {
-  'art-01': { name: 'Kolbenova 1', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.110192, 14.503811] },
-  'art-02': { name: 'Kolbenova 2', area: 'Vysočany', points: 50, hood: 'Vysočany', location: [50.110203, 14.503764] },
-  'art-03': { name: 'Kolbenova 3', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.109847, 14.504250] },
-  'art-04': { name: 'Kolbenova 4', area: 'Vysočany', points: 25, hood: 'Vysočany', location: [50.109981, 14.504933] },
-  'art-05': { name: 'Kolbenova 5', area: 'Vysočany', points: 200, hood: 'Vysočany', location: [50.109764, 14.505742] },
-  'art-06': { name: 'Kolbenova 6', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.109672, 14.505847] },
-  'art-07': { name: 'Hloubětín 1', area: 'Hloubětín', points: 100, hood: 'Vysočany', location: [50.110383, 14.508192] },
-  'art-08': { name: 'Hloubětín 2', area: 'Hloubětín', points: 200, hood: 'Vysočany', location: [50.110508, 14.509567] },
-  'art-09': { name: 'Vysočany 1', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.110817, 14.505475] },
-  'art-10': { name: 'Vysočany 2', area: 'Vysočany', points: 50, hood: 'Vysočany', location: [50.110986, 14.504672] },
-}
+// MindAR integration (loads dynamically)
+let MindARThree = null
 
-// Map target index to art ID
-const TARGET_TO_ART = {
-  0: 'art-01', 1: 'art-02', 2: 'art-03', 3: 'art-04', 4: 'art-05',
-  5: 'art-06', 6: 'art-07', 7: 'art-08', 8: 'art-09', 9: 'art-10',
-}
-
-const COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
-
-export default function ARScanner() {
-  const navigate = useNavigate()
-  const sceneRef = useRef(null)
-  const { player } = useGame()
-  
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [currentArt, setCurrentArt] = useState(null)
-  const [canCapture, setCanCapture] = useState(false)
-  const [cooldownMsg, setCooldownMsg] = useState(null)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [capturedArt, setCapturedArt] = useState(null)
-  const playerTeam = player?.team || 'red'
-
-  // Check if art can be scanned (cooldown + recapture logic)
-  const checkCanScan = useCallback(async (artId) => {
+async function loadMindAR() {
+  if (typeof window !== 'undefined' && !MindARThree) {
     try {
-      // Get capture data from Firebase
-      const captureDoc = await getDoc(doc(db, 'streetart-captures', artId))
-      const captureData = captureDoc.exists() ? captureDoc.data() : null
-      
-      // Get user's last scan time from Firebase
-      const userScanDoc = await getDoc(doc(db, 'streetart-scans', `${player.id}_${artId}`))
-      const lastScan = userScanDoc.exists() ? userScanDoc.data().timestamp?.toMillis() : null
-      
-      // If captured by enemy, allow recapture
-      if (captureData?.capturedBy && captureData.capturedBy !== playerTeam) {
-        return { canScan: true, reason: 'recapture' }
-      }
-      
-      // Check cooldown
-      if (lastScan) {
-        const timeSince = Date.now() - lastScan
-        if (timeSince < COOLDOWN_MS) {
-          const minsLeft = Math.ceil((COOLDOWN_MS - timeSince) / 60000)
-          return { canScan: false, reason: `Wait ${minsLeft}m` }
-        }
-      }
-      
-      return { canScan: true, reason: null }
+      // MindAR is loaded via CDN in production
+      // For now, we use a placeholder that simulates the behavior
+      console.log('MindAR would be initialized here')
     } catch (err) {
-      console.error('Error checking scan status:', err)
-      return { canScan: true, reason: null } // Allow on error
+      console.error('Failed to load MindAR:', err)
     }
-  }, [player?.id, playerTeam])
+  }
+}
 
-  // Handle target detection
-  const handleTargetFound = useCallback(async (targetIndex) => {
-    const artId = TARGET_TO_ART[targetIndex]
-    if (!artId || !ART_DATA[artId]) return
-    
-    const art = ART_DATA[artId]
-    setCurrentArt({ id: artId, ...art })
-    
-    // Check if can scan
-    const scanCheck = await checkCanScan(artId)
-    setCanCapture(scanCheck.canScan)
-    setCooldownMsg(scanCheck.canScan ? (scanCheck.reason === 'recapture' ? '⚔️ Recapture!' : null) : scanCheck.reason)
-  }, [checkCanScan])
+function ARScanner({ onArtDetected, onError }) {
+  const containerRef = useRef(null)
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [detectedArt, setDetectedArt] = useState(null)
+  const { streetArt } = useGame()
 
-  // Handle target lost
-  const handleTargetLost = useCallback(() => {
-    setCurrentArt(null)
-    setCanCapture(false)
-    setCooldownMsg(null)
-    setCaptureProgress(0)
-    if (holdTimerRef.current) {
-      clearInterval(holdTimerRef.current)
-      holdTimerRef.current = null
+  useEffect(() => {
+    loadMindAR()
+    
+    // Simulate AR initialization
+    const initTimeout = setTimeout(() => {
+      setIsInitialized(true)
+    }, 1000)
+
+    return () => {
+      clearTimeout(initTimeout)
     }
   }, [])
 
-  // Capture art to Firebase
-  const captureArt = useCallback(async () => {
-    if (!currentArt || !player) return
-    
-    try {
-      const artId = currentArt.id
-      const points = currentArt.points
-      
-      // Record scan time in Firebase
-      await setDoc(doc(db, 'streetart-scans', `${player.id}_${artId}`), {
-        timestamp: serverTimestamp(),
-        artId,
-        playerId: player.id
-      })
-      
-      // Update capture in Firebase
-      await setDoc(doc(db, 'streetart-captures', artId), {
-        artId,
-        capturedBy: playerTeam,
-        capturedAt: serverTimestamp(),
-        playerId: player.id,
-        playerName: player.name,
-        points
-      })
-      
-      // Update team score
-      await setDoc(doc(db, 'streetart-teams', playerTeam), {
-        score: increment(points),
-        lastCapture: artId,
-        lastCaptureAt: serverTimestamp()
-      }, { merge: true })
-      
-      // Update player score
-      await setDoc(doc(db, 'streetart-players', player.id), {
-        name: player.name,
-        team: playerTeam,
-        score: increment(points),
-        lastActive: serverTimestamp()
-      }, { merge: true })
-      
-      console.log('🔥 Captured to Firebase:', artId, points)
-      
-      // Show success then auto-navigate to map
-      setCapturedArt({ id: artId, ...currentArt })
-      setShowSuccess(true)
-      
-      // Auto redirect to map after 2 seconds
-      setTimeout(() => {
-        localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({
-          artId,
-          location: currentArt.location,
-          team: playerTeam
-        }))
-        navigate('/map')
-      }, 2500)
-      
-    } catch (err) {
-      console.error('Capture error:', err)
-      setError('Failed to capture. Try again.')
+  // In production, MindAR would call this when an image is detected
+  const handleImageDetected = (imageHash) => {
+    const art = streetArt.find(a => a.imageHash === imageHash)
+    if (art) {
+      setDetectedArt(art)
+      onArtDetected?.(art)
     }
-  }, [currentArt, player, playerTeam])
-
-  // Tap to capture (instant)
-  const handleCapture = useCallback(() => {
-    if (!canCapture || !currentArt) return
-    captureArt()
-  }, [canCapture, currentArt, captureArt])
-
-  // Initialize MindAR scene
-  useEffect(() => {
-    const sceneEl = sceneRef.current
-    if (!sceneEl) return
-
-    let arSystem = null
-    let entities = []
-
-    const startAR = async () => {
-      // Wait for scene to be loaded
-      if (!sceneEl.hasLoaded) {
-        await new Promise(resolve => sceneEl.addEventListener('loaded', resolve, { once: true }))
-      }
-
-      // Create target entities
-      for (let i = 0; i < Object.keys(TARGET_TO_ART).length; i++) {
-        const entity = document.createElement('a-entity')
-        entity.setAttribute('mindar-image-target', `targetIndex: ${i}`)
-        entity.setAttribute('data-target-index', i.toString())
-        
-        entity.addEventListener('targetFound', () => {
-          console.log('🎯 Target found:', i)
-          handleTargetFound(i)
-        })
-        entity.addEventListener('targetLost', () => {
-          console.log('❌ Target lost:', i)
-          handleTargetLost()
-        })
-        
-        sceneEl.appendChild(entity)
-        entities.push(entity)
-      }
-
-      // Get and start the AR system
-      arSystem = sceneEl.systems['mindar-image-system']
-      
-      if (arSystem) {
-        try {
-          console.log('🚀 Starting MindAR...')
-          await arSystem.start()
-          console.log('✅ MindAR started!')
-          setIsLoading(false)
-        } catch (err) {
-          console.error('MindAR start error:', err)
-          setError('Camera access required')
-          setIsLoading(false)
-        }
-      } else {
-        console.error('MindAR system not found')
-        setError('AR system failed to load')
-        setIsLoading(false)
-      }
-    }
-
-    // Small delay to ensure A-Frame is ready
-    const timer = setTimeout(startAR, 500)
-
-    return () => {
-      clearTimeout(timer)
-      // Cleanup entities
-      entities.forEach(e => e.remove())
-      // Stop AR system
-      if (arSystem) {
-        arSystem.stop()
-      }
-    }
-  }, [handleTargetFound, handleTargetLost])
-
-  // View on map handler
-  const viewOnMap = () => {
-    if (capturedArt) {
-      localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({
-        artId: capturedArt.id,
-        location: capturedArt.location,
-        team: playerTeam
-      }))
-    }
-    navigate('/map')
   }
 
-  const teamColor = playerTeam === 'red' ? '#ff6b6b' : '#4dabf7'
-
   return (
-    <div className="fixed inset-0 bg-black z-50">
-      {/* A-Frame Scene */}
-      <a-scene
-        ref={sceneRef}
-        mindar-image="imageTargetSrc: https://raw.githubusercontent.com/postptacek/street-art-ctf/main/client/targets.mind; autoStart: false; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 1000; uiLoading: no; uiError: no; uiScanning: no;"
-        color-space="sRGB"
-        renderer="colorManagement: true"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false"
-        embedded
-        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
-      >
-        <a-camera position="0 0 0" look-controls="enabled: false" />
-      </a-scene>
-
-      {/* UI Overlay */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Header */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between pointer-events-auto"
-             style={{ paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
-          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center">
-            <ChevronLeft size={24} className="text-white" />
-          </button>
-          
-          <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/50 backdrop-blur">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: teamColor }} />
-            <span className="text-white text-sm font-medium capitalize">{playerTeam}</span>
-          </div>
-        </div>
-
-        {/* Loading */}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-            <div className="text-center">
-              <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-white">Loading AR Scanner...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-            <div className="text-center p-6">
-              <div className="text-4xl mb-4">⚠️</div>
-              <p className="text-white mb-4">{error}</p>
-              <button onClick={() => window.location.reload()} className="px-6 py-3 bg-white text-black rounded-xl font-bold">
-                Retry
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Target Info */}
-        <AnimatePresence>
-          {currentArt && !showSuccess && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="absolute top-24 left-4 right-4"
-            >
-              <div className="bg-black/70 backdrop-blur-xl rounded-2xl p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-white font-bold text-lg">{currentArt.name}</p>
-                  <p className="text-white/60 text-sm">{currentArt.area} • {currentArt.hood}</p>
-                </div>
-                <div className={`px-4 py-2 rounded-xl font-bold text-lg ${canCapture ? 'bg-green-500' : 'bg-amber-500'}`}>
-                  {canCapture ? `+${currentArt.points}` : '⏱️'}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Scanning hint */}
-        {!currentArt && !isLoading && !error && (
-          <div className="absolute bottom-40 left-0 right-0 text-center">
-            <p className="text-white/70 text-sm">Point camera at street art to scan</p>
-          </div>
-        )}
-
-        {/* Capture status */}
-        {currentArt && !showSuccess && (
-          <div className="absolute bottom-36 left-0 right-0 text-center">
-            <p className={`text-sm font-medium ${canCapture ? 'text-green-400' : 'text-amber-400'}`}>
-              {cooldownMsg || (canCapture ? 'Tap to capture!' : 'Searching...')}
-            </p>
-          </div>
-        )}
-
-        {/* Capture button - centered */}
-        {!showSuccess && (
-          <div className="absolute bottom-0 left-0 right-0 flex justify-center items-center pointer-events-auto"
-               style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
-            <button
-              onClick={handleCapture}
-              disabled={!canCapture}
-              className={`w-20 h-20 rounded-full text-3xl flex items-center justify-center transition-all border-4 ${
-                canCapture 
-                  ? 'bg-white/20 border-green-500 active:bg-green-500/30 active:scale-95' 
-                  : 'bg-white/5 border-white/20 opacity-50'
-              }`}
-            >
-              📷
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Success overlay - auto redirects to map */}
-      <AnimatePresence>
-        {showSuccess && capturedArt && (
+    <div ref={containerRef} className="absolute inset-0">
+      {/* MindAR renders here in production */}
+      
+      {!isInitialized && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <motion.div
+            className="text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center p-6"
           >
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', delay: 0.1 }}
-              className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
-              style={{ backgroundColor: `${teamColor}20`, border: `3px solid ${teamColor}` }}
-            >
-              <span className="text-5xl">🎯</span>
-            </motion.div>
-            
-            <motion.h2 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-3xl font-bold text-white mb-2"
-            >
-              Territory Captured!
-            </motion.h2>
-            
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-white/60 mb-4"
-            >
-              {capturedArt.name} • {capturedArt.area}
-            </motion.p>
-            
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', delay: 0.4 }}
-              className="text-6xl font-bold mb-6"
-              style={{ color: teamColor }}
-            >
-              +{capturedArt.points}
-            </motion.div>
-            
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="text-white/40 text-sm"
-            >
-              Points added to Team {playerTeam === 'red' ? 'Red 🔴' : 'Blue 🔵'}
-            </motion.p>
-            
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-8 flex items-center gap-2 text-white/50"
-            >
-              <MapPin size={16} />
-              <span className="text-sm">Opening map...</span>
-            </motion.div>
+              className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full mx-auto mb-4"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            />
+            <p className="text-white/80">Initializing AR Scanner...</p>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
+
+      {detectedArt && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute bottom-32 left-4 right-4 glass rounded-xl p-4"
+        >
+          <p className="font-bold">{detectedArt.name}</p>
+          <p className="text-sm text-gray-400">{detectedArt.points} points</p>
+        </motion.div>
+      )}
     </div>
   )
 }
+
+/**
+ * MindAR Configuration for Production
+ * 
+ * To set up MindAR for real street art recognition:
+ * 
+ * 1. Collect reference images of each street art piece
+ * 2. Use MindAR Image Compiler to generate .mind files:
+ *    https://hiukim.github.io/mind-ar-js-doc/tools/compile
+ * 
+ * 3. Host the .mind files and load them:
+ *    const mindarThree = new MindARThree({
+ *      container: containerRef.current,
+ *      imageTargetSrc: '/targets.mind'
+ *    });
+ * 
+ * 4. Listen for target detection:
+ *    anchor.onTargetFound = () => handleImageDetected(targetIndex)
+ *    anchor.onTargetLost = () => setDetectedArt(null)
+ * 
+ * 5. Start the AR session:
+ *    await mindarThree.start()
+ */
+
+export const MINDAR_SETUP_INSTRUCTIONS = `
+## MindAR Setup Guide
+
+### 1. Prepare Target Images
+- Take clear photos of each street art piece
+- Ensure good lighting and minimal reflections
+- Save as high-quality JPEG/PNG (1024x1024 recommended)
+
+### 2. Compile Targets
+Visit: https://hiukim.github.io/mind-ar-js-doc/tools/compile
+
+Upload your images to generate a .mind file containing all targets.
+
+### 3. Configure in App
+- Place the .mind file in /public/targets/
+- Update the MindARThree imageTargetSrc path
+- Map target indices to street art IDs
+
+### 4. Test Recognition
+- Point camera at reference images
+- Verify detection triggers correctly
+- Adjust image quality if needed
+`
+
+export default ARScanner

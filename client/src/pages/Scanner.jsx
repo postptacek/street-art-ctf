@@ -1,21 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useGame } from '../context/GameContext'
-import { AlertCircle } from 'lucide-react'
-import ChumpLoader from '../components/ChumpLoader'
+import { useGame, TEAM_COLORS } from '../context/GameContext'
+import { AlertCircle, Loader2, Target } from 'lucide-react'
 
 function Scanner() {
   const { player } = useGame()
   const [redirecting, setRedirecting] = useState(false)
   
-  // Redirect to HTML scanner (works better than React bundled MindAR)
+  // Redirect to AR scanner immediately when team is selected
   useEffect(() => {
     if (player.team && !redirecting) {
       setRedirecting(true)
+      // Small delay for smooth transition
       setTimeout(() => {
         const basePath = import.meta.env.BASE_URL || '/'
         window.location.href = basePath + 'ar-scanner.html'
-      }, 300)
+      }, 500)
     }
   }, [player.team, redirecting])
 
@@ -38,7 +38,7 @@ function Scanner() {
     )
   }
 
-  // Loading while redirecting
+  // Loading/redirecting state
   return (
     <motion.div 
       className="flex-1 flex items-center justify-center p-8 bg-black"
@@ -46,8 +46,16 @@ function Scanner() {
       animate={{ opacity: 1 }}
     >
       <div className="text-center">
-        <ChumpLoader size={150} className="mb-4" />
-        <h2 className="text-xl font-bold text-white">Opening Scanner...</h2>
+        <motion.div 
+          className="w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-6"
+          animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+        >
+          <Target size={48} className="text-white" />
+        </motion.div>
+        <h2 className="text-2xl font-bold mb-3 text-white">Opening AR Scanner</h2>
+        <p className="text-white/40 text-sm mb-4">Point your camera at street art to capture it</p>
+        <Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-400" />
       </div>
     </motion.div>
   )

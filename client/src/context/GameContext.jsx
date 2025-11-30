@@ -12,7 +12,7 @@ const STORAGE_KEYS = {
   captures: 'streetart-ctf-captures'
 }
 
-// Firestore collections (streetart- prefix for famu-nodes project)
+// Firestore collections (matching ar-scanner.html)
 const CAPTURES_COLLECTION = 'streetart-captures'
 const PLAYERS_COLLECTION = 'streetart-players'
 const TEAMS_COLLECTION = 'streetart-teams'
@@ -114,7 +114,7 @@ export function GameProvider({ children }) {
       saveToStorage(STORAGE_KEYS.captures, firebaseCaptures)
       setIsOnline(true)
       
-      console.log('🔥 Firebase: Synced', Object.keys(firebaseCaptures).length, 'captures')
+      console.log('Firebase: Synced', Object.keys(firebaseCaptures).length, 'captures')
     }, (error) => {
       console.warn('Firestore sync error:', error)
       setIsOnline(false)
@@ -137,7 +137,7 @@ export function GameProvider({ children }) {
         }
       })
       setGlobalTeamScores(scores)
-      console.log('🔥 Team scores:', scores)
+      console.log('Team scores:', scores)
     })
     
     return () => unsubscribe()
