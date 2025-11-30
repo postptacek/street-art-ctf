@@ -88,22 +88,32 @@ export function GameProvider({ children }) {
     return () => unsubscribe()
   }, [])
 
-  // Subscribe to captures from Firestore (real-time sync)
+  // Subscribe to captures collection (real-time sync)
   useEffect(() => {
     if (!firebaseUser) return
     
-    const capturesDoc = doc(db, CAPTURES_COLLECTION, 'global')
-    const unsubscribe = onSnapshot(capturesDoc, (snapshot) => {
-      if (snapshot.exists()) {
-        const firebaseCaptures = snapshot.data()
-        // Merge Firebase captures with local art points
-        setArtPoints(prev => prev.map(point => ({
-          ...point,
-          capturedBy: firebaseCaptures[point.id] || null
-        })))
-        // Also save to localStorage as backup
-        saveToStorage(STORAGE_KEYS.captures, firebaseCaptures)
-      }
+    // Listen to all captures
+    const capturesRef = collection(db, CAPTURES_COLLECTION)
+    const unsubscribe = onSnapshot(capturesRef, (snapshot) => {
+      const firebaseCaptures = {}
+      snapshot.forEach(doc => {
+        const data = doc.data()
+        if (data.capturedBy) {
+          firebaseCaptures[doc.id] = data.capturedBy
+        }
+      })
+      
+      // Merge Firebase captures with local art points
+      setArtPoints(ART_POINTS.map(point => ({
+        ...point,
+        capturedBy: firebaseCaptures[point.id] || null
+      })))
+      
+      // Also save to localStorage as backup
+      saveToStorage(STORAGE_KEYS.captures, firebaseCaptures)
+      setIsOnline(true)
+      
+      console.log('🔥 Firebase: Synced', Object.keys(firebaseCaptures).length, 'captures')
     }, (error) => {
       console.warn('Firestore sync error:', error)
       setIsOnline(false)
@@ -111,6 +121,26 @@ export function GameProvider({ children }) {
     
     return () => unsubscribe()
   }, [firebaseUser])
+  
+  // Subscribe to team scores
+  const [globalTeamScores, setGlobalTeamScores] = useState({ red: 0, blue: 0 })
+  
+  useEffect(() => {
+    const teamsRef = collection(db, 'teams')
+    const unsubscribe = onSnapshot(teamsRef, (snapshot) => {
+      const scores = { red: 0, blue: 0 }
+      snapshot.forEach(doc => {
+        const data = doc.data()
+        if (doc.id === 'red' || doc.id === 'blue') {
+          scores[doc.id] = data.score || 0
+        }
+      })
+      setGlobalTeamScores(scores)
+      console.log('🔥 Team scores:', scores)
+    })
+    
+    return () => unsubscribe()
+  }, [])
 
   // Persist player changes locally
   useEffect(() => {
@@ -127,8 +157,12 @@ export function GameProvider({ children }) {
     }
   }, [firebaseUser, isOnline])
 
-  // Calculate team scores from art points
-  const teamScores = calculateTeamScores(artPoints)
+  // Calculate team scores - use Firebase global scores if available, otherwise calculate from art points
+  const calculatedScores = calculateTeamScores(artPoints)
+  const teamScores = {
+    red: Math.max(globalTeamScores.red, calculatedScores.red),
+    blue: Math.max(globalTeamScores.blue, calculatedScores.blue)
+  }
 
   // Join a team
   const joinTeam = useCallback((teamColor) => {
@@ -265,6 +299,7 @@ export function GameProvider({ children }) {
     player,
     artPoints,
     teamScores,
+    globalTeamScores,
     scanResult,
     isScanning,
     pendingCapture,

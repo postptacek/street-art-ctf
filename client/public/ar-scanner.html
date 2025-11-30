@@ -6,6 +6,10 @@
   <title>Street Art CTF - AR Scanner</title>
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
@@ -615,6 +619,30 @@
   </a-scene>
 
   <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAz0HX_QrTS2uB7hVXw86RUlXoB6jsIReA",
+      authDomain: "skan-2f8d5.firebaseapp.com",
+      projectId: "skan-2f8d5",
+      storageBucket: "skan-2f8d5.firebasestorage.app",
+      messagingSenderId: "839263869032",
+      appId: "1:839263869032:web:35b2bf59f90430075a83dd"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    
+    // Sign in anonymously
+    let currentUserId = null;
+    auth.signInAnonymously().then((result) => {
+      currentUserId = result.user.uid;
+      console.log('✅ Firebase: Signed in as', currentUserId);
+    }).catch((error) => {
+      console.error('Firebase auth error:', error);
+    });
+    
     // Vysočany street art mapping (21 pieces)
     const TARGET_TO_ART = {
       0: 'art-01', 1: 'art-02', 2: 'art-03', 3: 'art-04', 4: 'art-05',
@@ -783,21 +811,55 @@
       progressBar.style.strokeDashoffset = offset;
     }
     
-    function captureArt() {
+    async function captureArt() {
       if (!currentArtId) return;
       
       const art = ART_DATA[currentArtId] || { points: 100, name: 'Unknown', hood: 'Vysočany' };
       
-      // Save capture
+      // Save capture locally
       const captures = JSON.parse(localStorage.getItem('streetart-ctf-captures') || '{}');
       captures[currentArtId] = playerTeam;
       localStorage.setItem('streetart-ctf-captures', JSON.stringify(captures));
       
-      // Update player
+      // Update player locally
       const player = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
       player.score = (player.score || 0) + art.points;
       player.capturedArt = [...new Set([...(player.capturedArt || []), currentArtId])];
       localStorage.setItem('streetart-ctf-player', JSON.stringify(player));
+      
+      // 🔥 SYNC TO FIREBASE - Global score!
+      try {
+        // Update art point capture status
+        await db.collection('captures').doc(currentArtId).set({
+          artId: currentArtId,
+          capturedBy: playerTeam,
+          capturedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          userId: currentUserId || 'anonymous',
+          points: art.points
+        });
+        
+        // Update team score
+        await db.collection('teams').doc(playerTeam).set({
+          score: firebase.firestore.FieldValue.increment(art.points),
+          lastCapture: currentArtId,
+          lastCaptureAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        
+        // Update player in Firebase
+        if (currentUserId) {
+          await db.collection('players').doc(currentUserId).set({
+            odName: player.odName || ('Player_' + currentUserId.slice(0, 6)),
+            team: playerTeam,
+            score: player.score,
+            capturedArt: player.capturedArt,
+            lastActive: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        }
+        
+        console.log('🔥 Firebase: Synced capture globally!');
+      } catch (error) {
+        console.error('Firebase sync error:', error);
+      }
       
       // Count captures in hood
       const hoodCaptures = Object.keys(captures).filter(id => 
