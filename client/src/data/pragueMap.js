@@ -278,61 +278,25 @@ function expandPolygon(polygon, buffer) {
   })
 }
 
-// Main function: generate all team territories with clustering
+// Main function: generate individual territories for each point
 export function generateTeamTerritories(artPoints) {
   const territories = {}
   TEAMS.forEach(team => territories[team] = [])
   
-  // Group captured points by team
-  const teamPoints = {}
-  TEAMS.forEach(team => teamPoints[team] = [])
-  
+  // Each captured point gets its own territory
   artPoints.forEach(point => {
-    if (point.capturedBy && teamPoints[point.capturedBy]) {
-      teamPoints[point.capturedBy].push(point)
+    if (point.capturedBy && territories[point.capturedBy]) {
+      const seed = point.location[0] * 1000 + point.location[1] * 1000
+      // Size based on point value
+      const baseRadius = point.size === 'large' ? 0.0012 : 
+                         point.size === 'medium' ? 0.001 :
+                         point.size === 'small' ? 0.0008 : 0.0006
+      
+      territories[point.capturedBy].push({
+        polygon: createHexagon(point.location[0], point.location[1], baseRadius),
+        points: [point]
+      })
     }
-  })
-  
-  // Generate territories for each team
-  TEAMS.forEach(team => {
-    const points = teamPoints[team]
-    if (points.length === 0) return
-    
-    // Cluster nearby points (separate Vysocany from Palmovka etc)
-    const clusters = clusterPoints(points, 0.004) // ~400m max distance
-    
-    clusters.forEach((cluster, clusterIdx) => {
-      if (cluster.length === 1) {
-        // Single point: hexagon territory
-        const p = cluster[0]
-        const seed = p.location[0] * 1000 + p.location[1] * 1000
-        territories[team].push({
-          polygon: createBlob(p.location[0], p.location[1], 0.001, seed),
-          points: cluster
-        })
-      } else if (cluster.length === 2) {
-        // Two points: create connected blobs
-        const hexagons = cluster.map((p, i) => {
-          const seed = p.location[0] * 1000 + p.location[1] * 1000
-          return createBlob(p.location[0], p.location[1], 0.0008, seed)
-        })
-        const merged = mergeHexagons(hexagons)
-        const expanded = expandPolygon(merged, 0.0003)
-        territories[team].push({
-          polygon: expanded,
-          points: cluster
-        })
-      } else {
-        // Multiple points: convex hull with organic edge
-        const coords = cluster.map(p => p.location)
-        const hull = convexHull([...coords])
-        const expanded = expandPolygon(hull, 0.0006)
-        territories[team].push({
-          polygon: expanded,
-          points: cluster
-        })
-      }
-    })
   })
   
   return territories
