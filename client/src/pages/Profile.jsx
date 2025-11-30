@@ -83,8 +83,8 @@ function Profile() {
         <p className="text-sm" style={{ color: teamColor }}>{teamName}</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
+      {/* Main Stats */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <motion.div 
           className="p-4 rounded-2xl text-center"
           style={{ backgroundColor: '#eab30815', border: '1px solid #eab30830' }}
@@ -101,7 +101,7 @@ function Profile() {
           whileHover={{ scale: 1.02 }}
         >
           <Target size={24} className="mx-auto mb-2 text-green-500" />
-          <p className="text-2xl font-bold text-white">{capturedArt.length}</p>
+          <p className="text-2xl font-bold text-white">{player.captureCount || capturedArt.length}</p>
           <p className="text-[10px] text-white/40 uppercase">Captures</p>
         </motion.div>
         
@@ -111,9 +111,54 @@ function Profile() {
           whileHover={{ scale: 1.02 }}
         >
           <Flame size={24} className="mx-auto mb-2 text-orange-500" />
-          <p className="text-2xl font-bold text-white">0</p>
-          <p className="text-[10px] text-white/40 uppercase">Streak</p>
+          <p className="text-2xl font-bold text-white">{player.maxStreak || 0}</p>
+          <p className="text-[10px] text-white/40 uppercase">Best Streak</p>
         </motion.div>
+      </div>
+
+      {/* Detailed Stats */}
+      <div className="mb-8">
+        <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
+          Lifetime Stats
+        </h2>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <span className="text-sm">⚔️</span>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-white">{player.recaptureCount || 0}</p>
+              <p className="text-[10px] text-white/40">Recaptures</p>
+            </div>
+          </div>
+          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <span className="text-sm">🏴</span>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-white">{player.firstCaptureCount || 0}</p>
+              <p className="text-[10px] text-white/40">First Captures</p>
+            </div>
+          </div>
+          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+              <span className="text-sm">🚶</span>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-white">{player.totalDistance ? (player.totalDistance / 1000).toFixed(1) : '0'}km</p>
+              <p className="text-[10px] text-white/40">Distance Walked</p>
+            </div>
+          </div>
+          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+              <span className="text-sm">🔥</span>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-white">{player.streak || 0}</p>
+              <p className="text-[10px] text-white/40">Current Streak</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Your Captures */}

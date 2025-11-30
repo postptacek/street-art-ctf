@@ -48,13 +48,22 @@ export function GameProvider({ children }) {
   const [firebaseUser, setFirebaseUser] = useState(null)
   const [isOnline, setIsOnline] = useState(true)
   
-  // Player state - persisted
+  // Player state - persisted with game stats
   const [player, setPlayer] = useState(() => loadFromStorage(STORAGE_KEYS.player, {
     id: `player-${Date.now()}`,
     name: 'Street Artist',
     team: null,
     score: 0,
-    capturedArt: []
+    capturedArt: [],
+    // Game stats
+    streak: 0,
+    maxStreak: 0,
+    totalDistance: 0,
+    lastCaptureTime: null,
+    lastCaptureLocation: null,
+    captureCount: 0,
+    recaptureCount: 0,
+    firstCaptureCount: 0
   }))
   
   // Art points state - merged with real data
@@ -139,7 +148,9 @@ export function GameProvider({ children }) {
                   artName: artPoint.name,
                   team: data.capturedBy,
                   playerName: data.playerName || 'Someone',
-                  isRecapture: data.isRecapture || false,
+                  points: data.points || getPointValue(artPoint),
+                  streak: data.streak || 0,
+                  isRecapture: data.isRecapture || !!prevOwner,
                   timestamp: Date.now()
                 })
                 // Auto-hide after 4 seconds
@@ -223,15 +234,35 @@ export function GameProvider({ children }) {
     saveToStorage(STORAGE_KEYS.player, player)
   }, [player])
 
-  // Sync captures to Firebase
+  // Sync a single capture to Firebase with full details
+  const syncCaptureToFirebase = useCallback(async (artId, captureData) => {
+    if (!isOnline) return
+    try {
+      await setDoc(doc(db, CAPTURES_COLLECTION, artId), {
+        artId,
+        capturedBy: captureData.team,
+        capturedAt: new Date(),
+        playerId: player.id,
+        playerName: player.name,
+        points: captureData.points,
+        streak: captureData.streak,
+        isFirstCapture: captureData.isFirstCapture,
+        isRecapture: captureData.isRecapture
+      })
+    } catch (err) {
+      console.warn('Failed to sync capture to Firebase:', err)
+    }
+  }, [isOnline, player.id, player.name])
+
+  // Legacy sync for backwards compatibility
   const syncCapturesToFirebase = useCallback(async (captures) => {
-    if (!firebaseUser || !isOnline) return
+    if (!isOnline) return
     try {
       await setDoc(doc(db, CAPTURES_COLLECTION, 'global'), captures, { merge: true })
     } catch (err) {
       console.warn('Failed to sync to Firebase:', err)
     }
-  }, [firebaseUser, isOnline])
+  }, [isOnline])
 
   // Calculate team scores - use Firebase global scores if available, otherwise calculate from art points
   const calculatedScores = calculateTeamScores(artPoints)
@@ -271,8 +302,78 @@ export function GameProvider({ children }) {
     return nearest
   }, [artPoints])
 
-  // Capture art point
-  const captureArt = useCallback((artId) => {
+  // Calculate distance between two GPS coordinates in meters
+  const calculateDistance = useCallback((lat1, lng1, lat2, lng2) => {
+    const dLat = (lat2 - lat1) * 111000
+    const dLng = (lng2 - lng1) * 111000 * Math.cos(lat1 * Math.PI / 180)
+    return Math.sqrt(dLat * dLat + dLng * dLng)
+  }, [])
+
+  // Calculate all score bonuses
+  const calculateScoreWithBonuses = useCallback((art, playerState, location = null) => {
+    const basePoints = getPointValue(art)
+    const bonuses = []
+    let totalPoints = basePoints
+    
+    const isRecapture = art.capturedBy && art.capturedBy !== playerState.team
+    const isFirstCapture = !art.capturedBy
+    const now = Date.now()
+    const timeSinceLastCapture = playerState.lastCaptureTime 
+      ? (now - playerState.lastCaptureTime) / 1000 / 60 // minutes
+      : Infinity
+    
+    // 1. Streak Bonus: +10% per streak level, max +100%
+    const currentStreak = playerState.streak || 0
+    if (currentStreak > 0) {
+      const streakMultiplier = Math.min(currentStreak * 0.1, 1.0)
+      const streakBonus = Math.round(basePoints * streakMultiplier)
+      if (streakBonus > 0) {
+        totalPoints += streakBonus
+        bonuses.push({ type: 'streak', label: `🔥 ${currentStreak}x Streak`, points: streakBonus })
+      }
+    }
+    
+    // 2. Recapture Bonus: +50% for stealing from enemy
+    if (isRecapture) {
+      const recaptureBonus = Math.round(basePoints * 0.5)
+      totalPoints += recaptureBonus
+      bonuses.push({ type: 'recapture', label: '⚔️ Recapture', points: recaptureBonus })
+    }
+    
+    // 3. First Capture Bonus: +25% for virgin territory
+    if (isFirstCapture) {
+      const firstBonus = Math.round(basePoints * 0.25)
+      totalPoints += firstBonus
+      bonuses.push({ type: 'first', label: '🏴 First Capture', points: firstBonus })
+    }
+    
+    // 4. Speed Bonus: +20% if captured within 5 minutes of last capture
+    if (timeSinceLastCapture < 5) {
+      const speedBonus = Math.round(basePoints * 0.2)
+      totalPoints += speedBonus
+      bonuses.push({ type: 'speed', label: '⚡ Speed Bonus', points: speedBonus })
+    }
+    
+    // 5. Distance Bonus: +5pts per 100m walked from last capture (max +50)
+    if (location && playerState.lastCaptureLocation) {
+      const distance = calculateDistance(
+        playerState.lastCaptureLocation[0], playerState.lastCaptureLocation[1],
+        location[0], location[1]
+      )
+      if (distance > 50) { // Minimum 50m to count
+        const distanceBonus = Math.min(Math.round(distance / 100) * 5, 50)
+        if (distanceBonus > 0) {
+          totalPoints += distanceBonus
+          bonuses.push({ type: 'distance', label: `🚶 ${Math.round(distance)}m walked`, points: distanceBonus })
+        }
+      }
+    }
+    
+    return { basePoints, totalPoints, bonuses, isRecapture, isFirstCapture }
+  }, [calculateDistance])
+
+  // Capture art point with enhanced scoring
+  const captureArt = useCallback((artId, location = null) => {
     if (!player.team) return { success: false, message: 'Join a team first!' }
     
     const art = artPoints.find(a => a.id === artId)
@@ -280,7 +381,9 @@ export function GameProvider({ children }) {
     if (art.capturedBy === player.team) return { success: false, message: 'Already yours!' }
     if (art.status === 'ghost') return { success: false, message: 'This art no longer exists' }
     
-    const points = getPointValue(art)
+    // Calculate score with all bonuses
+    const captureLocation = location || art.location
+    const scoreResult = calculateScoreWithBonuses(art, player, captureLocation)
     const previousTeam = art.capturedBy
     
     // Update art points locally
@@ -288,15 +391,32 @@ export function GameProvider({ children }) {
       a.id === artId ? { ...a, capturedBy: player.team } : a
     ))
     
-    // Update player
+    // Update player with new stats
+    const newStreak = player.streak + 1
     setPlayer(prev => ({
       ...prev,
-      score: prev.score + points,
-      capturedArt: [...prev.capturedArt.filter(id => id !== artId), artId]
+      score: prev.score + scoreResult.totalPoints,
+      capturedArt: [...prev.capturedArt.filter(id => id !== artId), artId],
+      streak: newStreak,
+      maxStreak: Math.max(prev.maxStreak, newStreak),
+      lastCaptureTime: Date.now(),
+      lastCaptureLocation: captureLocation,
+      captureCount: prev.captureCount + 1,
+      recaptureCount: scoreResult.isRecapture ? prev.recaptureCount + 1 : prev.recaptureCount,
+      firstCaptureCount: scoreResult.isFirstCapture ? prev.firstCaptureCount + 1 : prev.firstCaptureCount,
+      totalDistance: prev.totalDistance + (location && prev.lastCaptureLocation 
+        ? calculateDistance(prev.lastCaptureLocation[0], prev.lastCaptureLocation[1], location[0], location[1])
+        : 0)
     }))
     
-    // Sync to Firebase
-    syncCapturesToFirebase({ [artId]: player.team })
+    // Sync to Firebase with full details
+    syncCaptureToFirebase(artId, {
+      team: player.team,
+      points: scoreResult.totalPoints,
+      streak: newStreak,
+      isFirstCapture: scoreResult.isFirstCapture,
+      isRecapture: scoreResult.isRecapture
+    })
     
     // Save locally as backup
     const currentCaptures = loadFromStorage(STORAGE_KEYS.captures, {})
@@ -305,12 +425,14 @@ export function GameProvider({ children }) {
     return { 
       success: true, 
       art, 
-      points,
+      points: scoreResult.totalPoints,
+      basePoints: scoreResult.basePoints,
+      bonuses: scoreResult.bonuses,
+      streak: newStreak,
       previousTeam,
       message: previousTeam ? `Stolen from ${previousTeam}!` : 'Captured!'
     }
-  }, [player.team, artPoints, syncCapturesToFirebase])
-
+  }, [player, artPoints, syncCaptureToFirebase, calculateScoreWithBonuses, calculateDistance])
   // Start capture flow - user takes photo, we verify location
   const startCapture = useCallback(async (photoData, location) => {
     setIsScanning(true)
