@@ -177,40 +177,63 @@ export default function ARScanner() {
     const sceneEl = sceneRef.current
     if (!sceneEl) return
 
-    const handleLoaded = () => {
+    let arSystem = null
+    let entities = []
+
+    const startAR = async () => {
+      // Wait for scene to be loaded
+      if (!sceneEl.hasLoaded) {
+        await new Promise(resolve => sceneEl.addEventListener('loaded', resolve, { once: true }))
+      }
+
       // Create target entities
       for (let i = 0; i < Object.keys(TARGET_TO_ART).length; i++) {
         const entity = document.createElement('a-entity')
         entity.setAttribute('mindar-image-target', `targetIndex: ${i}`)
         entity.setAttribute('data-target-index', i.toString())
         
-        entity.addEventListener('targetFound', () => handleTargetFound(i))
-        entity.addEventListener('targetLost', handleTargetLost)
+        entity.addEventListener('targetFound', () => {
+          console.log('🎯 Target found:', i)
+          handleTargetFound(i)
+        })
+        entity.addEventListener('targetLost', () => {
+          console.log('❌ Target lost:', i)
+          handleTargetLost()
+        })
         
         sceneEl.appendChild(entity)
+        entities.push(entity)
+      }
+
+      // Get and start the AR system
+      arSystem = sceneEl.systems['mindar-image-system']
+      
+      if (arSystem) {
+        try {
+          console.log('🚀 Starting MindAR...')
+          await arSystem.start()
+          console.log('✅ MindAR started!')
+          setIsLoading(false)
+        } catch (err) {
+          console.error('MindAR start error:', err)
+          setError('Camera access required')
+          setIsLoading(false)
+        }
+      } else {
+        console.error('MindAR system not found')
+        setError('AR system failed to load')
+        setIsLoading(false)
       }
     }
 
-    const handleArReady = () => {
-      setIsLoading(false)
-    }
-
-    const handleArError = () => {
-      setError('Camera access required')
-      setIsLoading(false)
-    }
-
-    sceneEl.addEventListener('loaded', handleLoaded)
-    sceneEl.addEventListener('arReady', handleArReady)
-    sceneEl.addEventListener('arError', handleArError)
+    // Small delay to ensure A-Frame is ready
+    const timer = setTimeout(startAR, 500)
 
     return () => {
-      sceneEl.removeEventListener('loaded', handleLoaded)
-      sceneEl.removeEventListener('arReady', handleArReady)
-      sceneEl.removeEventListener('arError', handleArError)
-      
-      // Cleanup MindAR
-      const arSystem = sceneEl.systems?.['mindar-image-system']
+      clearTimeout(timer)
+      // Cleanup entities
+      entities.forEach(e => e.remove())
+      // Stop AR system
       if (arSystem) {
         arSystem.stop()
       }
@@ -236,13 +259,13 @@ export default function ARScanner() {
       {/* A-Frame Scene */}
       <a-scene
         ref={sceneRef}
-        mindar-image="imageTargetSrc: https://raw.githubusercontent.com/postptacek/street-art-ctf/main/client/targets.mind; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 1000;"
+        mindar-image="imageTargetSrc: https://raw.githubusercontent.com/postptacek/street-art-ctf/main/client/targets.mind; autoStart: false; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 1000; uiLoading: no; uiError: no; uiScanning: no;"
         color-space="sRGB"
         renderer="colorManagement: true"
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false"
         embedded
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
       >
         <a-camera position="0 0 0" look-controls="enabled: false" />
       </a-scene>
