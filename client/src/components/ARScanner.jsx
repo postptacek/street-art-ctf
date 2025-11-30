@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { doc, setDoc, getDoc, serverTimestamp, increment } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useGame } from '../context/GameContext'
-import { X, MapPin, ChevronLeft } from 'lucide-react'
+import { MapPin, ChevronLeft } from 'lucide-react'
 
 // Import A-Frame and MindAR (must be imported in this order)
 import 'aframe'
@@ -42,12 +42,8 @@ export default function ARScanner() {
   const [currentArt, setCurrentArt] = useState(null)
   const [canCapture, setCanCapture] = useState(false)
   const [cooldownMsg, setCooldownMsg] = useState(null)
-  const [capturing, setCapturing] = useState(false)
-  const [captureProgress, setCaptureProgress] = useState(0)
   const [showSuccess, setShowSuccess] = useState(false)
   const [capturedArt, setCapturedArt] = useState(null)
-  
-  const holdTimerRef = useRef(null)
   const playerTeam = player?.team || 'red'
 
   // Check if art can be scanned (cooldown + recapture logic)
@@ -150,9 +146,19 @@ export default function ARScanner() {
       
       console.log('🔥 Captured to Firebase:', artId, points)
       
-      // Show success
+      // Show success then auto-navigate to map
       setCapturedArt({ id: artId, ...currentArt })
       setShowSuccess(true)
+      
+      // Auto redirect to map after 2 seconds
+      setTimeout(() => {
+        localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({
+          artId,
+          location: currentArt.location,
+          team: playerTeam
+        }))
+        navigate('/map')
+      }, 2500)
       
     } catch (err) {
       console.error('Capture error:', err)
@@ -160,35 +166,11 @@ export default function ARScanner() {
     }
   }, [currentArt, player, playerTeam])
 
-  // Hold to capture handlers
-  const startHold = useCallback(() => {
+  // Tap to capture (instant)
+  const handleCapture = useCallback(() => {
     if (!canCapture || !currentArt) return
-    
-    setCapturing(true)
-    setCaptureProgress(0)
-    
-    holdTimerRef.current = setInterval(() => {
-      setCaptureProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(holdTimerRef.current)
-          holdTimerRef.current = null
-          setCapturing(false)
-          captureArt()
-          return 100
-        }
-        return prev + 2
-      })
-    }, 20)
+    captureArt()
   }, [canCapture, currentArt, captureArt])
-
-  const endHold = useCallback(() => {
-    if (holdTimerRef.current) {
-      clearInterval(holdTimerRef.current)
-      holdTimerRef.current = null
-    }
-    setCapturing(false)
-    setCaptureProgress(0)
-  }, [])
 
   // Initialize MindAR scene
   useEffect(() => {
@@ -334,96 +316,97 @@ export default function ARScanner() {
 
         {/* Capture status */}
         {currentArt && !showSuccess && (
-          <div className="absolute bottom-40 left-0 right-0 text-center">
+          <div className="absolute bottom-36 left-0 right-0 text-center">
             <p className={`text-sm font-medium ${canCapture ? 'text-green-400' : 'text-amber-400'}`}>
-              {cooldownMsg || (canCapture ? 'Hold to capture!' : 'Searching...')}
+              {cooldownMsg || (canCapture ? 'Tap to capture!' : 'Searching...')}
             </p>
           </div>
         )}
 
-        {/* Capture button */}
+        {/* Capture button - centered */}
         {!showSuccess && (
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-auto"
-               style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
-            <div className="relative">
-              <svg width="96" height="96" viewBox="0 0 96 96" className="absolute top-0 left-0">
-                <circle cx="48" cy="48" r="45" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="4" />
-                <circle 
-                  cx="48" cy="48" r="45" fill="none" 
-                  stroke={canCapture ? '#22c55e' : 'rgba(255,255,255,0.3)'} 
-                  strokeWidth="4"
-                  strokeDasharray="283"
-                  strokeDashoffset={283 - (283 * captureProgress / 100)}
-                  strokeLinecap="round"
-                  style={{ transition: 'stroke-dashoffset 0.05s' }}
-                />
-              </svg>
-              <button
-                onTouchStart={startHold}
-                onTouchEnd={endHold}
-                onMouseDown={startHold}
-                onMouseUp={endHold}
-                onMouseLeave={endHold}
-                disabled={!canCapture}
-                className={`w-20 h-20 m-2 rounded-full text-3xl flex items-center justify-center transition-all ${
-                  canCapture 
-                    ? 'bg-white/20 active:bg-white/40' 
-                    : 'bg-white/10 opacity-50'
-                }`}
-              >
-                📷
-              </button>
-            </div>
+          <div className="absolute bottom-0 left-0 right-0 flex justify-center items-center pointer-events-auto"
+               style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
+            <button
+              onClick={handleCapture}
+              disabled={!canCapture}
+              className={`w-20 h-20 rounded-full text-3xl flex items-center justify-center transition-all border-4 ${
+                canCapture 
+                  ? 'bg-white/20 border-green-500 active:bg-green-500/30 active:scale-95' 
+                  : 'bg-white/5 border-white/20 opacity-50'
+              }`}
+            >
+              📷
+            </button>
           </div>
         )}
       </div>
 
-      {/* Success overlay */}
+      {/* Success overlay - auto redirects to map */}
       <AnimatePresence>
         {showSuccess && capturedArt && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-6"
+            className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center p-6"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', delay: 0.1 }}
-              className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center mb-6"
+              className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
+              style={{ backgroundColor: `${teamColor}20`, border: `3px solid ${teamColor}` }}
             >
-              <span className="text-4xl">✓</span>
+              <span className="text-5xl">🎯</span>
             </motion.div>
             
-            <h2 className="text-2xl font-bold text-white mb-2">Captured!</h2>
-            <p className="text-white/60 mb-6">{capturedArt.name}</p>
+            <motion.h2 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-3xl font-bold text-white mb-2"
+            >
+              Territory Captured!
+            </motion.h2>
+            
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-white/60 mb-4"
+            >
+              {capturedArt.name} • {capturedArt.area}
+            </motion.p>
             
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ type: 'spring', delay: 0.2 }}
-              className="text-5xl font-bold mb-8"
+              transition={{ type: 'spring', delay: 0.4 }}
+              className="text-6xl font-bold mb-6"
               style={{ color: teamColor }}
             >
               +{capturedArt.points}
             </motion.div>
             
-            <div className="w-full max-w-xs space-y-3">
-              <button
-                onClick={viewOnMap}
-                className="w-full py-4 rounded-2xl bg-white text-black font-bold flex items-center justify-center gap-2"
-              >
-                <MapPin size={20} />
-                View on Map
-              </button>
-              <button
-                onClick={() => setShowSuccess(false)}
-                className="w-full py-4 rounded-2xl bg-white/10 text-white font-bold"
-              >
-                📷 Scan More Art
-              </button>
-            </div>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-white/40 text-sm"
+            >
+              Points added to Team {playerTeam === 'red' ? 'Red 🔴' : 'Blue 🔵'}
+            </motion.p>
+            
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="mt-8 flex items-center gap-2 text-white/50"
+            >
+              <MapPin size={16} />
+              <span className="text-sm">Opening map...</span>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
