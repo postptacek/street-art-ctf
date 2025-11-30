@@ -169,6 +169,11 @@ export function GameProvider({ children }) {
     if (!TEAMS.includes(teamColor)) return
     setPlayer(prev => ({ ...prev, team: teamColor }))
   }, [])
+  
+  // Set player name
+  const setPlayerName = useCallback((name) => {
+    setPlayer(prev => ({ ...prev, name }))
+  }, [])
 
   // Find nearest art point to a location
   const findNearestArt = useCallback((lat, lng, maxDistanceMeters = 50) => {
@@ -308,6 +313,7 @@ export function GameProvider({ children }) {
     
     // Actions
     joinTeam,
+    setPlayerName,
     captureArt,
     startCapture,
     confirmCapture,
