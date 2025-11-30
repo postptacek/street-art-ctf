@@ -11,10 +11,9 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000; }
-    #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+    #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
     #loading.hidden { display: none; }
-    .spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    #chump-anim { width: 150px; height: 150px; image-rendering: pixelated; margin-bottom: 16px; }
     #header { position: fixed; top: 0; left: 0; right: 0; padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
     .back-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border: none; color: white; font-size: 24px; cursor: pointer; }
     .team-badge { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 20px; color: white; font-size: 14px; }
@@ -45,7 +44,10 @@
   </style>
 </head>
 <body>
-  <div id="loading"><div class="spinner"></div><div style="color:white">Loading AR Scanner...</div></div>
+  <div id="loading">
+    <img id="chump-anim" src="chump/frame_00000.png" alt="Loading">
+    <div style="color:white">Loading AR Scanner...</div>
+  </div>
   <div id="header">
     <button class="back-btn" onclick="goBack()">←</button>
     <div class="team-badge"><div class="team-dot" id="team-dot"></div><span id="team-name">Team</span></div>
@@ -71,6 +73,14 @@
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
   </a-scene>
   <script>
+    // Chump animation
+    var chumpFrame = 0;
+    var chumpImg = document.getElementById('chump-anim');
+    setInterval(function() {
+      chumpFrame = (chumpFrame + 1) % 51;
+      chumpImg.src = 'chump/frame_' + String(chumpFrame).padStart(5, '0') + '.png';
+    }, 50);
+
     firebase.initializeApp({apiKey:"AIzaSyCES_Zfi78paxI--dycL2LmBK0-g4fvvEM",authDomain:"famu-nodes.firebaseapp.com",projectId:"famu-nodes",storageBucket:"famu-nodes.firebasestorage.app",messagingSenderId:"67316044555",appId:"1:67316044555:web:72a88c28871236912f480e"});
     const db = firebase.firestore();
     const ART = {'art-01':{name:'Kolbenova 1',area:'Vysočany',points:100,loc:[50.110192,14.503811]},'art-02':{name:'Kolbenova 2',area:'Vysočany',points:50,loc:[50.110203,14.503764]},'art-03':{name:'Kolbenova 3',area:'Vysočany',points:100,loc:[50.109847,14.504250]},'art-04':{name:'Kolbenova 4',area:'Vysočany',points:25,loc:[50.109981,14.504933]},'art-05':{name:'Kolbenova 5',area:'Vysočany',points:200,loc:[50.109764,14.505742]},'art-06':{name:'Kolbenova 6',area:'Vysočany',points:100,loc:[50.109672,14.505847]},'art-07':{name:'Hloubětín 1',area:'Hloubětín',points:100,loc:[50.110383,14.508192]},'art-08':{name:'Hloubětín 2',area:'Hloubětín',points:200,loc:[50.110508,14.509567]},'art-09':{name:'Vysočany 1',area:'Vysočany',points:100,loc:[50.110817,14.505475]},'art-10':{name:'Vysočany 2',area:'Vysočany',points:50,loc:[50.110986,14.504672]}};
