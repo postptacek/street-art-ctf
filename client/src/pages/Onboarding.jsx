@@ -54,7 +54,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#12121a] to-[#0a0a0f] flex flex-col">
+    <div className="h-screen bg-gradient-to-b from-[#0a0a0f] via-[#12121a] to-[#0a0a0f] flex flex-col overflow-hidden">
       {/* Progress dots */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
         {[0, 1, 2, 3].map(i => (
@@ -75,7 +75,7 @@ export default function Onboarding() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center"
+            className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
           >
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
@@ -133,7 +133,7 @@ export default function Onboarding() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center"
+            className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
           >
             <h1 className="text-2xl font-bold mb-2">What's your name?</h1>
             <p className="text-white/50 mb-8">This is how others will see you</p>
@@ -166,7 +166,7 @@ export default function Onboarding() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center"
+            className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
           >
             <h1 className="text-2xl font-bold mb-2">Choose your team</h1>
             <p className="text-white/50 mb-8">Fight for territory together</p>
@@ -224,7 +224,7 @@ export default function Onboarding() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center"
+            className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
           >
             <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 ${
               selectedTeam === 'red' ? 'bg-red-500/20' : 'bg-blue-500/20'
@@ -266,7 +266,7 @@ export default function Onboarding() {
       </AnimatePresence>
 
       {/* Bottom button */}
-      <div className="p-6 pb-8">
+      <div className="p-4 pb-6 flex-shrink-0" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={handleNext}
