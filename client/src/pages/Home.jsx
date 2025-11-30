@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useGame, TEAM_COLORS } from '../context/GameContext'
-import { Palette, Users, Map, Scan, Trophy, ChevronRight, Sparkles, RotateCcw } from 'lucide-react'
+import { Palette, Users, Map, Scan, Trophy, ChevronRight, Sparkles, RotateCcw, Wifi, WifiOff, Cloud } from 'lucide-react'
 
 const teams = [
   { color: 'red', name: 'Crimson', icon: '🔴' },
@@ -10,7 +10,7 @@ const teams = [
 
 function Home() {
   const navigate = useNavigate()
-  const { player, joinTeam, teamScores, artPoints, resetAll } = useGame()
+  const { player, joinTeam, teamScores, artPoints, resetAll, isOnline } = useGame()
 
   const handleTeamSelect = (teamColor) => {
     joinTeam(teamColor)
@@ -68,6 +68,13 @@ function Home() {
         <p className="text-white/50 text-sm max-w-xs mx-auto">
           Capture the city, one masterpiece at a time
         </p>
+        {/* Sync Status */}
+        <div className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs ${
+          isOnline ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+        }`}>
+          {isOnline ? <Cloud size={12} /> : <WifiOff size={12} />}
+          {isOnline ? 'Synced' : 'Offline'}
+        </div>
       </motion.div>
 
       {/* Team Selection or Status */}
