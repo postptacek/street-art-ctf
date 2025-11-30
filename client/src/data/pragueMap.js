@@ -147,11 +147,12 @@ export function getPointValue(point) {
   return SIZES[point.size]?.points || 100
 }
 
-// Create a hexagonal territory around a point
-function createHexagon(lat, lng, radius = 0.0008) {
+// Create a smooth circle territory around a point
+function createCircle(lat, lng, radius = 0.0008) {
   const points = []
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * 2 * Math.PI + Math.PI / 6 // Start rotated for flat top
+  const segments = 24 // Smooth circle
+  for (let i = 0; i < segments; i++) {
+    const angle = (i / segments) * 2 * Math.PI
     points.push([
       lat + radius * Math.cos(angle),
       lng + radius * 1.6 * Math.sin(angle) // Adjust for lat/lng ratio
@@ -278,22 +279,22 @@ function expandPolygon(polygon, buffer) {
   })
 }
 
-// Main function: generate individual territories for each point
+// Main function: generate individual circle territories for each point
+// Overlapping circles create brighter areas where teams have more control
 export function generateTeamTerritories(artPoints) {
   const territories = {}
   TEAMS.forEach(team => territories[team] = [])
   
-  // Each captured point gets its own territory
+  // Each captured point gets its own circle territory
   artPoints.forEach(point => {
     if (point.capturedBy && territories[point.capturedBy]) {
-      const seed = point.location[0] * 1000 + point.location[1] * 1000
-      // Size based on point value
-      const baseRadius = point.size === 'large' ? 0.0012 : 
-                         point.size === 'medium' ? 0.001 :
-                         point.size === 'small' ? 0.0008 : 0.0006
+      // Size based on point value - larger points = bigger influence
+      const baseRadius = point.size === 'large' ? 0.002 : 
+                         point.size === 'medium' ? 0.0015 :
+                         point.size === 'small' ? 0.0012 : 0.001
       
       territories[point.capturedBy].push({
-        polygon: createHexagon(point.location[0], point.location[1], baseRadius),
+        polygon: createCircle(point.location[0], point.location[1], baseRadius),
         points: [point]
       })
     }

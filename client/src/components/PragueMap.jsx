@@ -436,6 +436,7 @@ export default function PragueMap() {
         ))}
         
         {/* Dynamic team territories - rendered first (below points) */}
+        {/* Low opacity so overlapping circles create brighter zones */}
         {Object.entries(territories).map(([team, teamTerritories]) => 
           teamTerritories.map((territory, idx) => (
             <Polygon
@@ -444,10 +445,10 @@ export default function PragueMap() {
               pathOptions={{
                 color: getTeamColor(team),
                 fillColor: getTeamColor(team),
-                fillOpacity: 0.25,
-                weight: 2,
-                opacity: 0.7,
-                interactive: false // Allow clicks to pass through to points
+                fillOpacity: 0.15, // Low opacity - stacks when overlapping
+                weight: 0, // No border for smooth blending
+                opacity: 0,
+                interactive: false
               }}
             />
           ))
