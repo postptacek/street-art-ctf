@@ -25,7 +25,7 @@ function AppContent() {
   const location = useLocation()
   const { player } = useGame()
   const isOnboarded = player.team && player.name && player.name !== 'Street Artist'
-  const hideNav = location.pathname === '/onboarding'
+  const hideNav = location.pathname === '/onboarding' || location.pathname === '/scanner'
   
   return (
     <div className="h-full w-full flex flex-col">

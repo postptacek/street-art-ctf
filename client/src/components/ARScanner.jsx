@@ -232,7 +232,7 @@ export default function ARScanner() {
   const teamColor = playerTeam === 'red' ? '#ff6b6b' : '#4dabf7'
 
   return (
-    <div className="fixed inset-0 bg-black">
+    <div className="fixed inset-0 bg-black z-50">
       {/* A-Frame Scene */}
       <a-scene
         ref={sceneRef}
