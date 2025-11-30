@@ -139,6 +139,32 @@ export function GameProvider({ children }) {
     
     return () => unsubscribe()
   }, [])
+  
+  // Subscribe to all players for leaderboard
+  const [allPlayers, setAllPlayers] = useState([])
+  
+  useEffect(() => {
+    const playersRef = collection(db, PLAYERS_COLLECTION)
+    const unsubscribe = onSnapshot(playersRef, (snapshot) => {
+      const players = []
+      snapshot.forEach(doc => {
+        const data = doc.data()
+        if (data.name && data.team) {
+          players.push({
+            id: doc.id,
+            name: data.name,
+            team: data.team,
+            score: data.score || 0,
+            captures: data.captures || 0
+          })
+        }
+      })
+      setAllPlayers(players.sort((a, b) => b.score - a.score))
+      console.log('Players loaded:', players.length)
+    })
+    
+    return () => unsubscribe()
+  }, [])
 
   // Persist player changes locally
   useEffect(() => {
@@ -303,6 +329,7 @@ export function GameProvider({ children }) {
     artPoints,
     teamScores,
     globalTeamScores,
+    allPlayers,
     scanResult,
     isScanning,
     pendingCapture,

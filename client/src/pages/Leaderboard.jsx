@@ -1,20 +1,10 @@
 import { motion } from 'framer-motion'
 import { useGame, TEAM_COLORS } from '../context/GameContext'
-import { Trophy, TrendingUp, Users, Crown, Medal, Flame } from 'lucide-react'
-
-// Sample players (will be replaced with Firebase data later)
-const MOCK_PLAYERS = [
-  { id: 1, name: 'StreetKing', team: 'red', score: 1250, captures: 12 },
-  { id: 2, name: 'ArtHunter', team: 'blue', score: 980, captures: 9 },
-  { id: 3, name: 'SprayQueen', team: 'red', score: 650, captures: 6 },
-  { id: 4, name: 'UrbanExplorer', team: 'blue', score: 580, captures: 5 },
-  { id: 5, name: 'WallWalker', team: 'red', score: 420, captures: 4 },
-  { id: 6, name: 'NightOwl', team: 'blue', score: 380, captures: 3 },
-]
+import { Trophy, TrendingUp, Crown, Flame } from 'lucide-react'
 
 const teamNames = {
-  red: 'Crimson',
-  blue: 'Azure'
+  red: 'Red Team',
+  blue: 'Blue Team'
 }
 
 function TeamScoreCard({ team, score, rank, totalScore }) {
@@ -143,26 +133,27 @@ function PlayerRow({ player, rank, isCurrentPlayer }) {
 }
 
 function Leaderboard() {
-  const { teamScores, player } = useGame()
+  const { teamScores, player, allPlayers } = useGame()
   
   // Only show teams that exist in TEAM_COLORS
   const validTeams = Object.entries(teamScores).filter(([team]) => TEAM_COLORS[team])
   const sortedTeams = validTeams.sort((a, b) => b[1] - a[1])
   const totalScore = Object.values(teamScores).reduce((a, b) => a + b, 0) || 1
 
-  // Filter mock players to only include valid teams
-  const allPlayers = MOCK_PLAYERS.filter(p => TEAM_COLORS[p.team])
-  if (player.team && player.score > 0) {
-    allPlayers.push({
+  // Use Firebase players, add current player if not in list
+  const playersList = [...allPlayers]
+  const currentPlayerInList = playersList.find(p => p.name === player.name)
+  if (!currentPlayerInList && player.team && player.name) {
+    playersList.push({
       id: 'current',
       name: player.name,
       team: player.team,
-      score: player.score,
+      score: player.score || 0,
       captures: player.capturedArt?.length || 0
     })
   }
   
-  const sortedPlayers = allPlayers.sort((a, b) => b.score - a.score)
+  const sortedPlayers = playersList.sort((a, b) => b.score - a.score)
 
   const containerVariants = {
     hidden: { opacity: 0 },

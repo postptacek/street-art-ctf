@@ -150,6 +150,9 @@
       window.location.href = window.location.pathname.replace('/ar-scanner.html','')+'/#/'; 
     }
     
+    let isRecapture = false;
+    let isFirstCapture = false;
+    
     async function checkScan(id) {
       // Check local cooldowns first
       const localScans = JSON.parse(localStorage.getItem('streetart-ctf-scans')||'{}');
@@ -159,7 +162,19 @@
       }
       // Check if enemy captured (allow recapture)
       const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures')||'{}');
-      if (localCaptures[id] && localCaptures[id] !== team) return {ok:true,msg:'recapture'};
+      if (localCaptures[id] && localCaptures[id] !== team) {
+        isRecapture = true;
+        isFirstCapture = false;
+        return {ok:true,msg:'recapture'};
+      }
+      // Check if this is first capture ever
+      if (!localCaptures[id]) {
+        isFirstCapture = true;
+        isRecapture = false;
+        return {ok:true,msg:'first'};
+      }
+      isFirstCapture = false;
+      isRecapture = false;
       return {ok:true,msg:null};
     }
     
@@ -174,7 +189,21 @@
         console.log('No art data for:', currentId);
         return;
       }
-      console.log('Capturing:', art.name, 'for', art.points, 'pts');
+      
+      // Calculate points: first capture = 1.5x, recapture = 1.25x, normal = 1x
+      let basePoints = art.points;
+      let finalPoints = basePoints;
+      let bonusText = '';
+      
+      if (isFirstCapture) {
+        finalPoints = Math.round(basePoints * 1.5);
+        bonusText = 'FIRST CAPTURE +50%';
+      } else if (isRecapture) {
+        finalPoints = Math.round(basePoints * 1.25);
+        bonusText = 'RECAPTURED +25%';
+      }
+      
+      console.log('Capturing:', art.name, 'for', finalPoints, 'pts', bonusText);
       document.getElementById('capture-btn').disabled = true;
       
       // Save locally first (always works)
@@ -187,7 +216,7 @@
       localStorage.setItem('streetart-ctf-captures', JSON.stringify(localCaptures));
       
       const localPlayer = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
-      localPlayer.score = (localPlayer.score || 0) + art.points;
+      localPlayer.score = (localPlayer.score || 0) + finalPoints;
       localPlayer.capturedArt = [...new Set([...(localPlayer.capturedArt || []), currentId])];
       localStorage.setItem('streetart-ctf-player', JSON.stringify(localPlayer));
       
@@ -197,10 +226,15 @@
       try {
         db.collection('streetart-captures').doc(currentId).set({
           artId: currentId, capturedBy: team, capturedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          playerId: pid, playerName: pname, points: art.points
+          playerId: pid, playerName: pname, points: finalPoints, isFirstCapture: isFirstCapture, isRecapture: isRecapture
         });
         db.collection('streetart-teams').doc(team).set({
-          score: firebase.firestore.FieldValue.increment(art.points)
+          score: firebase.firestore.FieldValue.increment(finalPoints)
+        }, {merge: true});
+        db.collection('streetart-players').doc(pid).set({
+          name: pname, team: team, 
+          score: firebase.firestore.FieldValue.increment(finalPoints),
+          captures: firebase.firestore.FieldValue.increment(1)
         }, {merge: true});
         console.log('Firebase sync attempted');
       } catch(e) { console.log('Firebase sync failed (offline mode):', e.message); }
@@ -210,9 +244,16 @@
       document.getElementById('s-check').style.borderColor = colors[team];
       document.getElementById('s-check').style.color = colors[team];
       document.getElementById('s-name').textContent = art.name + ' - ' + art.area;
-      document.getElementById('s-pts').textContent = '+' + art.points;
+      document.getElementById('s-pts').textContent = '+' + finalPoints;
       document.getElementById('s-pts').style.color = colors[team];
-      document.getElementById('s-team').textContent = 'Team ' + (team === 'red' ? 'Red' : 'Blue');
+      
+      // Show bonus or recapture message
+      if (bonusText) {
+        document.getElementById('s-team').innerHTML = '<span style="color:' + (isRecapture ? '#f59e0b' : '#22c55e') + '">' + bonusText + '</span>';
+      } else {
+        document.getElementById('s-team').textContent = 'Team ' + (team === 'red' ? 'Red' : 'Blue');
+      }
+      
       document.getElementById('success').classList.add('show');
       
       setTimeout(function() { 
@@ -246,11 +287,23 @@
             var btn = document.getElementById('capture-btn');
             var st = document.getElementById('status');
             if (chk.ok) { 
-              pts.textContent = '+'+art.points; 
+              // Calculate preview points
+              var previewPts = art.points;
+              if (chk.msg === 'first') previewPts = Math.round(art.points * 1.5);
+              else if (chk.msg === 'recapture') previewPts = Math.round(art.points * 1.25);
+              
+              pts.textContent = '+' + previewPts; 
               pts.classList.remove('cooldown'); 
               btn.classList.add('ready'); 
-              btn.disabled = false; 
-              st.textContent = chk.msg==='recapture'?'Recapture!':'Tap to capture!'; 
+              btn.disabled = false;
+              
+              if (chk.msg === 'first') {
+                st.innerHTML = '<span style="color:#22c55e">First capture! +50%</span>';
+              } else if (chk.msg === 'recapture') {
+                st.innerHTML = '<span style="color:#f59e0b">Recapture! +25%</span>';
+              } else {
+                st.textContent = 'Tap to capture!';
+              }
               st.className = 'ready'; 
             } else { 
               pts.textContent = 'WAIT'; 
