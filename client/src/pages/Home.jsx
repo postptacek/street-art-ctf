@@ -80,9 +80,19 @@ function Home() {
       {/* Team Selection or Status */}
       {!player.team ? (
         <motion.div variants={itemVariants} className="mb-8">
+          {/* Welcome message for new players */}
+          <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-4 mb-6">
+            <h3 className="font-bold text-white mb-2">👋 Welcome, Street Artist!</h3>
+            <p className="text-sm text-white/60 leading-relaxed">
+              Explore the city, find street art, and capture it for your team! 
+              Get within <span className="text-purple-400 font-medium">100m</span> of an art piece, 
+              take a photo, and claim it.
+            </p>
+          </div>
+          
           <div className="flex items-center gap-2 mb-5">
             <Users size={18} className="text-white/40" />
-            <h2 className="text-sm font-medium text-white/40 uppercase tracking-wider">Select Team</h2>
+            <h2 className="text-sm font-medium text-white/40 uppercase tracking-wider">Choose Your Side</h2>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {teams.map(({ color, name, icon }, index) => (

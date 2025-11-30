@@ -2,22 +2,19 @@ import { motion } from 'framer-motion'
 import { useGame, TEAM_COLORS } from '../context/GameContext'
 import { Trophy, TrendingUp, Users, Crown, Medal, Flame } from 'lucide-react'
 
+// Sample players (will be replaced with Firebase data later)
 const MOCK_PLAYERS = [
   { id: 1, name: 'StreetKing', team: 'red', score: 1250, captures: 12 },
   { id: 2, name: 'ArtHunter', team: 'blue', score: 980, captures: 9 },
-  { id: 3, name: 'GraffitiMaster', team: 'green', score: 875, captures: 8 },
-  { id: 4, name: 'WallWalker', team: 'yellow', score: 720, captures: 7 },
-  { id: 5, name: 'SprayQueen', team: 'red', score: 650, captures: 6 },
-  { id: 6, name: 'UrbanExplorer', team: 'blue', score: 580, captures: 5 },
-  { id: 7, name: 'TramRider', team: 'green', score: 490, captures: 4 },
-  { id: 8, name: 'NightOwl', team: 'yellow', score: 380, captures: 3 },
+  { id: 3, name: 'SprayQueen', team: 'red', score: 650, captures: 6 },
+  { id: 4, name: 'UrbanExplorer', team: 'blue', score: 580, captures: 5 },
+  { id: 5, name: 'WallWalker', team: 'red', score: 420, captures: 4 },
+  { id: 6, name: 'NightOwl', team: 'blue', score: 380, captures: 3 },
 ]
 
 const teamNames = {
   red: 'Crimson',
-  blue: 'Azure', 
-  green: 'Emerald',
-  yellow: 'Gold'
+  blue: 'Azure'
 }
 
 function TeamScoreCard({ team, score, rank, totalScore }) {
@@ -148,17 +145,20 @@ function PlayerRow({ player, rank, isCurrentPlayer }) {
 function Leaderboard() {
   const { teamScores, player } = useGame()
   
-  const sortedTeams = Object.entries(teamScores).sort((a, b) => b[1] - a[1])
-  const totalScore = Object.values(teamScores).reduce((a, b) => a + b, 0)
+  // Only show teams that exist in TEAM_COLORS
+  const validTeams = Object.entries(teamScores).filter(([team]) => TEAM_COLORS[team])
+  const sortedTeams = validTeams.sort((a, b) => b[1] - a[1])
+  const totalScore = Object.values(teamScores).reduce((a, b) => a + b, 0) || 1
 
-  const allPlayers = [...MOCK_PLAYERS]
-  if (player.score > 0) {
+  // Filter mock players to only include valid teams
+  const allPlayers = MOCK_PLAYERS.filter(p => TEAM_COLORS[p.team])
+  if (player.team && player.score > 0) {
     allPlayers.push({
       id: 'current',
       name: player.name,
       team: player.team,
       score: player.score,
-      captures: player.capturedArt.length
+      captures: player.capturedArt?.length || 0
     })
   }
   

@@ -56,14 +56,14 @@ function SettingsItem({ icon: Icon, label, onClick }) {
 }
 
 function Profile() {
-  const { player, streetArt, joinTeam } = useGame()
+  const { player, artPoints, joinTeam, resetAll } = useGame()
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(player.name)
 
   // Get player's captured art
-  const capturedArt = streetArt.filter(art => 
+  const capturedArt = artPoints?.filter(art => 
     player.capturedArt.includes(art.id)
-  )
+  ) || []
 
   const teamColor = player.team ? TEAM_COLORS[player.team].hex : '#64748b'
 
@@ -162,11 +162,11 @@ function Profile() {
             SELECT YOUR TEAM
           </h2>
           <div className="grid grid-cols-2 gap-2">
-            {['red', 'blue', 'green', 'yellow'].map(team => (
+            {['red', 'blue'].map(team => (
               <motion.button
                 key={team}
                 onClick={() => joinTeam(team)}
-                className="p-4 rounded-xl glass text-center"
+                className="p-4 rounded-xl bg-white/5 text-center"
                 style={{ borderColor: TEAM_COLORS[team].hex, borderWidth: 2 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -174,7 +174,7 @@ function Profile() {
                   className="w-8 h-8 rounded-full mx-auto mb-2"
                   style={{ backgroundColor: TEAM_COLORS[team].hex }}
                 />
-                <p className="text-sm font-medium capitalize">{team}</p>
+                <p className="text-sm font-medium capitalize">{team === 'red' ? 'Crimson' : 'Azure'}</p>
               </motion.button>
             ))}
           </div>
@@ -188,11 +188,10 @@ function Profile() {
         </h2>
         <SettingsItem icon={Bell} label="Notifications" />
         <SettingsItem icon={Shield} label="Privacy" />
-        <SettingsItem icon={Settings} label="Preferences" />
         <SettingsItem 
           icon={LogOut} 
-          label="Sign Out" 
-          onClick={() => {/* Handle logout */}}
+          label="Reset Game Data" 
+          onClick={resetAll}
         />
       </div>
 
