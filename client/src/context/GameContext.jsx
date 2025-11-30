@@ -12,9 +12,10 @@ const STORAGE_KEYS = {
   captures: 'streetart-ctf-captures'
 }
 
-// Firestore collection
-const CAPTURES_COLLECTION = 'captures'
-const PLAYERS_COLLECTION = 'players'
+// Firestore collections (streetart- prefix for famu-nodes project)
+const CAPTURES_COLLECTION = 'streetart-captures'
+const PLAYERS_COLLECTION = 'streetart-players'
+const TEAMS_COLLECTION = 'streetart-teams'
 
 // Team colors
 export const TEAM_COLORS = {
@@ -126,7 +127,7 @@ export function GameProvider({ children }) {
   const [globalTeamScores, setGlobalTeamScores] = useState({ red: 0, blue: 0 })
   
   useEffect(() => {
-    const teamsRef = collection(db, 'teams')
+    const teamsRef = collection(db, TEAMS_COLLECTION)
     const unsubscribe = onSnapshot(teamsRef, (snapshot) => {
       const scores = { red: 0, blue: 0 }
       snapshot.forEach(doc => {

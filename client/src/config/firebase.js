@@ -1,16 +1,18 @@
 // Firebase configuration for Street Art CTF
+// Using famu-nodes project for Firestore
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
+import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAz0HX_QrTS2uB7hVXw86RUlXoB6jsIReA",
-  authDomain: "skan-2f8d5.firebaseapp.com",
-  projectId: "skan-2f8d5",
-  storageBucket: "skan-2f8d5.firebasestorage.app",
-  messagingSenderId: "839263869032",
-  appId: "1:839263869032:web:35b2bf59f90430075a83dd",
-  measurementId: "G-JZSJKTE4LL"
+  apiKey: "AIzaSyCES_Zfi78paxI--dycL2LmBK0-g4fvvEM",
+  authDomain: "famu-nodes.firebaseapp.com",
+  projectId: "famu-nodes",
+  storageBucket: "famu-nodes.firebasestorage.app",
+  messagingSenderId: "67316044555",
+  appId: "1:67316044555:web:72a88c28871236912f480e",
+  measurementId: "G-LB6V1P1JVW"
 }
 
 // Initialize Firebase
@@ -19,5 +21,6 @@ const app = initializeApp(firebaseConfig)
 // Initialize services
 export const db = getFirestore(app)
 export const auth = getAuth(app)
+export const storage = getStorage(app)
 
 export default app
