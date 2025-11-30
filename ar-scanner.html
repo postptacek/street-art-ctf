@@ -230,7 +230,12 @@
   <div id="success-overlay">
     <div class="badge">✓ CAPTURED!</div>
     <div class="points-earned">+<span id="earned-points">100</span> pts</div>
-    <button class="done-btn" onclick="goBack()">Done</button>
+    <div id="territory-info" style="color: rgba(255,255,255,0.7); font-size: 14px; margin: 10px 0 20px;">
+      <span id="art-captured-name">Art Name</span> now belongs to <span id="team-captured" style="font-weight: bold;">Team</span>!<br>
+      <span style="font-size: 12px; opacity: 0.7;">Territory expanded in <span id="hood-captured">Vysočany</span></span>
+    </div>
+    <button class="done-btn" onclick="viewOnMap()">View on Map</button>
+    <button class="done-btn" style="background: transparent; border: 2px solid white; color: white; margin-top: 10px;" onclick="continueScan()">Scan More</button>
   </div>
 
   <a-scene 
@@ -246,38 +251,54 @@
   </a-scene>
 
   <script>
-    // Target Index to Art ID mapping
-    // This maps the MindAR target index to our art point IDs
+    // Target Index to Art ID mapping - Vysočany street art (21 pieces)
     const TARGET_TO_ART = {
-      0: 'art-34',  // Poděbrady 1
-      1: 'art-35',  // Poděbrady 2
-      2: 'art-36',  // Poděbrady 3
-      3: 'art-37',  // Poděbrady 4
-      4: 'art-38',  // Poděbrady 5
-      5: 'art-39',  // Poděbrady 6
-      6: 'art-40',  // Poděbrady 7
-      7: 'art-41',  // Poděbrady 8
-      8: 'art-42',  // Poděbrady 9
-      9: 'art-43',  // Poděbrady 10
-      10: 'art-44', // Poděbrady 11
-      11: 'art-45', // Poděbrady 12
-      // Add more mappings as needed
+      0: 'art-01',   // Kolbenova 1
+      1: 'art-02',   // Kolbenova 2
+      2: 'art-03',   // Kolbenova 3
+      3: 'art-04',   // Kolbenova 4
+      4: 'art-05',   // Kolbenova 5
+      5: 'art-06',   // Kolbenova 6
+      6: 'art-07',   // Hloubětín 1
+      7: 'art-08',   // Hloubětín 2
+      8: 'art-09',   // Vysočany 1
+      9: 'art-10',   // Vysočany 2
+      10: 'art-11',  // Vysočany 3
+      11: 'art-12',  // Vysočany 4
+      12: 'art-13',  // Vysočany 5
+      13: 'art-14',  // Vysočany 6
+      14: 'art-15',  // Vysočany 7
+      15: 'art-16',  // Vysočany 8
+      16: 'art-17',  // Hloubětín 3
+      17: 'art-18',  // Hloubětín 4
+      18: 'art-19',  // Hloubětín 5
+      19: 'art-20',  // Harfa
+      20: 'art-21',  // Harfa 2
     };
     
-    // Art data (simplified - will come from parent app)
+    // Art data - Vysočany hood
     const ART_DATA = {
-      'art-34': { name: 'Poděbrady 1', area: 'Kolonáda', points: 100, hood: 'podebrady' },
-      'art-35': { name: 'Poděbrady 2', area: 'Kolonáda', points: 100, hood: 'podebrady' },
-      'art-36': { name: 'Poděbrady 3', area: 'Lázeňský park', points: 200, hood: 'podebrady' },
-      'art-37': { name: 'Poděbrady 4', area: 'Lázeňský park', points: 100, hood: 'podebrady' },
-      'art-38': { name: 'Poděbrady 5', area: 'Nábřeží', points: 50, hood: 'podebrady' },
-      'art-39': { name: 'Poděbrady 6', area: 'Nábřeží', points: 200, hood: 'podebrady' },
-      'art-40': { name: 'Poděbrady 7', area: 'Náměstí', points: 100, hood: 'podebrady' },
-      'art-41': { name: 'Poděbrady 8', area: 'Náměstí', points: 25, hood: 'podebrady' },
-      'art-42': { name: 'Poděbrady 9', area: 'Poděbrady', points: 100, hood: 'podebrady' },
-      'art-43': { name: 'Poděbrady 10', area: 'Poděbrady', points: 200, hood: 'podebrady' },
-      'art-44': { name: 'Poděbrady 11', area: 'Poděbrady', points: 100, hood: 'podebrady' },
-      'art-45': { name: 'Poděbrady 12', area: 'Poděbrady', points: 50, hood: 'podebrady' },
+      'art-01': { name: 'Kolbenova 1', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.110192, 14.503811] },
+      'art-02': { name: 'Kolbenova 2', area: 'Vysočany', points: 50, hood: 'vysocany', location: [50.110203, 14.503764] },
+      'art-03': { name: 'Kolbenova 3', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.109847, 14.504250] },
+      'art-04': { name: 'Kolbenova 4', area: 'Vysočany', points: 25, hood: 'vysocany', location: [50.109981, 14.504933] },
+      'art-05': { name: 'Kolbenova 5', area: 'Vysočany', points: 200, hood: 'vysocany', location: [50.109764, 14.505742] },
+      'art-06': { name: 'Kolbenova 6', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.109672, 14.505847] },
+      'art-07': { name: 'Hloubětín 1', area: 'Hloubětín', points: 100, hood: 'vysocany', location: [50.110383, 14.508192] },
+      'art-08': { name: 'Hloubětín 2', area: 'Hloubětín', points: 200, hood: 'vysocany', location: [50.110508, 14.509567] },
+      'art-09': { name: 'Vysočany 1', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.110817, 14.505475] },
+      'art-10': { name: 'Vysočany 2', area: 'Vysočany', points: 50, hood: 'vysocany', location: [50.110986, 14.504672] },
+      'art-11': { name: 'Vysočany 3', area: 'Vysočany', points: 25, hood: 'vysocany', location: [50.110706, 14.504081] },
+      'art-12': { name: 'Vysočany 4', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.110217, 14.503650] },
+      'art-13': { name: 'Vysočany 5', area: 'Vysočany', points: 50, hood: 'vysocany', location: [50.109600, 14.505878] },
+      'art-14': { name: 'Vysočany 6', area: 'Vysočany', points: 200, hood: 'vysocany', location: [50.109736, 14.508125] },
+      'art-15': { name: 'Vysočany 7', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.109908, 14.508189] },
+      'art-16': { name: 'Vysočany 8', area: 'Vysočany', points: 25, hood: 'vysocany', location: [50.109517, 14.509489] },
+      'art-17': { name: 'Hloubětín 3', area: 'Hloubětín', points: 100, hood: 'vysocany', location: [50.110383, 14.509569] },
+      'art-18': { name: 'Hloubětín 4', area: 'Hloubětín', points: 50, hood: 'vysocany', location: [50.110369, 14.509569] },
+      'art-19': { name: 'Hloubětín 5', area: 'Hloubětín', points: 200, hood: 'vysocany', location: [50.110717, 14.509906] },
+      'art-20': { name: 'Harfa', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.109428, 14.498994] },
+      'art-21': { name: 'Harfa 2', area: 'Vysočany', points: 50, hood: 'vysocany', location: [50.110039, 14.504783] },
     };
     
     let currentTargetIndex = null;
@@ -352,7 +373,7 @@
     function captureArt() {
       if (!currentArtId) return;
       
-      const art = ART_DATA[currentArtId] || { points: 100 };
+      const art = ART_DATA[currentArtId] || { points: 100, name: 'Unknown', hood: 'vysocany' };
       
       // Save capture to localStorage (will sync to Firebase via main app)
       const captures = JSON.parse(localStorage.getItem('streetart-ctf-captures') || '{}');
@@ -362,21 +383,40 @@
       // Update player score
       const playerData = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
       playerData.score = (playerData.score || 0) + art.points;
-      playerData.capturedArt = [...(playerData.capturedArt || []), currentArtId];
+      playerData.capturedArt = [...new Set([...(playerData.capturedArt || []), currentArtId])];
       localStorage.setItem('streetart-ctf-player', JSON.stringify(playerData));
       
-      // Show success
+      // Update success overlay with details
       document.getElementById('earned-points').textContent = art.points;
+      document.getElementById('art-captured-name').textContent = art.name;
+      document.getElementById('team-captured').textContent = playerTeam.charAt(0).toUpperCase() + playerTeam.slice(1);
+      document.getElementById('team-captured').style.color = teamColors[playerTeam];
+      document.getElementById('hood-captured').textContent = art.hood === 'vysocany' ? 'Vysočany' : art.hood;
+      
       document.getElementById('success-overlay').classList.add('show');
       
-      console.log('✅ Captured:', currentArtId, 'for', playerTeam);
+      console.log('✅ Captured:', currentArtId, 'for', playerTeam, '- Points:', art.points);
+    }
+    
+    function viewOnMap() {
+      // Go to map centered on the captured art
+      const path = window.location.pathname;
+      const basePath = path.substring(0, path.lastIndexOf('/') + 1);
+      window.location.href = basePath + 'index.html#/map';
+    }
+    
+    function continueScan() {
+      // Hide success and continue scanning
+      document.getElementById('success-overlay').classList.remove('show');
+      currentArtId = null;
+      currentTargetIndex = null;
     }
     
     function goBack() {
-      // Go back to main app - handle both local and GitHub Pages
+      // Go back to main app
       const path = window.location.pathname;
       const basePath = path.substring(0, path.lastIndexOf('/') + 1);
-      window.location.href = basePath + 'index.html#/scanner';
+      window.location.href = basePath + 'index.html#/';
     }
   </script>
 </body>
