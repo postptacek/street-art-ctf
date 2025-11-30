@@ -71,27 +71,24 @@ export function GameProvider({ children }) {
   const [isScanning, setIsScanning] = useState(false)
   const [pendingCapture, setPendingCapture] = useState(null)
 
-  // Initialize Firebase Auth (anonymous)
+  // Initialize Firebase Auth (optional - works without it)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setFirebaseUser(user)
-        // Update player ID with Firebase UID
         setPlayer(prev => ({ ...prev, id: user.uid }))
       } else {
-        // Sign in anonymously
+        // Try anonymous auth, but don't block if it fails
         signInAnonymously(auth).catch(err => {
-          console.warn('Firebase auth failed, using offline mode:', err)
-          setIsOnline(false)
+          console.log('Auth not available, using local mode')
         })
       }
     })
     return () => unsubscribe()
   }, [])
 
-  // Subscribe to captures collection (real-time sync)
+  // Subscribe to captures collection (real-time sync) - works without auth
   useEffect(() => {
-    if (!firebaseUser) return
     
     // Listen to all captures
     const capturesRef = collection(db, CAPTURES_COLLECTION)
@@ -121,7 +118,7 @@ export function GameProvider({ children }) {
     })
     
     return () => unsubscribe()
-  }, [firebaseUser])
+  }, [])
   
   // Subscribe to team scores
   const [globalTeamScores, setGlobalTeamScores] = useState({ red: 0, blue: 0 })
