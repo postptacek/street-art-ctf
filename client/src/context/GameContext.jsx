@@ -1,14 +1,20 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { doc, setDoc, onSnapshot, collection, getDocs } from 'firebase/firestore'
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth'
+import { db, auth } from '../config/firebase'
 import { ART_POINTS, TEAMS, getPointValue, calculateTeamScores } from '../data/pragueMap'
 
 const GameContext = createContext(null)
 
-// Storage keys
+// Storage keys (for local backup)
 const STORAGE_KEYS = {
   player: 'streetart-ctf-player',
-  artPoints: 'streetart-ctf-artpoints',
   captures: 'streetart-ctf-captures'
 }
+
+// Firestore collection
+const CAPTURES_COLLECTION = 'captures'
+const PLAYERS_COLLECTION = 'players'
 
 // Team colors
 export const TEAM_COLORS = {
@@ -37,6 +43,10 @@ function saveToStorage(key, value) {
 }
 
 export function GameProvider({ children }) {
+  // Firebase auth state
+  const [firebaseUser, setFirebaseUser] = useState(null)
+  const [isOnline, setIsOnline] = useState(true)
+  
   // Player state - persisted
   const [player, setPlayer] = useState(() => loadFromStorage(STORAGE_KEYS.player, {
     id: `player-${Date.now()}`,
@@ -49,7 +59,6 @@ export function GameProvider({ children }) {
   // Art points state - merged with real data
   const [artPoints, setArtPoints] = useState(() => {
     const savedCaptures = loadFromStorage(STORAGE_KEYS.captures, {})
-    // Apply saved captures to base data
     return ART_POINTS.map(point => ({
       ...point,
       capturedBy: savedCaptures[point.id] || null
@@ -61,19 +70,62 @@ export function GameProvider({ children }) {
   const [isScanning, setIsScanning] = useState(false)
   const [pendingCapture, setPendingCapture] = useState(null)
 
-  // Persist player changes
+  // Initialize Firebase Auth (anonymous)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setFirebaseUser(user)
+        // Update player ID with Firebase UID
+        setPlayer(prev => ({ ...prev, id: user.uid }))
+      } else {
+        // Sign in anonymously
+        signInAnonymously(auth).catch(err => {
+          console.warn('Firebase auth failed, using offline mode:', err)
+          setIsOnline(false)
+        })
+      }
+    })
+    return () => unsubscribe()
+  }, [])
+
+  // Subscribe to captures from Firestore (real-time sync)
+  useEffect(() => {
+    if (!firebaseUser) return
+    
+    const capturesDoc = doc(db, CAPTURES_COLLECTION, 'global')
+    const unsubscribe = onSnapshot(capturesDoc, (snapshot) => {
+      if (snapshot.exists()) {
+        const firebaseCaptures = snapshot.data()
+        // Merge Firebase captures with local art points
+        setArtPoints(prev => prev.map(point => ({
+          ...point,
+          capturedBy: firebaseCaptures[point.id] || null
+        })))
+        // Also save to localStorage as backup
+        saveToStorage(STORAGE_KEYS.captures, firebaseCaptures)
+      }
+    }, (error) => {
+      console.warn('Firestore sync error:', error)
+      setIsOnline(false)
+    })
+    
+    return () => unsubscribe()
+  }, [firebaseUser])
+
+  // Persist player changes locally
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.player, player)
   }, [player])
 
-  // Persist art captures
-  useEffect(() => {
-    const captures = {}
-    artPoints.forEach(p => {
-      if (p.capturedBy) captures[p.id] = p.capturedBy
-    })
-    saveToStorage(STORAGE_KEYS.captures, captures)
-  }, [artPoints])
+  // Sync captures to Firebase
+  const syncCapturesToFirebase = useCallback(async (captures) => {
+    if (!firebaseUser || !isOnline) return
+    try {
+      await setDoc(doc(db, CAPTURES_COLLECTION, 'global'), captures, { merge: true })
+    } catch (err) {
+      console.warn('Failed to sync to Firebase:', err)
+    }
+  }, [firebaseUser, isOnline])
 
   // Calculate team scores from art points
   const teamScores = calculateTeamScores(artPoints)
@@ -116,7 +168,7 @@ export function GameProvider({ children }) {
     const points = getPointValue(art)
     const previousTeam = art.capturedBy
     
-    // Update art points
+    // Update art points locally
     setArtPoints(prev => prev.map(a => 
       a.id === artId ? { ...a, capturedBy: player.team } : a
     ))
@@ -128,6 +180,13 @@ export function GameProvider({ children }) {
       capturedArt: [...prev.capturedArt.filter(id => id !== artId), artId]
     }))
     
+    // Sync to Firebase
+    syncCapturesToFirebase({ [artId]: player.team })
+    
+    // Save locally as backup
+    const currentCaptures = loadFromStorage(STORAGE_KEYS.captures, {})
+    saveToStorage(STORAGE_KEYS.captures, { ...currentCaptures, [artId]: player.team })
+    
     return { 
       success: true, 
       art, 
@@ -135,7 +194,7 @@ export function GameProvider({ children }) {
       previousTeam,
       message: previousTeam ? `Stolen from ${previousTeam}!` : 'Captured!'
     }
-  }, [player.team, artPoints])
+  }, [player.team, artPoints, syncCapturesToFirebase])
 
   // Start capture flow - user takes photo, we verify location
   const startCapture = useCallback(async (photoData, location) => {
@@ -176,11 +235,21 @@ export function GameProvider({ children }) {
   }, [])
 
   // Reset all data (for testing)
-  const resetAll = useCallback(() => {
+  const resetAll = useCallback(async () => {
     localStorage.removeItem(STORAGE_KEYS.player)
     localStorage.removeItem(STORAGE_KEYS.captures)
+    
+    // Reset Firebase captures
+    if (firebaseUser && isOnline) {
+      try {
+        await setDoc(doc(db, CAPTURES_COLLECTION, 'global'), {})
+      } catch (err) {
+        console.warn('Failed to reset Firebase:', err)
+      }
+    }
+    
     setPlayer({
-      id: `player-${Date.now()}`,
+      id: firebaseUser?.uid || `player-${Date.now()}`,
       name: 'Street Artist',
       team: null,
       score: 0,
@@ -189,7 +258,7 @@ export function GameProvider({ children }) {
     setArtPoints(ART_POINTS.map(p => ({ ...p, capturedBy: null })))
     setScanResult(null)
     setPendingCapture(null)
-  }, [])
+  }, [firebaseUser, isOnline])
 
   const value = {
     // State
@@ -199,6 +268,7 @@ export function GameProvider({ children }) {
     scanResult,
     isScanning,
     pendingCapture,
+    isOnline,
     teams: TEAMS,
     
     // Actions

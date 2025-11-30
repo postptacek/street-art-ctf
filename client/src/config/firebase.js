@@ -1,23 +1,16 @@
-// Firebase configuration
-// To set up:
-// 1. Go to https://console.firebase.google.com/
-// 2. Create a new project called "street-art-ctf"
-// 3. Add a web app to the project
-// 4. Copy the config values below
-// 5. Enable Firestore Database (start in test mode)
-// 6. Enable Authentication > Anonymous sign-in
-
+// Firebase configuration for Street Art CTF
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAz0HX_QrTS2uB7hVXw86RUlXoB6jsIReA",
+  authDomain: "skan-2f8d5.firebaseapp.com",
+  projectId: "skan-2f8d5",
+  storageBucket: "skan-2f8d5.firebasestorage.app",
+  messagingSenderId: "839263869032",
+  appId: "1:839263869032:web:35b2bf59f90430075a83dd",
+  measurementId: "G-JZSJKTE4LL"
 }
 
 // Initialize Firebase
