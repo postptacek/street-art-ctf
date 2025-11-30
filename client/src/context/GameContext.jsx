@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { doc, setDoc, onSnapshot, collection, getDocs } from 'firebase/firestore'
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth'
 import { db, auth } from '../config/firebase'
@@ -87,19 +87,56 @@ export function GameProvider({ children }) {
     return () => unsubscribe()
   }, [])
 
+  // Capture notifications
+  const [captureNotification, setCaptureNotification] = useState(null)
+  const prevCapturesRef = useRef({})
+  
   // Subscribe to captures collection (real-time sync) - works without auth
   useEffect(() => {
+    let isFirstLoad = true
     
     // Listen to all captures
     const capturesRef = collection(db, CAPTURES_COLLECTION)
     const unsubscribe = onSnapshot(capturesRef, (snapshot) => {
       const firebaseCaptures = {}
+      const captureDetails = {}
+      
       snapshot.forEach(doc => {
         const data = doc.data()
         if (data.capturedBy) {
           firebaseCaptures[doc.id] = data.capturedBy
+          captureDetails[doc.id] = data
         }
       })
+      
+      // Check for new captures (not on first load)
+      if (!isFirstLoad) {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'added' || change.type === 'modified') {
+            const data = change.doc.data()
+            const prevOwner = prevCapturesRef.current[change.doc.id]
+            
+            // Show notification if territory changed hands
+            if (data.capturedBy && prevOwner !== data.capturedBy) {
+              const artPoint = ART_POINTS.find(p => p.id === change.doc.id)
+              if (artPoint) {
+                setCaptureNotification({
+                  artName: artPoint.name,
+                  team: data.capturedBy,
+                  playerName: data.playerName || 'Someone',
+                  isRecapture: data.isRecapture || false,
+                  timestamp: Date.now()
+                })
+                // Auto-hide after 4 seconds
+                setTimeout(() => setCaptureNotification(null), 4000)
+              }
+            }
+          }
+        })
+      }
+      
+      isFirstLoad = false
+      prevCapturesRef.current = firebaseCaptures
       
       // Merge Firebase captures with local art points
       setArtPoints(ART_POINTS.map(point => ({
@@ -330,6 +367,7 @@ export function GameProvider({ children }) {
     teamScores,
     globalTeamScores,
     allPlayers,
+    captureNotification,
     scanResult,
     isScanning,
     pendingCapture,

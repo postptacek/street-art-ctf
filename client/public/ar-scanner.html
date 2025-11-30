@@ -154,25 +154,44 @@
     let isFirstCapture = false;
     
     async function checkScan(id) {
-      // Check local cooldowns first
-      const localScans = JSON.parse(localStorage.getItem('streetart-ctf-scans')||'{}');
-      if (localScans[id]) {
-        const t = Date.now() - localScans[id];
+      // Check cooldown for THIS PLAYER only (not shared)
+      const myCooldowns = JSON.parse(localStorage.getItem('streetart-ctf-mycooldowns-'+pid)||'{}');
+      if (myCooldowns[id]) {
+        const t = Date.now() - myCooldowns[id];
         if (t < COOLDOWN) return {ok:false,msg:'Wait '+Math.ceil((COOLDOWN-t)/60000)+'m'};
       }
-      // Check if enemy captured (allow recapture)
+      
+      // Check Firebase for current owner
+      try {
+        const cap = await db.collection('streetart-captures').doc(id).get();
+        if (cap.exists && cap.data().capturedBy) {
+          if (cap.data().capturedBy !== team) {
+            isRecapture = true;
+            isFirstCapture = false;
+            return {ok:true,msg:'recapture'};
+          }
+          // Same team owns it
+          isFirstCapture = false;
+          isRecapture = false;
+          return {ok:true,msg:null};
+        }
+      } catch(e) { console.log('Firebase check failed, using local'); }
+      
+      // Check local captures as fallback
       const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures')||'{}');
       if (localCaptures[id] && localCaptures[id] !== team) {
         isRecapture = true;
         isFirstCapture = false;
         return {ok:true,msg:'recapture'};
       }
-      // Check if this is first capture ever
+      
+      // First capture ever
       if (!localCaptures[id]) {
         isFirstCapture = true;
         isRecapture = false;
         return {ok:true,msg:'first'};
       }
+      
       isFirstCapture = false;
       isRecapture = false;
       return {ok:true,msg:null};
@@ -206,10 +225,10 @@
       console.log('Capturing:', art.name, 'for', finalPoints, 'pts', bonusText);
       document.getElementById('capture-btn').disabled = true;
       
-      // Save locally first (always works)
-      const localScans = JSON.parse(localStorage.getItem('streetart-ctf-scans')||'{}');
-      localScans[currentId] = Date.now();
-      localStorage.setItem('streetart-ctf-scans', JSON.stringify(localScans));
+      // Save cooldown for THIS PLAYER only
+      const myCooldowns = JSON.parse(localStorage.getItem('streetart-ctf-mycooldowns-'+pid)||'{}');
+      myCooldowns[currentId] = Date.now();
+      localStorage.setItem('streetart-ctf-mycooldowns-'+pid, JSON.stringify(myCooldowns));
       
       const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures')||'{}');
       localCaptures[currentId] = team;
