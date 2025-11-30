@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AR Scanner</title>
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -11,108 +11,123 @@
   <style>
     body { margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     
-    #loading {
-      position: fixed; inset: 0; z-index: 1000;
-      background: #000;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    .ui-overlay {
+      position: absolute;
+      z-index: 1000;
     }
-    #loading.hidden { display: none; }
-    #chump-anim { width: 120px; height: 120px; image-rendering: pixelated; margin-bottom: 16px; }
-    
-    .overlay {
-      position: fixed; z-index: 100; pointer-events: none;
-    }
-    .overlay button { pointer-events: auto; }
     
     #header {
       top: 0; left: 0; right: 0;
-      padding: 16px; padding-top: max(16px, env(safe-area-inset-top));
-      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+    
     .back-btn {
-      width: 44px; height: 44px; border-radius: 50%;
-      background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
-      border: none; color: white; font-size: 24px; cursor: pointer;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
     }
+    
     .team-badge {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 12px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
-      border-radius: 20px; color: white; font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      color: white;
+      font-size: 14px;
     }
-    .team-dot { width: 12px; height: 12px; border-radius: 50%; }
+    
+    .team-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+    }
     
     #target-info {
       top: 80px; left: 16px; right: 16px;
-      background: rgba(0,0,0,0.7); backdrop-filter: blur(20px);
-      border-radius: 12px; padding: 16px;
-      display: flex; align-items: center; justify-content: space-between;
-      opacity: 0; transform: translateY(-20px); transition: all 0.3s;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(20px);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s;
     }
-    #target-info.found { opacity: 1; transform: translateY(0); }
+    
+    #target-info.found {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
     .art-title { color: white; font-size: 18px; font-weight: 700; }
     .art-sub { color: rgba(255,255,255,0.6); font-size: 13px; }
     .points { background: #22c55e; color: white; padding: 8px 16px; border-radius: 8px; font-size: 20px; font-weight: 700; }
-    .points.cooldown { background: #f59e0b; }
-    
-    #hint {
-      bottom: 150px; left: 0; right: 0;
-      text-align: center; color: rgba(255,255,255,0.7); font-size: 14px;
-    }
     
     #capture-area {
       bottom: 0; left: 0; right: 0;
-      display: flex; flex-direction: column; align-items: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding-bottom: max(32px, env(safe-area-inset-bottom));
-      pointer-events: auto !important;
     }
-    #status { margin-bottom: 16px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.6); }
+    
+    #status {
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+    }
+    
     #status.ready { color: #22c55e; }
-    #status.cooldown { color: #f59e0b; }
     
     #capture-btn {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: transparent; border: 3px solid rgba(255,255,255,0.3);
-      cursor: pointer; opacity: 0.5; transition: all 0.2s;
-      position: relative;
-      pointer-events: auto !important;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      border: 3px solid rgba(255,255,255,0.3);
+      cursor: pointer;
+      opacity: 0.5;
     }
-    #capture-btn::after {
-      content: ''; position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 56px; height: 56px; border-radius: 50%;
-      background: rgba(255,255,255,0.15); transition: all 0.2s;
-      pointer-events: none;
+    
+    #capture-btn.ready {
+      border-color: #22c55e;
+      background: #22c55e;
+      opacity: 1;
     }
-    #capture-btn.ready { border-color: #22c55e; opacity: 1; }
-    #capture-btn.ready::after { background: #22c55e; }
-    #capture-btn.ready:active::after { transform: translate(-50%, -50%) scale(0.85); }
-    #capture-btn:disabled { opacity: 0.3; }
     
     #success {
-      position: fixed; inset: 0; z-index: 2000;
+      position: fixed;
+      inset: 0;
       background: rgba(0,0,0,0.95);
-      display: none; flex-direction: column; align-items: center; justify-content: center;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
     }
+    
     #success.show { display: flex; }
-    .success-icon { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 24px; }
     .success-title { color: white; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
     .success-sub { color: rgba(255,255,255,0.6); margin-bottom: 16px; }
-    .success-pts { font-size: 48px; font-weight: 700; margin-bottom: 8px; }
-    .success-team { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 32px; }
-    .success-nav { color: rgba(255,255,255,0.4); font-size: 14px; }
+    .success-pts { font-size: 48px; font-weight: 700; margin-bottom: 32px; }
   </style>
 </head>
 <body>
-  <!-- Loading screen -->
-  <div id="loading">
-    <img id="chump-anim" src="animation/frame_00000.png" alt="Loading">
-    <div style="color:white">Loading AR...</div>
-  </div>
-  
   <!-- Header -->
-  <div id="header" class="overlay">
+  <div id="header" class="ui-overlay">
     <button class="back-btn" onclick="goBack()">&#8592;</button>
     <div class="team-badge">
       <div class="team-dot" id="team-dot"></div>
@@ -120,8 +135,8 @@
     </div>
   </div>
   
-  <!-- Target info card -->
-  <div id="target-info" class="overlay">
+  <!-- Target info -->
+  <div id="target-info" class="ui-overlay">
     <div>
       <div class="art-title" id="art-name">-</div>
       <div class="art-sub" id="art-area">-</div>
@@ -129,44 +144,81 @@
     <div class="points" id="art-points">+0</div>
   </div>
   
-  <!-- Hint text -->
-  <div id="hint" class="overlay">Point camera at street art</div>
-  
   <!-- Capture button -->
-  <div id="capture-area" class="overlay">
+  <div id="capture-area" class="ui-overlay">
     <div id="status">Searching...</div>
     <button id="capture-btn" disabled></button>
   </div>
   
   <!-- Success screen -->
   <div id="success">
-    <div class="success-icon" id="s-icon">OK</div>
     <div class="success-title">Territory Captured!</div>
     <div class="success-sub" id="s-name">-</div>
     <div class="success-pts" id="s-pts">+0</div>
-    <div class="success-team" id="s-team">Points added</div>
-    <div class="success-nav">Opening map...</div>
   </div>
 
-  <!-- AR Scene - exactly like working example -->
-  <a-scene
-    mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/postptacek/street-art-ctf@main/client/targets.mind; maxTrack: 1;"
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights"
-    vr-mode-ui="enabled: false"
+  <!-- AR Scene - EXACTLY like working example -->
+  <a-scene 
+    mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/postptacek/street-art-ctf@main/client/targets.mind;" 
+    color-space="sRGB" 
+    renderer="colorManagement: true, physicallyCorrectLights" 
+    vr-mode-ui="enabled: false" 
     device-orientation-permission-ui="enabled: false">
+    
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- Target 0 -->
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
+    
+    <!-- Target 1 -->
+    <a-entity mindar-image-target="targetIndex: 1">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
+    
+    <!-- Target 2 -->
+    <a-entity mindar-image-target="targetIndex: 2">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
+    
+    <!-- Target 3 -->
+    <a-entity mindar-image-target="targetIndex: 3">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
+    
+    <!-- Target 4 -->
+    <a-entity mindar-image-target="targetIndex: 4">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
+    
+    <!-- Target 5 -->
+    <a-entity mindar-image-target="targetIndex: 5">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
+    
+    <!-- Target 6 -->
+    <a-entity mindar-image-target="targetIndex: 6">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
+    
+    <!-- Target 7 -->
+    <a-entity mindar-image-target="targetIndex: 7">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
+    
+    <!-- Target 8 -->
+    <a-entity mindar-image-target="targetIndex: 8">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
+    
+    <!-- Target 9 -->
+    <a-entity mindar-image-target="targetIndex: 9">
+      <a-plane color="#22c55e" opacity="0.3" position="0 0 0" height="0.5" width="0.5"></a-plane>
+    </a-entity>
   </a-scene>
 
   <script>
-    // Animation
-    var chumpFrame = 0;
-    var chumpImg = document.getElementById('chump-anim');
-    setInterval(function() {
-      chumpFrame = (chumpFrame + 1) % 51;
-      chumpImg.src = 'animation/frame_' + String(chumpFrame).padStart(5, '0') + '.png';
-    }, 50);
-
     // Firebase
     firebase.initializeApp({
       apiKey: "AIzaSyCES_Zfi78paxI--dycL2LmBK0-g4fvvEM",
@@ -180,32 +232,30 @@
 
     // Art data
     var ART = {
-      'art-01': {name:'Kolbenova 1', area:'Vysocany', points:100},
-      'art-02': {name:'Kolbenova 2', area:'Vysocany', points:50},
-      'art-03': {name:'Kolbenova 3', area:'Vysocany', points:100},
-      'art-04': {name:'Kolbenova 4', area:'Vysocany', points:25},
-      'art-05': {name:'Kolbenova 5', area:'Vysocany', points:200},
-      'art-06': {name:'Kolbenova 6', area:'Vysocany', points:100},
-      'art-07': {name:'Hloubetin 1', area:'Hloubetin', points:100},
-      'art-08': {name:'Hloubetin 2', area:'Hloubetin', points:200},
-      'art-09': {name:'Vysocany 1', area:'Vysocany', points:100},
-      'art-10': {name:'Vysocany 2', area:'Vysocany', points:50}
+      0: {id: 'art-01', name: 'Kolbenova 1', area: 'Vysocany', points: 100},
+      1: {id: 'art-02', name: 'Kolbenova 2', area: 'Vysocany', points: 50},
+      2: {id: 'art-03', name: 'Kolbenova 3', area: 'Vysocany', points: 100},
+      3: {id: 'art-04', name: 'Kolbenova 4', area: 'Vysocany', points: 25},
+      4: {id: 'art-05', name: 'Kolbenova 5', area: 'Vysocany', points: 200},
+      5: {id: 'art-06', name: 'Kolbenova 6', area: 'Vysocany', points: 100},
+      6: {id: 'art-07', name: 'Hloubetin 1', area: 'Hloubetin', points: 100},
+      7: {id: 'art-08', name: 'Hloubetin 2', area: 'Hloubetin', points: 200},
+      8: {id: 'art-09', name: 'Vysocany 1', area: 'Vysocany', points: 100},
+      9: {id: 'art-10', name: 'Vysocany 2', area: 'Vysocany', points: 50}
     };
-    var MAP = {0:'art-01',1:'art-02',2:'art-03',3:'art-04',4:'art-05',5:'art-06',6:'art-07',7:'art-08',8:'art-09',9:'art-10'};
-    var COOLDOWN = 10 * 60 * 1000;
 
-    // Player data
+    // Player
     var player = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
     var team = player.team || 'red';
     var pid = player.id || 'anon';
     var pname = player.name || 'Player';
     var colors = {red: '#ff6b6b', blue: '#4dabf7'};
 
-    // Current state
-    var currentId = null;
+    // State
+    var currentTarget = null;
     var canCapture = false;
 
-    // Setup UI
+    // UI Setup
     document.getElementById('team-dot').style.backgroundColor = colors[team];
     document.getElementById('team-name').textContent = team.charAt(0).toUpperCase() + team.slice(1);
 
@@ -213,42 +263,18 @@
       window.location.href = window.location.pathname.replace('/ar-scanner.html', '') + '/#/';
     }
 
-    async function checkScan(id) {
-      try {
-        var cap = await db.collection('streetart-captures').doc(id).get();
-        if (cap.exists && cap.data().capturedBy && cap.data().capturedBy !== team) {
-          return {ok: true, msg: 'recapture'};
-        }
-        var scan = await db.collection('streetart-scans').doc(pid + '_' + id).get();
-        if (scan.exists && scan.data().timestamp) {
-          var elapsed = Date.now() - scan.data().timestamp.toMillis();
-          if (elapsed < COOLDOWN) {
-            return {ok: false, msg: 'Wait ' + Math.ceil((COOLDOWN - elapsed) / 60000) + 'm'};
-          }
-        }
-        return {ok: true, msg: null};
-      } catch (e) {
-        console.error('Check scan error:', e);
-        return {ok: true, msg: null};
-      }
-    }
-
+    // Capture function
     async function capture() {
-      if (!currentId || !canCapture) return;
-      var art = ART[currentId];
+      if (currentTarget === null || !canCapture) return;
+      
+      var art = ART[currentTarget];
       if (!art) return;
-
+      
       document.getElementById('capture-btn').disabled = true;
-
+      
       try {
-        await db.collection('streetart-scans').doc(pid + '_' + currentId).set({
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          artId: currentId,
-          playerId: pid
-        });
-
-        await db.collection('streetart-captures').doc(currentId).set({
-          artId: currentId,
+        await db.collection('streetart-captures').doc(art.id).set({
+          artId: art.id,
           capturedBy: team,
           capturedAt: firebase.firestore.FieldValue.serverTimestamp(),
           playerId: pid,
@@ -257,31 +283,24 @@
         });
 
         await db.collection('streetart-teams').doc(team).set({
-          score: firebase.firestore.FieldValue.increment(art.points),
-          lastCapture: currentId,
-          lastCaptureAt: firebase.firestore.FieldValue.serverTimestamp()
+          score: firebase.firestore.FieldValue.increment(art.points)
         }, {merge: true});
 
         await db.collection('streetart-players').doc(pid).set({
           name: pname,
           team: team,
-          score: firebase.firestore.FieldValue.increment(art.points),
-          lastActive: firebase.firestore.FieldValue.serverTimestamp()
+          score: firebase.firestore.FieldValue.increment(art.points)
         }, {merge: true});
 
         // Show success
-        document.getElementById('s-icon').style.cssText = 'background:' + colors[team] + '30;border:3px solid ' + colors[team];
-        document.getElementById('s-name').textContent = art.name + ' - ' + art.area;
+        document.getElementById('s-name').textContent = art.name;
         document.getElementById('s-pts').textContent = '+' + art.points;
         document.getElementById('s-pts').style.color = colors[team];
-        document.getElementById('s-team').textContent = 'Points added to Team ' + (team === 'red' ? 'Red' : 'Blue');
         document.getElementById('success').classList.add('show');
-
-        localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({artId: currentId, team: team}));
 
         setTimeout(function() {
           window.location.href = window.location.pathname.replace('/ar-scanner.html', '') + '/#/map';
-        }, 2500);
+        }, 2000);
 
       } catch (e) {
         console.error('Capture error:', e);
@@ -289,102 +308,50 @@
       }
     }
 
-    // AR Scene setup
-    var scene = document.querySelector('a-scene');
+    // Scene events
+    var sceneEl = document.querySelector('a-scene');
 
-    scene.addEventListener('loaded', function() {
-      console.log('Scene loaded');
+    sceneEl.addEventListener('targetFound', function(event) {
+      var targetIndex = event.target.getAttribute('mindar-image-target').targetIndex;
+      console.log('Target found:', targetIndex);
       
-      // Create targets
-      for (var i = 0; i < 10; i++) {
-        (function(idx) {
-          var entity = document.createElement('a-entity');
-          entity.setAttribute('mindar-image-target', 'targetIndex: ' + idx);
-          scene.appendChild(entity);
-
-          entity.addEventListener('targetFound', async function() {
-            console.log('Target found:', idx);
-            var id = MAP[idx];
-            if (!id || !ART[id]) return;
-
-            currentId = id;
-            var art = ART[id];
-
-            document.getElementById('art-name').textContent = art.name;
-            document.getElementById('art-area').textContent = art.area;
-
-            var check = await checkScan(id);
-            canCapture = check.ok;
-
-            var pts = document.getElementById('art-points');
-            var btn = document.getElementById('capture-btn');
-            var st = document.getElementById('status');
-
-            if (check.ok) {
-              pts.textContent = '+' + art.points;
-              pts.classList.remove('cooldown');
-              btn.classList.add('ready');
-              btn.disabled = false;
-              st.textContent = check.msg === 'recapture' ? 'Recapture!' : 'Tap to capture!';
-              st.className = 'ready';
-            } else {
-              pts.textContent = 'WAIT';
-              pts.classList.add('cooldown');
-              btn.classList.remove('ready');
-              btn.disabled = true;
-              st.textContent = check.msg;
-              st.className = 'cooldown';
-            }
-
-            document.getElementById('target-info').classList.add('found');
-            document.getElementById('hint').style.display = 'none';
-          });
-
-          entity.addEventListener('targetLost', function() {
-            console.log('Target lost:', idx);
-            currentId = null;
-            canCapture = false;
-            document.getElementById('target-info').classList.remove('found');
-            document.getElementById('hint').style.display = 'block';
-            document.getElementById('capture-btn').classList.remove('ready');
-            document.getElementById('capture-btn').disabled = true;
-            document.getElementById('status').textContent = 'Searching...';
-            document.getElementById('status').className = '';
-          });
-        })(i);
-      }
+      var art = ART[targetIndex];
+      if (!art) return;
+      
+      currentTarget = targetIndex;
+      canCapture = true;
+      
+      document.getElementById('art-name').textContent = art.name;
+      document.getElementById('art-area').textContent = art.area;
+      document.getElementById('art-points').textContent = '+' + art.points;
+      document.getElementById('target-info').classList.add('found');
+      document.getElementById('status').textContent = 'Tap to capture!';
+      document.getElementById('status').className = 'ready';
+      document.getElementById('capture-btn').classList.add('ready');
+      document.getElementById('capture-btn').disabled = false;
     });
 
-    scene.addEventListener('arReady', function() {
-      console.log('AR Ready');
-      document.getElementById('loading').classList.add('hidden');
+    sceneEl.addEventListener('targetLost', function(event) {
+      console.log('Target lost');
+      currentTarget = null;
+      canCapture = false;
+      document.getElementById('target-info').classList.remove('found');
+      document.getElementById('status').textContent = 'Searching...';
+      document.getElementById('status').className = '';
+      document.getElementById('capture-btn').classList.remove('ready');
+      document.getElementById('capture-btn').disabled = true;
     });
 
-    scene.addEventListener('arError', function(e) {
-      console.error('AR Error:', e);
-      document.getElementById('loading').innerHTML = 
-        '<div style="color:#ff6b6b;text-align:center;padding:20px">' +
-        '<div style="font-size:48px;margin-bottom:16px">!</div>' +
-        '<div>Camera access required</div>' +
-        '<div style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:8px;">Settings > Safari > Camera</div>' +
-        '<button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer">Retry</button>' +
-        '</div>';
+    sceneEl.addEventListener('arError', function(event) {
+      console.error('AR Error:', event);
     });
 
-    // Button handlers - make sure it works on mobile
-    var captureBtn = document.getElementById('capture-btn');
-    captureBtn.addEventListener('click', function(e) {
+    // Button click
+    document.getElementById('capture-btn').addEventListener('touchstart', function(e) {
       e.preventDefault();
-      e.stopPropagation();
-      console.log('Click!');
       capture();
     });
-    captureBtn.addEventListener('touchstart', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('Touch!');
-      capture();
-    }, {passive: false});
+    document.getElementById('capture-btn').addEventListener('click', capture);
   </script>
 </body>
 </html>
