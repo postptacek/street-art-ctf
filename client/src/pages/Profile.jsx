@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useGame, TEAM_COLORS } from '../context/GameContext'
 import { 
   User, Settings, Palette, MapPin, Trophy, 
-  ChevronRight, LogOut, Bell, Shield 
+  ChevronRight, Camera, LogOut, Bell, Shield 
 } from 'lucide-react'
 
 function StatCard({ icon: Icon, label, value, color }) {
@@ -76,15 +76,23 @@ function Profile() {
     >
       {/* Profile Header */}
       <div className="text-center mb-6">
-        <div 
-          className="w-20 h-20 rounded-lg flex items-center justify-center mx-auto mb-3"
-          style={{ 
-            background: `${teamColor}20`,
-            border: `2px solid ${teamColor}40`
-          }}
+        <motion.div
+          className="relative inline-block"
+          whileHover={{ scale: 1.05 }}
         >
-          <User size={32} style={{ color: teamColor }} />
-        </div>
+          <div 
+            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-3"
+            style={{ 
+              background: `linear-gradient(135deg, ${teamColor}50, ${teamColor}20)`,
+              border: `3px solid ${teamColor}`
+            }}
+          >
+            <User size={40} style={{ color: teamColor }} />
+          </div>
+          <button className="absolute bottom-2 right-0 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+            <Camera size={14} />
+          </button>
+        </motion.div>
         
         {isEditing ? (
           <input

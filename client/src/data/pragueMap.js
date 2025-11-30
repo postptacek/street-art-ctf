@@ -27,7 +27,7 @@ export const HOODS = {
 }
 
 // Default to first hood
-export const DEFAULT_HOOD = 'palmovka'
+export const DEFAULT_HOOD = 'vysocany'
 export const MAP_CENTER = HOODS[DEFAULT_HOOD].center
 export const DEFAULT_ZOOM = 15
 export const MIN_ZOOM = 13

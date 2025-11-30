@@ -1,160 +1,261 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chumper AR Tracking</title>
-  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AR Scanner</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { 
+      width: 100%; height: 100%; overflow: hidden; 
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+      background: #000; 
+      position: fixed;
+      top: 0; left: 0;
     }
-    .info-overlay {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.85);
-      color: white;
-      padding: 15px 20px;
-      border-radius: 10px;
-      z-index: 1000;
-      max-width: 320px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    
+    #loading { position: fixed; inset: 0; background: #0a0a0f; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+    #loading.hidden { display: none; }
+    #chump-anim { width: 120px; height: 120px; image-rendering: pixelated; margin-bottom: 16px; }
+    
+    #header { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+    .back-btn { width: 40px; height: 40px; border-radius: 8px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 20px; cursor: pointer; }
+    .team-badge { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 13px; }
+    .team-dot { width: 10px; height: 10px; border-radius: 50%; }
+    
+    #target-info { position: fixed; top: 70px; left: 16px; right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); padding: 14px; display: flex; align-items: center; justify-content: space-between; z-index: 100; opacity: 0; transform: translateY(-10px); transition: all 0.2s; pointer-events: none; }
+    #target-info.found { opacity: 1; transform: translateY(0); }
+    .art-title { color: white; font-size: 16px; font-weight: 600; }
+    .art-sub { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+    .points { background: #22c55e; color: white; padding: 6px 14px; border-radius: 8px; font-size: 18px; font-weight: 700; }
+    .points.cooldown { background: #f59e0b; }
+    
+    #hint { position: fixed; bottom: 140px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.5); font-size: 13px; z-index: 100; pointer-events: none; }
+    
+    #capture-area { position: fixed; bottom: 0; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: max(24px, env(safe-area-inset-bottom)); z-index: 100; }
+    #status { margin-bottom: 12px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.5); }
+    #status.ready { color: #22c55e; }
+    #status.cooldown { color: #f59e0b; }
+    
+    #capture-btn { 
+      width: 72px; height: 72px; border-radius: 50%; 
+      background: transparent;
+      border: 3px solid rgba(255,255,255,0.3); 
+      cursor: pointer; 
+      opacity: 0.4; 
+      transition: all 0.15s;
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
     }
-    .info-overlay h2 {
-      margin: 0 0 10px 0;
-      font-size: 18px;
-      color: #4CAF50;
+    #capture-btn::after {
+      content: '';
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transition: all 0.15s;
     }
-    .info-overlay p {
-      margin: 5px 0;
-      font-size: 13px;
-      line-height: 1.5;
+    #capture-btn.ready { 
+      border-color: #22c55e; 
+      opacity: 1; 
     }
-    .warning {
-      background: rgba(255, 152, 0, 0.2);
-      padding: 10px;
-      border-radius: 5px;
-      margin-top: 10px;
-      border-left: 3px solid #FF9800;
+    #capture-btn.ready::after { 
+      background: #22c55e; 
     }
-    .warning strong {
-      color: #FF9800;
+    #capture-btn.ready:active { 
+      transform: scale(0.9); 
     }
+    #capture-btn.ready:active::after { 
+      background: #16a34a; 
+    }
+    #capture-btn:disabled { opacity: 0.25; pointer-events: none; }
+    
+    #success { position: fixed; inset: 0; background: #0a0a0f; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
+    #success.show { display: flex; }
+    .success-icon { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+    .success-check { width: 32px; height: 32px; border: 3px solid; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .success-title { color: white; font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+    .success-sub { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 16px; }
+    .success-pts { font-size: 48px; font-weight: 700; margin-bottom: 8px; }
+    .success-team { color: rgba(255,255,255,0.4); font-size: 13px; margin-bottom: 32px; }
+    .success-nav { color: rgba(255,255,255,0.3); font-size: 13px; }
   </style>
 </head>
 <body>
-  <div class="info-overlay">
-    <h2>🎯 Chumper AR Tracker</h2>
-    <p><strong>Status:</strong> Ready to track</p>
-    <p>Point your camera at the Chumper image to see AR content!</p>
-    <div class="warning" style="background: rgba(76, 175, 80, 0.2); border-left: 3px solid #4CAF50;">
-      <strong>✅ Ready to Track:</strong>
-      <p style="margin: 5px 0; font-size: 12px;">
-        Target compiled successfully! Point camera at Chumper image.
-      </p>
-    </div>
+  <div id="loading">
+    <img id="chump-anim" src="animation/frame_00000.png" alt="Loading">
+    <div style="color:rgba(255,255,255,0.5);font-size:13px">Loading AR...</div>
   </div>
-
+  
+  <div id="header">
+    <button class="back-btn" onclick="goBack()">&larr;</button>
+    <div class="team-badge"><div class="team-dot" id="team-dot"></div><span id="team-name">Team</span></div>
+  </div>
+  
+  <div id="target-info">
+    <div><div class="art-title" id="art-name">-</div><div class="art-sub" id="art-area">-</div></div>
+    <div class="points" id="art-points">+0</div>
+  </div>
+  
+  <div id="hint">Point camera at street art</div>
+  
+  <div id="capture-area">
+    <div id="status">Searching...</div>
+    <button id="capture-btn" disabled></button>
+  </div>
+  
+  <div id="success">
+    <div class="success-icon" id="s-icon"><div class="success-check" id="s-check">&#10003;</div></div>
+    <div class="success-title">Captured!</div>
+    <div class="success-sub" id="s-name">-</div>
+    <div class="success-pts" id="s-pts">+0</div>
+    <div class="success-team" id="s-team">Points added</div>
+    <div class="success-nav">Opening map...</div>
+  </div>
+  
   <a-scene 
-    mindar-image="imageTargetSrc: ./targets.mind;" 
+    mindar-image="imageTargetSrc: https://raw.githubusercontent.com/postptacek/street-art-ctf/main/client/targets.mind; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 1000; uiLoading: no; uiScanning: no; uiError: no" 
     color-space="sRGB" 
-    renderer="colorManagement: true, physicallyCorrectLights" 
+    renderer="colorManagement: true; antialias: true" 
     vr-mode-ui="enabled: false" 
-    device-orientation-permission-ui="enabled: false">
-    
-    <a-assets>
-      <!-- Your Chumper image -->
-      <img id="chumper" src="./chumper_1000_white.png" />
-    </a-assets>
-
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-    <!-- AR Content that appears when Chumper is detected -->
-    <a-entity mindar-image-target="targetIndex: 0">
-      
-      <!-- Show the Chumper image as background -->
-      <a-plane 
-        src="#chumper" 
-        position="0 0 0" 
-        height="1" 
-        width="1" 
-        rotation="0 0 0"
-        opacity="0.3">
-      </a-plane>
-
-      <!-- Animated 3D Text -->
-      <a-text 
-        value="CHUMPER!" 
-        position="0 0.6 0.1" 
-        align="center" 
-        color="#4CAF50" 
-        width="2"
-        animation="property: rotation; to: 0 360 0; dur: 4000; easing: linear; loop: true">
-      </a-text>
-
-      <!-- Rotating Box -->
-      <a-box 
-        position="-0.3 0.2 0.1" 
-        rotation="0 45 0" 
-        color="#FF5722" 
-        scale="0.2 0.2 0.2"
-        animation="property: rotation; to: 360 45 360; dur: 3000; easing: linear; loop: true">
-      </a-box>
-
-      <!-- Pulsing Sphere -->
-      <a-sphere 
-        position="0.3 0.2 0.1" 
-        radius="0.1" 
-        color="#2196F3"
-        animation="property: scale; to: 0.15 0.15 0.15; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate">
-      </a-sphere>
-
-      <!-- Floating Torus -->
-      <a-torus 
-        position="0 -0.2 0.15" 
-        radius="0.15" 
-        radius-tubular="0.03" 
-        color="#FFC107"
-        animation__rotate="property: rotation; to: 360 360 0; dur: 5000; easing: linear; loop: true"
-        animation__float="property: position; to: 0 -0.1 0.15; dur: 2000; easing: easeInOutQuad; loop: true; dir: alternate">
-      </a-torus>
-
-      <!-- Center Cylinder -->
-      <a-cylinder 
-        position="0 0 0.1" 
-        radius="0.08" 
-        height="0.3" 
-        color="#9C27B0"
-        animation="property: rotation; to: 0 0 360; dur: 2000; easing: linear; loop: true">
-      </a-cylinder>
-
-    </a-entity>
+    device-orientation-permission-ui="enabled: false"
+    loading-screen="enabled: false"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;">
+    <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
   </a-scene>
-
+  
   <script>
-    // Event listeners for tracking
-    const sceneEl = document.querySelector('a-scene');
-    const infoOverlay = document.querySelector('.info-overlay');
-    
-    sceneEl.addEventListener('targetFound', event => {
-      console.log('🎯 Chumper target found!');
-      infoOverlay.querySelector('p').innerHTML = '<strong>Status:</strong> <span style="color: #4CAF50;">✅ Tracking Active</span>';
-    });
-    
-    sceneEl.addEventListener('targetLost', event => {
-      console.log('❌ Chumper target lost');
-      infoOverlay.querySelector('p').innerHTML = '<strong>Status:</strong> <span style="color: #FF9800;">⚠️ Searching...</span>';
-    });
+    // Chump animation
+    var chumpFrame = 0;
+    var chumpImg = document.getElementById('chump-anim');
+    setInterval(function() {
+      chumpFrame = (chumpFrame + 1) % 51;
+      chumpImg.src = 'animation/frame_' + String(chumpFrame).padStart(5, '0') + '.png';
+    }, 42);
 
-    // Handle errors
-    sceneEl.addEventListener('arError', event => {
-      console.error('AR Error:', event.detail);
-      infoOverlay.querySelector('.warning').innerHTML = 
-        '<strong>❌ Error:</strong><p style="margin: 5px 0; font-size: 12px;">Failed to load target. Make sure chumper_1000_white.mind exists!</p>';
+    firebase.initializeApp({apiKey:"AIzaSyCES_Zfi78paxI--dycL2LmBK0-g4fvvEM",authDomain:"famu-nodes.firebaseapp.com",projectId:"famu-nodes",storageBucket:"famu-nodes.firebasestorage.app",messagingSenderId:"67316044555",appId:"1:67316044555:web:72a88c28871236912f480e"});
+    const db = firebase.firestore();
+    const ART = {'art-01':{name:'Kolbenova 1',area:'Vysocany',points:100,loc:[50.110192,14.503811]},'art-02':{name:'Kolbenova 2',area:'Vysocany',points:50,loc:[50.110203,14.503764]},'art-03':{name:'Kolbenova 3',area:'Vysocany',points:100,loc:[50.109847,14.504250]},'art-04':{name:'Kolbenova 4',area:'Vysocany',points:25,loc:[50.109981,14.504933]},'art-05':{name:'Kolbenova 5',area:'Vysocany',points:200,loc:[50.109764,14.505742]},'art-06':{name:'Kolbenova 6',area:'Vysocany',points:100,loc:[50.109672,14.505847]},'art-07':{name:'Hloubetin 1',area:'Hloubetin',points:100,loc:[50.110383,14.508192]},'art-08':{name:'Hloubetin 2',area:'Hloubetin',points:200,loc:[50.110508,14.509567]},'art-09':{name:'Vysocany 1',area:'Vysocany',points:100,loc:[50.110817,14.505475]},'art-10':{name:'Vysocany 2',area:'Vysocany',points:50,loc:[50.110986,14.504672]}};
+    const MAP = {0:'art-01',1:'art-02',2:'art-03',3:'art-04',4:'art-05',5:'art-06',6:'art-07',7:'art-08',8:'art-09',9:'art-10'};
+    const COOLDOWN = 10*60*1000;
+    let currentId = null, canCap = false;
+    const player = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
+    const team = player.team||'red', pid = player.id||'anon', pname = player.name||'Player';
+    const colors = {red:'#ff6b6b',blue:'#4dabf7'};
+    document.getElementById('team-dot').style.backgroundColor = colors[team];
+    document.getElementById('team-name').textContent = team;
+    
+    function goBack() { 
+      window.location.href = window.location.pathname.replace('/ar-scanner.html','')+'/#/'; 
+    }
+    
+    async function checkScan(id) {
+      try {
+        const cap = await db.collection('streetart-captures').doc(id).get();
+        const scan = await db.collection('streetart-scans').doc(pid+'_'+id).get();
+        if (cap.exists && cap.data().capturedBy && cap.data().capturedBy !== team) return {ok:true,msg:'recapture'};
+        if (scan.exists && scan.data().timestamp) { 
+          const t = Date.now() - scan.data().timestamp.toMillis(); 
+          if (t < COOLDOWN) return {ok:false,msg:'Wait '+Math.ceil((COOLDOWN-t)/60000)+'m'}; 
+        }
+        return {ok:true,msg:null};
+      } catch(e) { console.error(e); return {ok:true,msg:null}; }
+    }
+    
+    async function capture() {
+      if (!currentId || !canCap) return;
+      const art = ART[currentId]; if (!art) return;
+      document.getElementById('capture-btn').disabled = true;
+      try {
+        await db.collection('streetart-scans').doc(pid+'_'+currentId).set({timestamp:firebase.firestore.FieldValue.serverTimestamp(),artId:currentId,playerId:pid});
+        await db.collection('streetart-captures').doc(currentId).set({artId:currentId,capturedBy:team,capturedAt:firebase.firestore.FieldValue.serverTimestamp(),playerId:pid,playerName:pname,points:art.points});
+        await db.collection('streetart-teams').doc(team).set({score:firebase.firestore.FieldValue.increment(art.points),lastCapture:currentId,lastCaptureAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+        await db.collection('streetart-players').doc(pid).set({name:pname,team:team,score:firebase.firestore.FieldValue.increment(art.points),lastActive:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+        document.getElementById('s-icon').style.background = colors[team]+'20';
+        document.getElementById('s-check').style.borderColor = colors[team];
+        document.getElementById('s-check').style.color = colors[team];
+        document.getElementById('s-name').textContent = art.name+' - '+art.area;
+        document.getElementById('s-pts').textContent = '+'+art.points;
+        document.getElementById('s-pts').style.color = colors[team];
+        document.getElementById('s-team').textContent = 'Team '+(team==='red'?'Red':'Blue');
+        document.getElementById('success').classList.add('show');
+        localStorage.setItem('streetart-ctf-lastCapture',JSON.stringify({artId:currentId,location:art.loc,team:team}));
+        setTimeout(function() { window.location.href = window.location.pathname.replace('/ar-scanner.html','')+'/#/map'; }, 2500);
+      } catch(e) { console.error(e); document.getElementById('capture-btn').disabled = false; }
+    }
+    
+    var scene = document.querySelector('a-scene');
+    
+    scene.addEventListener('loaded', function() {
+      console.log('Scene loaded');
+      for (var i = 0; i < 10; i++) {
+        (function(idx) {
+          var e = document.createElement('a-entity');
+          e.setAttribute('mindar-image-target','targetIndex:'+idx);
+          scene.appendChild(e);
+          
+          e.addEventListener('targetFound', async function() {
+            console.log('Target found:',idx);
+            var id = MAP[idx]; if (!id || !ART[id]) return;
+            currentId = id; var art = ART[id];
+            document.getElementById('art-name').textContent = art.name;
+            document.getElementById('art-area').textContent = art.area;
+            var chk = await checkScan(id);
+            canCap = chk.ok;
+            var pts = document.getElementById('art-points');
+            var btn = document.getElementById('capture-btn');
+            var st = document.getElementById('status');
+            if (chk.ok) { 
+              pts.textContent = '+'+art.points; 
+              pts.classList.remove('cooldown'); 
+              btn.classList.add('ready'); 
+              btn.disabled = false; 
+              st.textContent = chk.msg==='recapture'?'Recapture!':'Tap to capture!'; 
+              st.className = 'ready'; 
+            } else { 
+              pts.textContent = 'WAIT'; 
+              pts.classList.add('cooldown'); 
+              btn.classList.remove('ready'); 
+              btn.disabled = true; 
+              st.textContent = chk.msg; 
+              st.className = 'cooldown'; 
+            }
+            document.getElementById('target-info').classList.add('found');
+            document.getElementById('hint').style.display = 'none';
+          });
+          
+          e.addEventListener('targetLost', function() {
+            console.log('Target lost:',idx);
+            currentId = null; canCap = false;
+            document.getElementById('target-info').classList.remove('found');
+            document.getElementById('hint').style.display = 'block';
+            document.getElementById('capture-btn').classList.remove('ready');
+            document.getElementById('capture-btn').disabled = true;
+            document.getElementById('status').textContent = 'Searching...';
+            document.getElementById('status').className = '';
+          });
+        })(i);
+      }
+    });
+    
+    scene.addEventListener('arReady', function() { 
+      console.log('AR Ready');
+      document.getElementById('loading').classList.add('hidden'); 
+    });
+    
+    scene.addEventListener('arError', function(e) { 
+      console.error('AR Error', e);
+      document.getElementById('loading').innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:20px"><div style="font-size:48px;margin-bottom:16px">!</div><div>Camera access required</div><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer">Retry</button></div>'; 
+    });
+    
+    // Button click handler
+    document.getElementById('capture-btn').addEventListener('click', capture);
+    document.getElementById('capture-btn').addEventListener('touchend', function(e) {
+      e.preventDefault();
+      capture();
     });
   </script>
 </body>
