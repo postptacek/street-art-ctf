@@ -3,73 +3,22 @@ import { motion } from 'framer-motion'
 import { useGame, TEAM_COLORS } from '../context/GameContext'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
-import { ART_POINTS } from '../data/pragueMap'
+import { ART_POINTS, getPointValue } from '../data/pragueMap'
 import { 
-  User, Settings, Palette, MapPin, Trophy, 
-  ChevronRight, Camera, LogOut, Bell, Shield, Shuffle, Zap
+  Trophy, Target, Flame, RotateCcw, Shuffle, Zap
 } from 'lucide-react'
 
-function StatCard({ icon: Icon, label, value, color }) {
-  return (
-    <motion.div
-      className="glass rounded-xl p-4 text-center"
-      whileHover={{ scale: 1.02 }}
-    >
-      <Icon size={24} className="mx-auto mb-2" style={{ color }} />
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-xs text-gray-400">{label}</p>
-    </motion.div>
-  )
-}
-
-function CapturedArtItem({ art }) {
-  return (
-    <motion.div
-      className="flex items-center gap-3 p-3 bg-white/5 rounded-xl"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div 
-        className="w-10 h-10 rounded-lg flex items-center justify-center"
-        style={{ backgroundColor: `${TEAM_COLORS[art.capturedBy]?.hex}30` }}
-      >
-        <Palette size={20} style={{ color: TEAM_COLORS[art.capturedBy]?.hex }} />
-      </div>
-      <div className="flex-1">
-        <p className="font-medium text-sm">{art.name}</p>
-        <p className="text-xs text-gray-400">{art.points} pts</p>
-      </div>
-      <ChevronRight size={18} className="text-gray-500" />
-    </motion.div>
-  )
-}
-
-function SettingsItem({ icon: Icon, label, onClick }) {
-  return (
-    <motion.button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
-      whileTap={{ scale: 0.98 }}
-    >
-      <Icon size={20} className="text-gray-400" />
-      <span className="flex-1 text-left">{label}</span>
-      <ChevronRight size={18} className="text-gray-500" />
-    </motion.button>
-  )
-}
-
 function Profile() {
-  const { player, artPoints, joinTeam, resetAll } = useGame()
-  const [isEditing, setIsEditing] = useState(false)
-  const [name, setName] = useState(player.name)
+  const { player, artPoints, resetAll } = useGame()
   const [isRandomizing, setIsRandomizing] = useState(false)
 
-  // Get player's captured art
+  // Get player's captured art with points
   const capturedArt = artPoints?.filter(art => 
     player.capturedArt.includes(art.id)
   ) || []
 
   const teamColor = player.team ? TEAM_COLORS[player.team].hex : '#64748b'
+  const teamName = player.team === 'red' ? 'Red Team' : 'Blue Team'
 
   // Randomly assign all points to teams
   const randomizeTeams = async () => {
@@ -83,7 +32,7 @@ function Profile() {
       
       for (const art of ART_POINTS) {
         const randomTeam = teams[Math.floor(Math.random() * teams.length)]
-        const points = art.points || 100
+        const points = getPointValue(art)
         
         if (randomTeam === 'red') redScore += points
         else blueScore += points
@@ -100,11 +49,8 @@ function Profile() {
         })
       }
       
-      // Update team scores
       await setDoc(doc(db, 'streetart-teams', 'red'), { score: redScore }, { merge: true })
       await setDoc(doc(db, 'streetart-teams', 'blue'), { score: blueScore }, { merge: true })
-      
-      console.log('Randomized all territories!')
     } catch (e) {
       console.error('Failed to randomize:', e)
     }
@@ -114,153 +60,124 @@ function Profile() {
 
   return (
     <motion.div
-      className="flex-1 overflow-y-auto pb-20 px-4 pt-6"
+      className="flex-1 overflow-y-auto pb-24 px-5 pt-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       {/* Profile Header */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-8">
         <motion.div
-          className="relative inline-block"
+          className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
+          style={{ 
+            background: `linear-gradient(135deg, ${teamColor}, ${teamColor}50)`,
+          }}
           whileHover={{ scale: 1.05 }}
         >
-          <div 
-            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-3"
-            style={{ 
-              background: `linear-gradient(135deg, ${teamColor}50, ${teamColor}20)`,
-              border: `3px solid ${teamColor}`
-            }}
-          >
-            <User size={40} style={{ color: teamColor }} />
-          </div>
-          <button className="absolute bottom-2 right-0 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-            <Camera size={14} />
-          </button>
+          <span className="text-3xl font-black text-white">
+            {player.name?.charAt(0)?.toUpperCase() || '?'}
+          </span>
         </motion.div>
         
-        {isEditing ? (
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => setIsEditing(false)}
-            className="text-xl font-bold bg-transparent border-b-2 border-white/30 text-center outline-none"
-            autoFocus
-          />
-        ) : (
-          <h1 
-            className="text-xl font-bold cursor-pointer"
-            onClick={() => setIsEditing(true)}
-          >
-            {player.name}
-          </h1>
-        )}
+        <h1 className="text-2xl font-bold text-white mb-1">{player.name}</h1>
+        <p className="text-sm" style={{ color: teamColor }}>{teamName}</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-3 mb-8">
+        <motion.div 
+          className="p-4 rounded-2xl text-center"
+          style={{ backgroundColor: '#eab30815', border: '1px solid #eab30830' }}
+          whileHover={{ scale: 1.02 }}
+        >
+          <Trophy size={24} className="mx-auto mb-2 text-yellow-500" />
+          <p className="text-2xl font-bold text-white">{player.score}</p>
+          <p className="text-[10px] text-white/40 uppercase">Score</p>
+        </motion.div>
         
-        {player.team && (
-          <p className="text-sm mt-1" style={{ color: teamColor }}>
-            {player.team.charAt(0).toUpperCase() + player.team.slice(1)} Team
-          </p>
-        )}
+        <motion.div 
+          className="p-4 rounded-2xl text-center"
+          style={{ backgroundColor: '#22c55e15', border: '1px solid #22c55e30' }}
+          whileHover={{ scale: 1.02 }}
+        >
+          <Target size={24} className="mx-auto mb-2 text-green-500" />
+          <p className="text-2xl font-bold text-white">{capturedArt.length}</p>
+          <p className="text-[10px] text-white/40 uppercase">Captures</p>
+        </motion.div>
+        
+        <motion.div 
+          className="p-4 rounded-2xl text-center"
+          style={{ backgroundColor: '#f9731615', border: '1px solid #f9731630' }}
+          whileHover={{ scale: 1.02 }}
+        >
+          <Flame size={24} className="mx-auto mb-2 text-orange-500" />
+          <p className="text-2xl font-bold text-white">0</p>
+          <p className="text-[10px] text-white/40 uppercase">Streak</p>
+        </motion.div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <StatCard 
-          icon={Trophy} 
-          label="Score" 
-          value={player.score} 
-          color="#eab308" 
-        />
-        <StatCard 
-          icon={Palette} 
-          label="Captures" 
-          value={capturedArt.length} 
-          color="#22c55e" 
-        />
-        <StatCard 
-          icon={MapPin} 
-          label="Sectors" 
-          value="3" 
-          color="#3b82f6" 
-        />
-      </div>
-
-      {/* Captured Art */}
+      {/* Your Captures */}
       {capturedArt.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-            <Palette size={16} /> YOUR CAPTURES
+        <div className="mb-8">
+          <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
+            Your Captures
           </h2>
-          <div className="space-y-2">
-            {capturedArt.map(art => (
-              <CapturedArtItem key={art.id} art={art} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Team Selection (if no team) */}
-      {!player.team && (
-        <div className="mb-6">
-          <h2 className="text-sm font-medium text-gray-400 mb-3">
-            SELECT YOUR TEAM
-          </h2>
-          <div className="grid grid-cols-2 gap-2">
-            {['red', 'blue'].map(team => (
-              <motion.button
-                key={team}
-                onClick={() => joinTeam(team)}
-                className="p-4 rounded-xl bg-white/5 text-center"
-                style={{ borderColor: TEAM_COLORS[team].hex, borderWidth: 2 }}
-                whileTap={{ scale: 0.95 }}
+          <div className="grid grid-cols-4 gap-2">
+            {capturedArt.slice(0, 8).map((art, idx) => (
+              <motion.div
+                key={art.id}
+                className="aspect-square rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${teamColor}20`, border: `1px solid ${teamColor}30` }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.05 }}
               >
-                <div 
-                  className="w-8 h-8 rounded-full mx-auto mb-2"
-                  style={{ backgroundColor: TEAM_COLORS[team].hex }}
-                />
-                <p className="text-sm font-medium capitalize">{team === 'red' ? 'Crimson' : 'Azure'}</p>
-              </motion.button>
+                <span className="text-lg">🎨</span>
+              </motion.div>
             ))}
+            {capturedArt.length > 8 && (
+              <div 
+                className="aspect-square rounded-xl flex items-center justify-center bg-white/5"
+              >
+                <span className="text-xs text-white/40">+{capturedArt.length - 8}</span>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Admin Actions */}
+      {/* Game Master */}
       <div className="mb-6">
-        <h2 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-          <Zap size={16} /> GAME MASTER
-        </h2>
+        <div className="flex items-center gap-2 mb-3">
+          <Zap size={14} className="text-purple-400" />
+          <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">Game Master</h2>
+        </div>
         <motion.button
           onClick={randomizeTeams}
           disabled={isRandomizing}
-          className="w-full flex items-center gap-3 p-4 bg-purple-500/20 border border-purple-500/30 rounded-xl hover:bg-purple-500/30 transition-colors disabled:opacity-50"
+          className="w-full p-4 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center gap-3 disabled:opacity-50"
           whileTap={{ scale: 0.98 }}
         >
           <Shuffle size={20} className="text-purple-400" />
-          <span className="flex-1 text-left text-purple-300">
+          <span className="text-sm text-purple-300">
             {isRandomizing ? 'Randomizing...' : 'Randomize All Territories'}
           </span>
         </motion.button>
       </div>
 
-      {/* Settings */}
-      <div className="space-y-2">
-        <h2 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-          <Settings size={16} /> SETTINGS
-        </h2>
-        <SettingsItem icon={Bell} label="Notifications" />
-        <SettingsItem icon={Shield} label="Privacy" />
-        <SettingsItem 
-          icon={LogOut} 
-          label="Reset Game Data" 
-          onClick={resetAll}
-        />
-      </div>
+      {/* Reset */}
+      <motion.button
+        onClick={resetAll}
+        className="w-full p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white/40 hover:text-white/60 transition-colors"
+        whileTap={{ scale: 0.98 }}
+      >
+        <RotateCcw size={14} />
+        <span className="text-xs">Reset Game Data</span>
+      </motion.button>
 
-      {/* App Version */}
-      <p className="text-center text-xs text-gray-500 mt-6">
-        Street Art CTF v1.1.0
+      {/* Version */}
+      <p className="text-center text-[10px] text-white/20 mt-6">
+        Street Art CTF v1.2.0
       </p>
     </motion.div>
   )

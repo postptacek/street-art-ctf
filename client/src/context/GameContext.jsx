@@ -87,8 +87,9 @@ export function GameProvider({ children }) {
     return () => unsubscribe()
   }, [])
 
-  // Capture notifications
+  // Capture notifications and recent captures feed
   const [captureNotification, setCaptureNotification] = useState(null)
+  const [recentCaptures, setRecentCaptures] = useState([])
   const prevCapturesRef = useRef({})
   
   // Subscribe to captures collection (real-time sync) - works without auth
@@ -99,15 +100,29 @@ export function GameProvider({ children }) {
     const capturesRef = collection(db, CAPTURES_COLLECTION)
     const unsubscribe = onSnapshot(capturesRef, (snapshot) => {
       const firebaseCaptures = {}
-      const captureDetails = {}
+      const allCaptures = []
       
       snapshot.forEach(doc => {
         const data = doc.data()
         if (data.capturedBy) {
           firebaseCaptures[doc.id] = data.capturedBy
-          captureDetails[doc.id] = data
+          const artPoint = ART_POINTS.find(p => p.id === doc.id)
+          allCaptures.push({
+            id: doc.id,
+            artName: artPoint?.name || doc.id,
+            area: artPoint?.area || 'Unknown',
+            team: data.capturedBy,
+            playerName: data.playerName || 'Unknown',
+            capturedAt: data.capturedAt?.toDate?.() || new Date(),
+            points: data.points || 100,
+            isRecapture: data.isRecapture || false
+          })
         }
       })
+      
+      // Sort by date and keep last 10
+      const sorted = allCaptures.sort((a, b) => b.capturedAt - a.capturedAt).slice(0, 10)
+      setRecentCaptures(sorted)
       
       // Check for new captures (not on first load)
       if (!isFirstLoad) {
@@ -367,6 +382,7 @@ export function GameProvider({ children }) {
     teamScores,
     globalTeamScores,
     allPlayers,
+    recentCaptures,
     captureNotification,
     scanResult,
     isScanning,
