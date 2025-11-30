@@ -1,151 +1,177 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGame, TEAM_COLORS } from '../context/GameContext'
-import { Camera, X, Check, AlertCircle, Zap, MapPin, Navigation, Loader2 } from 'lucide-react'
+import { getPointValue } from '../data/pragueMap'
+import { Camera, X, Check, AlertCircle, Zap, MapPin, Navigation, Loader2, Target, Image, Share2, Crosshair } from 'lucide-react'
 
-// Capture confirmation panel
-function CaptureConfirmation({ art, photo, onConfirm, onCancel, teamColor }) {
+// Alignment viewfinder corners
+function ViewfinderCorner({ position, isAligned }) {
+  const positions = {
+    'top-left': 'top-0 left-0 border-t-4 border-l-4 rounded-tl-lg',
+    'top-right': 'top-0 right-0 border-t-4 border-r-4 rounded-tr-lg',
+    'bottom-left': 'bottom-0 left-0 border-b-4 border-l-4 rounded-bl-lg',
+    'bottom-right': 'bottom-0 right-0 border-b-4 border-r-4 rounded-br-lg'
+  }
+  
   return (
     <motion.div
-      initial={{ opacity: 0, y: 100 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 100 }}
-      className="absolute inset-x-4 bottom-24 z-20"
-    >
-      <div className="bg-black/90 backdrop-blur-xl rounded-3xl p-5 border border-white/10">
-        {/* Photo preview */}
-        {photo && (
-          <div className="mb-4 rounded-2xl overflow-hidden aspect-video bg-white/5">
-            <img src={photo} alt="Captured" className="w-full h-full object-cover" />
-          </div>
-        )}
-        
-        {/* Art info */}
-        <div className="flex items-center gap-3 mb-4">
-          <div 
-            className="w-12 h-12 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: `${teamColor}20`, border: `1px solid ${teamColor}40` }}
-          >
-            <MapPin size={20} style={{ color: teamColor }} />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-white">{art.name}</h3>
-            <p className="text-sm text-white/40">{art.area} • {art.distance}m away</p>
-          </div>
-          <div className="text-right">
-            <span className="text-lg font-bold" style={{ color: teamColor }}>
-              +{art.points || 100}
-            </span>
-            <p className="text-xs text-white/40">points</p>
-          </div>
-        </div>
-        
-        {/* Actions */}
-        <div className="flex gap-3">
-          <motion.button
-            onClick={onCancel}
-            className="flex-1 py-3 rounded-xl font-semibold bg-white/5 border border-white/10 text-white/70"
-            whileTap={{ scale: 0.98 }}
-          >
-            Cancel
-          </motion.button>
-          <motion.button
-            onClick={onConfirm}
-            className="flex-1 py-3 rounded-xl font-semibold text-white"
-            style={{ backgroundColor: teamColor }}
-            whileTap={{ scale: 0.98 }}
-          >
-            Claim!
-          </motion.button>
-        </div>
-      </div>
-    </motion.div>
+      className={`absolute w-8 h-8 ${positions[position]}`}
+      animate={{ 
+        borderColor: isAligned ? '#22c55e' : 'rgba(255,255,255,0.6)',
+        scale: isAligned ? 1.1 : 1
+      }}
+      transition={{ duration: 0.2 }}
+    />
   )
 }
 
-// Result screen
-function CaptureResult({ result, teamColor, onClose }) {
-  const isSuccess = result?.success
-
+// Capture success screen with share options
+function CaptureSuccess({ result, photo, teamColor, onClose, onShare }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-20 p-6"
+      className="absolute inset-0 bg-black flex flex-col z-30"
     >
-      <motion.div 
-        className="max-w-sm w-full text-center"
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-      >
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', stiffness: 200 }}
-          className="mx-auto mb-6"
+      {/* Photo */}
+      <div className="flex-1 relative">
+        <img src={photo} alt="Captured" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/50" />
+        
+        {/* Success badge */}
+        <motion.div 
+          className="absolute top-8 left-1/2 -translate-x-1/2"
+          initial={{ scale: 0, y: -50 }}
+          animate={{ scale: 1, y: 0 }}
+          transition={{ type: 'spring', delay: 0.2 }}
         >
-          <div 
-            className={`w-24 h-24 rounded-3xl flex items-center justify-center ${
-              isSuccess 
-                ? 'bg-gradient-to-br from-emerald-400 to-green-600' 
-                : 'bg-gradient-to-br from-amber-400 to-orange-600'
-            }`}
-          >
-            {isSuccess ? <Check size={40} strokeWidth={3} /> : <X size={40} strokeWidth={3} />}
+          <div className="bg-emerald-500 px-6 py-2 rounded-full flex items-center gap-2">
+            <Check size={20} strokeWidth={3} />
+            <span className="font-bold">CAPTURED!</span>
           </div>
         </motion.div>
         
-        <h2 className="text-3xl font-bold mb-2 text-white">
-          {isSuccess ? result.message || 'Captured!' : 'Oops!'}
-        </h2>
-        
-        {isSuccess ? (
-          <>
-            <p className="text-white/50 mb-6">{result.art?.name}</p>
-            <div
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-2xl font-bold"
-              style={{ backgroundColor: `${teamColor}20`, color: teamColor }}
-            >
-              <Zap size={24} />
-              +{result.points}
-            </div>
-          </>
-        ) : (
-          <p className="text-white/50">{result?.message}</p>
-        )}
-        
-        <motion.button
-          onClick={onClose}
-          className="mt-8 w-full py-4 rounded-2xl font-semibold bg-white/10 border border-white/10"
-          whileTap={{ scale: 0.98 }}
+        {/* Points badge */}
+        <motion.div 
+          className="absolute top-20 left-1/2 -translate-x-1/2"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', delay: 0.4 }}
         >
-          Continue
-        </motion.button>
+          <div 
+            className="px-8 py-3 rounded-2xl text-3xl font-black flex items-center gap-2"
+            style={{ backgroundColor: teamColor }}
+          >
+            <Zap size={28} />
+            +{result.points}
+          </div>
+        </motion.div>
+      </div>
+      
+      {/* Info panel */}
+      <motion.div 
+        className="p-6 space-y-4"
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white">{result.art?.name}</h2>
+          <p className="text-white/50">{result.art?.area} • Added to your gallery</p>
+        </div>
+        
+        {/* Actions */}
+        <div className="flex gap-3">
+          <motion.button
+            onClick={onShare}
+            className="flex-1 py-4 rounded-2xl font-semibold bg-white/10 border border-white/10 flex items-center justify-center gap-2"
+            whileTap={{ scale: 0.98 }}
+          >
+            <Share2 size={20} />
+            Share
+          </motion.button>
+          <motion.button
+            onClick={onClose}
+            className="flex-1 py-4 rounded-2xl font-semibold text-black bg-white flex items-center justify-center gap-2"
+            whileTap={{ scale: 0.98 }}
+          >
+            <Check size={20} />
+            Done
+          </motion.button>
+        </div>
       </motion.div>
     </motion.div>
   )
 }
 
-// Location status indicator
-function LocationStatus({ status, accuracy }) {
-  const statusConfig = {
-    loading: { color: 'text-amber-400', bg: 'bg-amber-500/20', text: 'Getting location...' },
-    success: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', text: `±${accuracy}m` },
-    error: { color: 'text-red-400', bg: 'bg-red-500/20', text: 'Location unavailable' }
-  }
-  
-  const config = statusConfig[status] || statusConfig.loading
-  
+// Instructions overlay
+function Instructions({ onClose }) {
   return (
-    <div className={`px-3 py-1.5 rounded-full ${config.bg} flex items-center gap-2`}>
-      {status === 'loading' ? (
-        <Loader2 size={14} className={`${config.color} animate-spin`} />
-      ) : (
-        <Navigation size={14} className={config.color} />
-      )}
-      <span className={`text-xs font-medium ${config.color}`}>{config.text}</span>
-    </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="absolute inset-0 bg-black/95 z-40 flex flex-col p-6"
+    >
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-8"
+        >
+          <Target size={48} />
+        </motion.div>
+        
+        <h1 className="text-3xl font-bold mb-4">How to Flash</h1>
+        
+        <div className="space-y-6 max-w-xs">
+          <div className="flex items-start gap-4 text-left">
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+              <span className="font-bold">1</span>
+            </div>
+            <p className="text-white/70">Find street art on the map and get within <span className="text-emerald-400 font-medium">100m</span></p>
+          </div>
+          
+          <div className="flex items-start gap-4 text-left">
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+              <span className="font-bold">2</span>
+            </div>
+            <p className="text-white/70">Align the artwork inside the <span className="text-emerald-400 font-medium">viewfinder frame</span></p>
+          </div>
+          
+          <div className="flex items-start gap-4 text-left">
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+              <span className="font-bold">3</span>
+            </div>
+            <p className="text-white/70">Corners turn <span className="text-emerald-400 font-medium">green</span> when aligned - tap to capture!</p>
+          </div>
+        </div>
+        
+        <div className="mt-8 flex gap-4">
+          <div className="text-center">
+            <div className="w-20 h-20 border-2 border-white/30 rounded-lg mb-2 flex items-center justify-center">
+              <span className="text-3xl">🎨</span>
+            </div>
+            <p className="text-xs text-red-400">BAD</p>
+          </div>
+          <div className="text-center">
+            <div className="w-20 h-20 border-2 border-emerald-500 rounded-lg mb-2 flex items-center justify-center">
+              <span className="text-3xl">🎨</span>
+            </div>
+            <p className="text-xs text-emerald-400">GOOD</p>
+          </div>
+        </div>
+      </div>
+      
+      <motion.button
+        onClick={onClose}
+        className="w-full py-4 rounded-2xl font-bold bg-white text-black"
+        whileTap={{ scale: 0.98 }}
+      >
+        Got it!
+      </motion.button>
+    </motion.div>
   )
 }
 
@@ -159,7 +185,8 @@ function Scanner() {
     confirmCapture,
     cancelCapture,
     setScanResult,
-    findNearestArt
+    findNearestArt,
+    captureArt
   } = useGame()
   
   const [cameraActive, setCameraActive] = useState(false)
@@ -167,12 +194,31 @@ function Scanner() {
   const [location, setLocation] = useState(null)
   const [locationStatus, setLocationStatus] = useState('loading')
   const [nearbyArt, setNearbyArt] = useState(null)
+  const [isAligned, setIsAligned] = useState(false)
+  const [showInstructions, setShowInstructions] = useState(false)
+  const [capturedPhoto, setCapturedPhoto] = useState(null)
+  const [captureResult, setCaptureResult] = useState(null)
+  const [holdProgress, setHoldProgress] = useState(0)
   
   const videoRef = useRef(null)
   const streamRef = useRef(null)
   const canvasRef = useRef(null)
+  const holdTimerRef = useRef(null)
 
   const teamColor = player.team ? TEAM_COLORS[player.team].hex : '#22c55e'
+  
+  // Check if first time (show instructions)
+  useEffect(() => {
+    const hasSeenInstructions = localStorage.getItem('scanner-instructions-seen')
+    if (!hasSeenInstructions && player.team) {
+      setShowInstructions(true)
+    }
+  }, [player.team])
+  
+  const dismissInstructions = () => {
+    localStorage.setItem('scanner-instructions-seen', 'true')
+    setShowInstructions(false)
+  }
 
   // Get user location
   useEffect(() => {
@@ -234,24 +280,81 @@ function Scanner() {
     return () => stopCamera()
   }, [startCamera, stopCamera])
 
-  // Capture photo
-  const handleCapture = useCallback(() => {
-    if (!location || !nearbyArt) return
+  // Simulate alignment based on device stability (for now, use touch hold)
+  const startHold = useCallback(() => {
+    if (!nearbyArt || holdTimerRef.current) return
     
-    // Capture frame from video
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    if (!video || !canvas) return
-    
-    canvas.width = video.videoWidth || 640
-    canvas.height = video.videoHeight || 480
-    const ctx = canvas.getContext('2d')
-    ctx.drawImage(video, 0, 0)
-    const photoData = canvas.toDataURL('image/jpeg', 0.8)
-    
-    // Start capture flow
-    startCapture(photoData, location)
-  }, [location, nearbyArt, startCapture])
+    let progress = 0
+    holdTimerRef.current = setInterval(() => {
+      progress += 5
+      setHoldProgress(progress)
+      
+      if (progress >= 25) setIsAligned(true)
+      
+      if (progress >= 100) {
+        clearInterval(holdTimerRef.current)
+        holdTimerRef.current = null
+        
+        // Capture!
+        const video = videoRef.current
+        const canvas = canvasRef.current
+        if (video && canvas) {
+          canvas.width = video.videoWidth || 640
+          canvas.height = video.videoHeight || 480
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(video, 0, 0)
+          const photoData = canvas.toDataURL('image/jpeg', 0.9)
+          
+          setCapturedPhoto(photoData)
+          const result = captureArt(nearbyArt.id)
+          setCaptureResult({ ...result, art: nearbyArt })
+        }
+        
+        setHoldProgress(0)
+        setIsAligned(false)
+      }
+    }, 50)
+  }, [nearbyArt, captureArt])
+  
+  const endHold = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearInterval(holdTimerRef.current)
+      holdTimerRef.current = null
+    }
+    setHoldProgress(0)
+    setIsAligned(false)
+  }, [])
+  
+  // Cleanup hold timer
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) {
+        clearInterval(holdTimerRef.current)
+      }
+    }
+  }, [])
+
+  // Close success and reset
+  const handleCloseSuccess = () => {
+    setCapturedPhoto(null)
+    setCaptureResult(null)
+  }
+  
+  const handleShare = async () => {
+    if (capturedPhoto && navigator.share) {
+      try {
+        const blob = await fetch(capturedPhoto).then(r => r.blob())
+        const file = new File([blob], 'street-art.jpg', { type: 'image/jpeg' })
+        await navigator.share({
+          title: `Captured: ${captureResult?.art?.name}`,
+          text: `I captured ${captureResult?.art?.name} in Street Art CTF!`,
+          files: [file]
+        })
+      } catch (err) {
+        console.log('Share cancelled')
+      }
+    }
+  }
 
   // No team selected
   if (!player.team) {
@@ -299,10 +402,47 @@ function Scanner() {
       )}
       
       {/* Vignette */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none" />
+      
+      {/* Viewfinder frame */}
+      {!capturedPhoto && nearbyArt && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="relative w-72 h-72">
+            <ViewfinderCorner position="top-left" isAligned={isAligned} />
+            <ViewfinderCorner position="top-right" isAligned={isAligned} />
+            <ViewfinderCorner position="bottom-left" isAligned={isAligned} />
+            <ViewfinderCorner position="bottom-right" isAligned={isAligned} />
+            
+            {/* Center crosshair */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                animate={{ opacity: isAligned ? 0 : 0.3 }}
+                className="w-8 h-8"
+              >
+                <Crosshair size={32} className="text-white" />
+              </motion.div>
+            </div>
+            
+            {/* Progress ring when holding */}
+            {holdProgress > 0 && (
+              <svg className="absolute inset-0 w-full h-full -rotate-90">
+                <circle
+                  cx="144"
+                  cy="144"
+                  r="140"
+                  fill="none"
+                  stroke={isAligned ? '#22c55e' : 'rgba(255,255,255,0.3)'}
+                  strokeWidth="4"
+                  strokeDasharray={`${(holdProgress / 100) * 879} 879`}
+                />
+              </svg>
+            )}
+          </div>
+        </div>
+      )}
       
       {/* Top bar */}
-      <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
+      <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between safe-top">
         <div 
           className="px-4 py-2 rounded-2xl flex items-center gap-2 bg-black/40 backdrop-blur-sm border"
           style={{ borderColor: `${teamColor}40` }}
@@ -311,103 +451,141 @@ function Scanner() {
           <span className="text-sm font-medium text-white/90 capitalize">{player.team}</span>
         </div>
         
-        <LocationStatus 
-          status={locationStatus} 
-          accuracy={location ? Math.round(location.accuracy || 10) : null}
-        />
+        <div className="flex items-center gap-2">
+          <motion.button
+            onClick={() => setShowInstructions(true)}
+            className="w-10 h-10 rounded-xl bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center"
+            whileTap={{ scale: 0.95 }}
+          >
+            <AlertCircle size={18} className="text-white/70" />
+          </motion.button>
+        </div>
       </div>
       
       {/* Nearby art indicator */}
-      {nearbyArt && !pendingCapture && !scanResult && (
+      {nearbyArt && !capturedPhoto && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="absolute top-20 left-4 right-4"
         >
-          <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+          <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-4 border border-emerald-500/30">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <MapPin size={18} className="text-emerald-400" />
+                <Target size={18} className="text-emerald-400" />
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-white text-sm">{nearbyArt.name}</p>
-                <p className="text-xs text-white/40">{nearbyArt.distance}m away • {nearbyArt.area}</p>
+                <p className="text-xs text-white/40">{nearbyArt.distance}m • Hold to capture</p>
               </div>
-              {nearbyArt.capturedBy && (
-                <div 
-                  className="px-2 py-1 rounded-full text-xs"
-                  style={{ 
-                    backgroundColor: `${TEAM_COLORS[nearbyArt.capturedBy]?.hex}20`,
-                    color: TEAM_COLORS[nearbyArt.capturedBy]?.hex
-                  }}
-                >
-                  {nearbyArt.capturedBy}
-                </div>
-              )}
+              <div className="text-right">
+                <span className="text-lg font-bold text-emerald-400">+{getPointValue(nearbyArt)}</span>
+              </div>
             </div>
           </div>
         </motion.div>
       )}
       
       {/* No nearby art message */}
-      {!nearbyArt && locationStatus === 'success' && !pendingCapture && !scanResult && (
+      {!nearbyArt && locationStatus === 'success' && !capturedPhoto && (
         <div className="absolute top-20 left-4 right-4">
-          <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-4 border border-white/10 text-center">
-            <p className="text-white/50 text-sm">No street art nearby</p>
-            <p className="text-white/30 text-xs mt-1">Get closer to a spot on the map</p>
+          <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-4 border border-amber-500/30 text-center">
+            <MapPin size={24} className="mx-auto mb-2 text-amber-400" />
+            <p className="text-white/70 text-sm font-medium">No street art nearby</p>
+            <p className="text-white/40 text-xs mt-1">Check the map and get within 100m of a spot</p>
           </div>
         </div>
       )}
       
-      {/* Capture button */}
-      {!pendingCapture && !scanResult && (
-        <div className="absolute bottom-24 left-0 right-0 flex justify-center">
-          <motion.button
-            onClick={handleCapture}
-            disabled={!nearbyArt || locationStatus !== 'success' || isScanning}
-            className="relative w-20 h-20 rounded-full flex items-center justify-center disabled:opacity-50"
-            whileTap={{ scale: 0.9 }}
-          >
-            <div 
-              className="absolute inset-0 rounded-full border-4"
-              style={{ borderColor: nearbyArt ? teamColor : 'rgba(255,255,255,0.2)' }}
-            />
-            <motion.div 
-              className="w-16 h-16 rounded-full bg-white flex items-center justify-center"
-              animate={isScanning ? { scale: [1, 0.9, 1] } : {}}
-              transition={{ repeat: Infinity, duration: 0.6 }}
-            >
-              {isScanning ? (
-                <Loader2 size={26} className="text-black animate-spin" />
-              ) : (
-                <Camera size={26} className="text-black" />
-              )}
-            </motion.div>
-          </motion.button>
+      {/* Location loading */}
+      {locationStatus === 'loading' && !capturedPhoto && (
+        <div className="absolute top-20 left-4 right-4">
+          <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-4 border border-white/10 text-center">
+            <Loader2 size={24} className="mx-auto mb-2 text-white/50 animate-spin" />
+            <p className="text-white/50 text-sm">Getting your location...</p>
+          </div>
         </div>
       )}
       
-      {/* Capture confirmation */}
+      {/* Capture button - hold to capture */}
+      {!capturedPhoto && (
+        <div className="absolute bottom-24 left-0 right-0 flex flex-col items-center gap-4">
+          <motion.button
+            onTouchStart={startHold}
+            onTouchEnd={endHold}
+            onMouseDown={startHold}
+            onMouseUp={endHold}
+            onMouseLeave={endHold}
+            disabled={!nearbyArt || locationStatus !== 'success'}
+            className="relative w-24 h-24 rounded-full flex items-center justify-center disabled:opacity-30"
+            whileTap={{ scale: 0.95 }}
+          >
+            {/* Outer ring */}
+            <motion.div 
+              className="absolute inset-0 rounded-full border-4"
+              animate={{ 
+                borderColor: isAligned ? '#22c55e' : nearbyArt ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)',
+                scale: isAligned ? 1.1 : 1
+              }}
+            />
+            
+            {/* Inner button */}
+            <motion.div 
+              className="w-20 h-20 rounded-full flex items-center justify-center"
+              animate={{ 
+                backgroundColor: isAligned ? '#22c55e' : '#ffffff',
+                scale: holdProgress > 0 ? 0.9 : 1
+              }}
+            >
+              <Camera size={32} className={isAligned ? 'text-white' : 'text-black'} />
+            </motion.div>
+          </motion.button>
+          
+          <p className="text-white/40 text-xs">
+            {nearbyArt ? 'Hold to capture' : 'Get closer to street art'}
+          </p>
+        </div>
+      )}
+      
+      {/* Instructions overlay */}
       <AnimatePresence>
-        {pendingCapture && (
-          <CaptureConfirmation
-            art={pendingCapture.art}
-            photo={pendingCapture.photo}
+        {showInstructions && (
+          <Instructions onClose={dismissInstructions} />
+        )}
+      </AnimatePresence>
+      
+      {/* Success screen */}
+      <AnimatePresence>
+        {capturedPhoto && captureResult?.success && (
+          <CaptureSuccess
+            result={captureResult}
+            photo={capturedPhoto}
             teamColor={teamColor}
-            onConfirm={confirmCapture}
-            onCancel={cancelCapture}
+            onClose={handleCloseSuccess}
+            onShare={handleShare}
           />
         )}
       </AnimatePresence>
       
-      {/* Result modal */}
+      {/* Failure message */}
       <AnimatePresence>
-        {scanResult && (
-          <CaptureResult
-            result={scanResult}
-            teamColor={teamColor}
-            onClose={() => setScanResult(null)}
-          />
+        {captureResult && !captureResult.success && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="absolute bottom-32 left-4 right-4"
+          >
+            <div className="bg-red-500/90 backdrop-blur-sm rounded-2xl p-4 text-center">
+              <p className="font-semibold text-white">{captureResult.message}</p>
+              <button 
+                onClick={() => setCaptureResult(null)}
+                className="mt-2 text-white/70 text-sm underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>
