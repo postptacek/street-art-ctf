@@ -178,6 +178,7 @@ function Instructions({ onClose }) {
 function Scanner() {
   const { 
     player, 
+    artPoints,
     pendingCapture, 
     scanResult, 
     isScanning,
@@ -199,6 +200,7 @@ function Scanner() {
   const [capturedPhoto, setCapturedPhoto] = useState(null)
   const [captureResult, setCaptureResult] = useState(null)
   const [holdProgress, setHoldProgress] = useState(0)
+  const [devMode, setDevMode] = useState(true) // Dev mode: bypass GPS
   
   const videoRef = useRef(null)
   const streamRef = useRef(null)
@@ -220,8 +222,20 @@ function Scanner() {
     setShowInstructions(false)
   }
 
-  // Get user location
+  // Get user location or use dev mode
   useEffect(() => {
+    // Dev mode: pick a random art point to capture
+    if (devMode && artPoints) {
+      const uncaptured = artPoints.filter(p => !p.capturedBy && p.status === 'active')
+      if (uncaptured.length > 0) {
+        const randomArt = uncaptured[Math.floor(Math.random() * uncaptured.length)]
+        setNearbyArt({ ...randomArt, distance: 10 })
+      }
+      setLocationStatus('success')
+      setLocation({ lat: 50.1, lng: 14.5 })
+      return
+    }
+    
     if (!navigator.geolocation) {
       setLocationStatus('error')
       return
@@ -245,7 +259,7 @@ function Scanner() {
     )
     
     return () => navigator.geolocation.clearWatch(watchId)
-  }, [findNearestArt])
+  }, [findNearestArt, devMode, artPoints])
 
   // Start camera
   const startCamera = useCallback(async () => {
@@ -452,6 +466,12 @@ function Scanner() {
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Dev mode badge */}
+          {devMode && (
+            <div className="px-3 py-1.5 rounded-xl bg-purple-500/30 border border-purple-500/50">
+              <span className="text-xs font-medium text-purple-400">DEV</span>
+            </div>
+          )}
           <motion.button
             onClick={() => setShowInstructions(true)}
             className="w-10 h-10 rounded-xl bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center"
@@ -476,12 +496,28 @@ function Scanner() {
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-white text-sm">{nearbyArt.name}</p>
-                <p className="text-xs text-white/40">{nearbyArt.distance}m • Hold to capture</p>
+                <p className="text-xs text-white/40">{nearbyArt.area} • {nearbyArt.hood}</p>
               </div>
               <div className="text-right">
                 <span className="text-lg font-bold text-emerald-400">+{getPointValue(nearbyArt)}</span>
               </div>
             </div>
+            {/* Dev mode: next art button */}
+            {devMode && (
+              <motion.button
+                onClick={() => {
+                  const uncaptured = artPoints.filter(p => !p.capturedBy && p.status === 'active' && p.id !== nearbyArt.id)
+                  if (uncaptured.length > 0) {
+                    const randomArt = uncaptured[Math.floor(Math.random() * uncaptured.length)]
+                    setNearbyArt({ ...randomArt, distance: 10 })
+                  }
+                }}
+                className="mt-3 w-full py-2 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-medium"
+                whileTap={{ scale: 0.98 }}
+              >
+                Pick Another Art →
+              </motion.button>
+            )}
           </div>
         </motion.div>
       )}
