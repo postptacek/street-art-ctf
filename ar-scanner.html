@@ -133,8 +133,16 @@
     const COOLDOWN = 10*60*1000;
     let currentId = null, canCap = false;
     const player = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
-    const team = player.team||'red', pid = player.id||'anon', pname = player.name||'Player';
+    const team = player.team||'red';
+    const pname = player.name||'Player';
+    // Generate stable player ID from name if not set
+    let pid = localStorage.getItem('streetart-ctf-pid');
+    if (!pid) {
+      pid = 'p_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('streetart-ctf-pid', pid);
+    }
     const colors = {red:'#ff6b6b',blue:'#4dabf7'};
+    console.log('Player:', pname, 'Team:', team, 'ID:', pid);
     document.getElementById('team-dot').style.backgroundColor = colors[team];
     document.getElementById('team-name').textContent = team;
     
@@ -156,25 +164,64 @@
     }
     
     async function capture() {
-      if (!currentId || !canCap) return;
-      const art = ART[currentId]; if (!art) return;
+      console.log('Capture clicked! currentId:', currentId, 'canCap:', canCap);
+      if (!currentId || !canCap) {
+        console.log('Cannot capture - no target or not allowed');
+        return;
+      }
+      const art = ART[currentId];
+      if (!art) {
+        console.log('No art data for:', currentId);
+        return;
+      }
+      console.log('Capturing:', art.name, 'for', art.points, 'pts');
       document.getElementById('capture-btn').disabled = true;
+      
       try {
-        await db.collection('streetart-scans').doc(pid+'_'+currentId).set({timestamp:firebase.firestore.FieldValue.serverTimestamp(),artId:currentId,playerId:pid});
-        await db.collection('streetart-captures').doc(currentId).set({artId:currentId,capturedBy:team,capturedAt:firebase.firestore.FieldValue.serverTimestamp(),playerId:pid,playerName:pname,points:art.points});
-        await db.collection('streetart-teams').doc(team).set({score:firebase.firestore.FieldValue.increment(art.points),lastCapture:currentId,lastCaptureAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-        await db.collection('streetart-players').doc(pid).set({name:pname,team:team,score:firebase.firestore.FieldValue.increment(art.points),lastActive:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+        console.log('Writing to Firebase...');
+        await db.collection('streetart-scans').doc(pid+'_'+currentId).set({
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          artId: currentId,
+          playerId: pid
+        });
+        await db.collection('streetart-captures').doc(currentId).set({
+          artId: currentId,
+          capturedBy: team,
+          capturedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          playerId: pid,
+          playerName: pname,
+          points: art.points
+        });
+        await db.collection('streetart-teams').doc(team).set({
+          score: firebase.firestore.FieldValue.increment(art.points),
+          lastCapture: currentId,
+          lastCaptureAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, {merge: true});
+        await db.collection('streetart-players').doc(pid).set({
+          name: pname,
+          team: team,
+          score: firebase.firestore.FieldValue.increment(art.points),
+          lastActive: firebase.firestore.FieldValue.serverTimestamp()
+        }, {merge: true});
+        
+        console.log('Firebase write complete! Showing success...');
         document.getElementById('s-icon').style.background = colors[team]+'20';
         document.getElementById('s-check').style.borderColor = colors[team];
         document.getElementById('s-check').style.color = colors[team];
-        document.getElementById('s-name').textContent = art.name+' - '+art.area;
-        document.getElementById('s-pts').textContent = '+'+art.points;
+        document.getElementById('s-name').textContent = art.name + ' - ' + art.area;
+        document.getElementById('s-pts').textContent = '+' + art.points;
         document.getElementById('s-pts').style.color = colors[team];
-        document.getElementById('s-team').textContent = 'Team '+(team==='red'?'Red':'Blue');
+        document.getElementById('s-team').textContent = 'Team ' + (team === 'red' ? 'Red' : 'Blue');
         document.getElementById('success').classList.add('show');
-        localStorage.setItem('streetart-ctf-lastCapture',JSON.stringify({artId:currentId,location:art.loc,team:team}));
-        setTimeout(function() { window.location.href = window.location.pathname.replace('/ar-scanner.html','')+'/#/map'; }, 2500);
-      } catch(e) { console.error(e); document.getElementById('capture-btn').disabled = false; }
+        localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({artId: currentId, location: art.loc, team: team}));
+        setTimeout(function() { 
+          window.location.href = window.location.pathname.replace('/ar-scanner.html', '') + '/#/map'; 
+        }, 2500);
+      } catch(e) { 
+        console.error('Capture error:', e); 
+        alert('Capture failed: ' + e.message);
+        document.getElementById('capture-btn').disabled = false; 
+      }
     }
     
     var scene = document.querySelector('a-scene');
