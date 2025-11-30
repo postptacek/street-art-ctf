@@ -3,19 +3,19 @@
 
 // Neighborhoods (hoods)
 export const HOODS = {
-  vysocany: {
-    id: 'vysocany',
-    name: 'Vysočany',
-    center: [50.1090, 14.5050],
-    zoom: 15,
-    description: 'Prague industrial district'
-  },
   palmovka: {
     id: 'palmovka',
     name: 'Palmovka',
     center: [50.1036, 14.4700],
     zoom: 15,
     description: 'Prague metro hub'
+  },
+  vysocany: {
+    id: 'vysocany',
+    name: 'Vysočany',
+    center: [50.1090, 14.5050],
+    zoom: 15,
+    description: 'Prague industrial district'
   },
   podebrady: {
     id: 'podebrady',
@@ -27,7 +27,7 @@ export const HOODS = {
 }
 
 // Default to first hood
-export const DEFAULT_HOOD = 'vysocany'
+export const DEFAULT_HOOD = 'palmovka'
 export const MAP_CENTER = HOODS[DEFAULT_HOOD].center
 export const DEFAULT_ZOOM = 15
 export const MIN_ZOOM = 13
