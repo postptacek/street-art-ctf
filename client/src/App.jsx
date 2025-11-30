@@ -10,57 +10,81 @@ import Profile from './pages/Profile'
 import Navigation from './components/Navigation'
 import { Swords, Flag } from 'lucide-react'
 
-// Capture notification toast
+// Full-screen capture notification
 function CaptureNotification() {
   const { captureNotification } = useGame()
   
   if (!captureNotification) return null
   
   const teamColor = TEAM_COLORS[captureNotification.team]?.hex || '#888'
+  const teamName = captureNotification.team === 'red' ? 'RED TEAM' : 'BLUE TEAM'
   
   return (
     <motion.div
-      initial={{ opacity: 0, y: -50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="fixed top-4 left-4 right-4 z-[9999] pointer-events-none"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+      style={{ backgroundColor: `${teamColor}20` }}
     >
-      <div 
-        className="mx-auto max-w-sm p-4 rounded-lg border backdrop-blur-xl shadow-lg"
-        style={{ 
-          backgroundColor: `${teamColor}15`,
-          borderColor: `${teamColor}40`
-        }}
+      <motion.div
+        initial={{ scale: 0.5, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={{ type: 'spring', damping: 15 }}
+        className="text-center p-8"
       >
-        <div className="flex items-center gap-3">
-          <div 
-            className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: `${teamColor}30` }}
-          >
-            {captureNotification.isRecapture ? (
-              <Swords size={20} style={{ color: teamColor }} />
-            ) : (
-              <Flag size={20} style={{ color: teamColor }} />
-            )}
-          </div>
-          <div className="flex-1">
-            <p className="font-semibold text-white text-sm">
-              {captureNotification.isRecapture ? 'Territory Recaptured!' : 'Territory Captured!'}
-            </p>
-            <p className="text-xs text-white/60">
-              <span style={{ color: teamColor }}>{captureNotification.playerName}</span>
-              {' took '}
-              <span className="text-white/80">{captureNotification.artName}</span>
-            </p>
-          </div>
-          <div 
-            className="text-xs font-bold px-2 py-1 rounded"
+        {/* Icon */}
+        <motion.div 
+          className="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: `${teamColor}30`, border: `3px solid ${teamColor}` }}
+          initial={{ rotate: -10 }}
+          animate={{ rotate: 0 }}
+        >
+          {captureNotification.isRecapture ? (
+            <Swords size={48} style={{ color: teamColor }} />
+          ) : (
+            <Flag size={48} style={{ color: teamColor }} />
+          )}
+        </motion.div>
+        
+        {/* Title */}
+        <motion.h1 
+          className="text-3xl font-black mb-2"
+          style={{ color: teamColor }}
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
+        >
+          {captureNotification.isRecapture ? 'RECAPTURED!' : 'CAPTURED!'}
+        </motion.h1>
+        
+        {/* Art name */}
+        <motion.p 
+          className="text-xl font-bold text-white mb-4"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          {captureNotification.artName}
+        </motion.p>
+        
+        {/* Player & Team */}
+        <motion.div
+          className="flex items-center justify-center gap-3"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <span className="text-white/60">by</span>
+          <span className="font-semibold text-white">{captureNotification.playerName}</span>
+          <span 
+            className="px-3 py-1 rounded font-bold text-sm"
             style={{ backgroundColor: teamColor, color: 'white' }}
           >
-            {captureNotification.team.toUpperCase()}
-          </div>
-        </div>
-      </div>
+            {teamName}
+          </span>
+        </motion.div>
+      </motion.div>
     </motion.div>
   )
 }

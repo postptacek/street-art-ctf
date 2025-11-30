@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useGame, TEAM_COLORS } from '../context/GameContext'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../config/firebase'
+import { ART_POINTS } from '../data/pragueMap'
 import { 
   User, Settings, Palette, MapPin, Trophy, 
-  ChevronRight, Camera, LogOut, Bell, Shield 
+  ChevronRight, Camera, LogOut, Bell, Shield, Shuffle, Zap
 } from 'lucide-react'
 
 function StatCard({ icon: Icon, label, value, color }) {
@@ -59,6 +62,7 @@ function Profile() {
   const { player, artPoints, joinTeam, resetAll } = useGame()
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(player.name)
+  const [isRandomizing, setIsRandomizing] = useState(false)
 
   // Get player's captured art
   const capturedArt = artPoints?.filter(art => 
@@ -66,6 +70,47 @@ function Profile() {
   ) || []
 
   const teamColor = player.team ? TEAM_COLORS[player.team].hex : '#64748b'
+
+  // Randomly assign all points to teams
+  const randomizeTeams = async () => {
+    if (isRandomizing) return
+    setIsRandomizing(true)
+    
+    try {
+      const teams = ['red', 'blue']
+      let redScore = 0
+      let blueScore = 0
+      
+      for (const art of ART_POINTS) {
+        const randomTeam = teams[Math.floor(Math.random() * teams.length)]
+        const points = art.points || 100
+        
+        if (randomTeam === 'red') redScore += points
+        else blueScore += points
+        
+        await setDoc(doc(db, 'streetart-captures', art.id), {
+          artId: art.id,
+          capturedBy: randomTeam,
+          capturedAt: new Date(),
+          playerId: 'system',
+          playerName: 'Game Master',
+          points: points,
+          isFirstCapture: true,
+          isRecapture: false
+        })
+      }
+      
+      // Update team scores
+      await setDoc(doc(db, 'streetart-teams', 'red'), { score: redScore }, { merge: true })
+      await setDoc(doc(db, 'streetart-teams', 'blue'), { score: blueScore }, { merge: true })
+      
+      console.log('Randomized all territories!')
+    } catch (e) {
+      console.error('Failed to randomize:', e)
+    }
+    
+    setIsRandomizing(false)
+  }
 
   return (
     <motion.div
@@ -181,6 +226,24 @@ function Profile() {
         </div>
       )}
 
+      {/* Admin Actions */}
+      <div className="mb-6">
+        <h2 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
+          <Zap size={16} /> GAME MASTER
+        </h2>
+        <motion.button
+          onClick={randomizeTeams}
+          disabled={isRandomizing}
+          className="w-full flex items-center gap-3 p-4 bg-purple-500/20 border border-purple-500/30 rounded-xl hover:bg-purple-500/30 transition-colors disabled:opacity-50"
+          whileTap={{ scale: 0.98 }}
+        >
+          <Shuffle size={20} className="text-purple-400" />
+          <span className="flex-1 text-left text-purple-300">
+            {isRandomizing ? 'Randomizing...' : 'Randomize All Territories'}
+          </span>
+        </motion.button>
+      </div>
+
       {/* Settings */}
       <div className="space-y-2">
         <h2 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
@@ -197,7 +260,7 @@ function Profile() {
 
       {/* App Version */}
       <p className="text-center text-xs text-gray-500 mt-6">
-        Street Art CTF v1.0.0
+        Street Art CTF v1.1.0
       </p>
     </motion.div>
   )
