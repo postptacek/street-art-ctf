@@ -151,16 +151,16 @@
     }
     
     async function checkScan(id) {
-      try {
-        const cap = await db.collection('streetart-captures').doc(id).get();
-        const scan = await db.collection('streetart-scans').doc(pid+'_'+id).get();
-        if (cap.exists && cap.data().capturedBy && cap.data().capturedBy !== team) return {ok:true,msg:'recapture'};
-        if (scan.exists && scan.data().timestamp) { 
-          const t = Date.now() - scan.data().timestamp.toMillis(); 
-          if (t < COOLDOWN) return {ok:false,msg:'Wait '+Math.ceil((COOLDOWN-t)/60000)+'m'}; 
-        }
-        return {ok:true,msg:null};
-      } catch(e) { console.error(e); return {ok:true,msg:null}; }
+      // Check local cooldowns first
+      const localScans = JSON.parse(localStorage.getItem('streetart-ctf-scans')||'{}');
+      if (localScans[id]) {
+        const t = Date.now() - localScans[id];
+        if (t < COOLDOWN) return {ok:false,msg:'Wait '+Math.ceil((COOLDOWN-t)/60000)+'m'};
+      }
+      // Check if enemy captured (allow recapture)
+      const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures')||'{}');
+      if (localCaptures[id] && localCaptures[id] !== team) return {ok:true,msg:'recapture'};
+      return {ok:true,msg:null};
     }
     
     async function capture() {
@@ -177,51 +177,47 @@
       console.log('Capturing:', art.name, 'for', art.points, 'pts');
       document.getElementById('capture-btn').disabled = true;
       
+      // Save locally first (always works)
+      const localScans = JSON.parse(localStorage.getItem('streetart-ctf-scans')||'{}');
+      localScans[currentId] = Date.now();
+      localStorage.setItem('streetart-ctf-scans', JSON.stringify(localScans));
+      
+      const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures')||'{}');
+      localCaptures[currentId] = team;
+      localStorage.setItem('streetart-ctf-captures', JSON.stringify(localCaptures));
+      
+      const localPlayer = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
+      localPlayer.score = (localPlayer.score || 0) + art.points;
+      localPlayer.capturedArt = [...new Set([...(localPlayer.capturedArt || []), currentId])];
+      localStorage.setItem('streetart-ctf-player', JSON.stringify(localPlayer));
+      
+      localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({artId: currentId, location: art.loc, team: team}));
+      
+      // Try Firebase in background (don't wait)
       try {
-        console.log('Writing to Firebase...');
-        await db.collection('streetart-scans').doc(pid+'_'+currentId).set({
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          artId: currentId,
-          playerId: pid
+        db.collection('streetart-captures').doc(currentId).set({
+          artId: currentId, capturedBy: team, capturedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          playerId: pid, playerName: pname, points: art.points
         });
-        await db.collection('streetart-captures').doc(currentId).set({
-          artId: currentId,
-          capturedBy: team,
-          capturedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          playerId: pid,
-          playerName: pname,
-          points: art.points
-        });
-        await db.collection('streetart-teams').doc(team).set({
-          score: firebase.firestore.FieldValue.increment(art.points),
-          lastCapture: currentId,
-          lastCaptureAt: firebase.firestore.FieldValue.serverTimestamp()
+        db.collection('streetart-teams').doc(team).set({
+          score: firebase.firestore.FieldValue.increment(art.points)
         }, {merge: true});
-        await db.collection('streetart-players').doc(pid).set({
-          name: pname,
-          team: team,
-          score: firebase.firestore.FieldValue.increment(art.points),
-          lastActive: firebase.firestore.FieldValue.serverTimestamp()
-        }, {merge: true});
-        
-        console.log('Firebase write complete! Showing success...');
-        document.getElementById('s-icon').style.background = colors[team]+'20';
-        document.getElementById('s-check').style.borderColor = colors[team];
-        document.getElementById('s-check').style.color = colors[team];
-        document.getElementById('s-name').textContent = art.name + ' - ' + art.area;
-        document.getElementById('s-pts').textContent = '+' + art.points;
-        document.getElementById('s-pts').style.color = colors[team];
-        document.getElementById('s-team').textContent = 'Team ' + (team === 'red' ? 'Red' : 'Blue');
-        document.getElementById('success').classList.add('show');
-        localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({artId: currentId, location: art.loc, team: team}));
-        setTimeout(function() { 
-          window.location.href = window.location.pathname.replace('/ar-scanner.html', '') + '/#/map'; 
-        }, 2500);
-      } catch(e) { 
-        console.error('Capture error:', e); 
-        alert('Capture failed: ' + e.message);
-        document.getElementById('capture-btn').disabled = false; 
-      }
+        console.log('Firebase sync attempted');
+      } catch(e) { console.log('Firebase sync failed (offline mode):', e.message); }
+      
+      // Show success immediately
+      document.getElementById('s-icon').style.background = colors[team]+'20';
+      document.getElementById('s-check').style.borderColor = colors[team];
+      document.getElementById('s-check').style.color = colors[team];
+      document.getElementById('s-name').textContent = art.name + ' - ' + art.area;
+      document.getElementById('s-pts').textContent = '+' + art.points;
+      document.getElementById('s-pts').style.color = colors[team];
+      document.getElementById('s-team').textContent = 'Team ' + (team === 'red' ? 'Red' : 'Blue');
+      document.getElementById('success').classList.add('show');
+      
+      setTimeout(function() { 
+        window.location.href = window.location.pathname.replace('/ar-scanner.html', '') + '/#/map'; 
+      }, 2500);
     }
     
     var scene = document.querySelector('a-scene');
