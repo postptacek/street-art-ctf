@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Street Art CTF - Scanner</title>
+  <title>Street Art CTF - AR Scanner</title>
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
@@ -16,20 +16,16 @@
     
     #ui-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       pointer-events: none;
       z-index: 1000;
     }
     
     #top-bar {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       padding: 16px;
+      padding-top: max(16px, env(safe-area-inset-top));
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -37,15 +33,16 @@
     
     .team-badge {
       padding: 8px 16px;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.7);
       backdrop-filter: blur(10px);
-      border-radius: 16px;
+      border-radius: 20px;
       color: white;
       font-size: 14px;
       font-weight: 600;
       display: flex;
       align-items: center;
       gap: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
     }
     
     .team-dot {
@@ -57,78 +54,21 @@
     .back-btn {
       width: 44px;
       height: 44px;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.7);
       backdrop-filter: blur(10px);
-      border-radius: 12px;
-      border: none;
-      color: white;
-      font-size: 24px;
-      pointer-events: auto;
-      cursor: pointer;
-    }
-    
-    #target-info {
-      position: absolute;
-      top: 80px;
-      left: 16px;
-      right: 16px;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 16px;
-      border: 2px solid #22c55e;
-      display: none;
-    }
-    
-    #target-info.found { display: block; }
-    
-    #target-info h2 {
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.1);
       color: white;
       font-size: 20px;
-      margin-bottom: 4px;
-    }
-    
-    #target-info p {
-      color: rgba(255,255,255,0.6);
-      font-size: 14px;
-    }
-    
-    #target-info .points {
-      color: #22c55e;
-      font-size: 24px;
-      font-weight: bold;
-    }
-    
-    #capture-btn {
-      position: absolute;
-      bottom: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: white;
-      border: 4px solid #22c55e;
       pointer-events: auto;
       cursor: pointer;
-      display: none;
-      font-size: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
-    #capture-btn.ready { display: flex; align-items: center; justify-content: center; }
-    
-    #scanning-hint {
-      position: absolute;
-      bottom: 120px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: rgba(255,255,255,0.6);
-      font-size: 14px;
-      text-align: center;
-    }
-    
-    /* Viewfinder frame */
-    #viewfinder {
+    /* Alignment Frame */
+    #alignment-frame {
       position: absolute;
       top: 50%;
       left: 50%;
@@ -138,65 +78,445 @@
       pointer-events: none;
     }
     
-    .corner {
+    .frame-corner {
       position: absolute;
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255,255,255,0.5);
-      transition: border-color 0.3s, transform 0.3s;
+      width: 50px;
+      height: 50px;
+      transition: all 0.3s ease;
     }
     
-    .corner.found { border-color: #22c55e; transform: scale(1.1); }
+    .frame-corner::before,
+    .frame-corner::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,255,255,0.6);
+      transition: all 0.3s ease;
+    }
     
-    .corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; border-radius: 8px 0 0 0; }
-    .corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; border-radius: 0 8px 0 0; }
-    .corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; border-radius: 0 0 0 8px; }
-    .corner.br { bottom: 0; right: 0; border-left: none; border-top: none; border-radius: 0 0 8px 0; }
+    .frame-corner.tl { top: 0; left: 0; }
+    .frame-corner.tl::before { top: 0; left: 0; width: 4px; height: 30px; border-radius: 2px; }
+    .frame-corner.tl::after { top: 0; left: 0; width: 30px; height: 4px; border-radius: 2px; }
+    
+    .frame-corner.tr { top: 0; right: 0; }
+    .frame-corner.tr::before { top: 0; right: 0; width: 4px; height: 30px; border-radius: 2px; }
+    .frame-corner.tr::after { top: 0; right: 0; width: 30px; height: 4px; border-radius: 2px; }
+    
+    .frame-corner.bl { bottom: 0; left: 0; }
+    .frame-corner.bl::before { bottom: 0; left: 0; width: 4px; height: 30px; border-radius: 2px; }
+    .frame-corner.bl::after { bottom: 0; left: 0; width: 30px; height: 4px; border-radius: 2px; }
+    
+    .frame-corner.br { bottom: 0; right: 0; }
+    .frame-corner.br::before { bottom: 0; right: 0; width: 4px; height: 30px; border-radius: 2px; }
+    .frame-corner.br::after { bottom: 0; right: 0; width: 30px; height: 4px; border-radius: 2px; }
+    
+    /* Aligned state */
+    .frame-corner.aligned::before,
+    .frame-corner.aligned::after {
+      background: #22c55e;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+    }
+    
+    /* Pulsing animation when aligned */
+    @keyframes pulse-green {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    
+    .frame-corner.aligned {
+      animation: pulse-green 1s ease infinite;
+    }
+    
+    /* Center crosshair */
+    #center-marker {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      opacity: 0.5;
+      transition: all 0.3s;
+    }
+    
+    #center-marker::before,
+    #center-marker::after {
+      content: '';
+      position: absolute;
+      background: white;
+      border-radius: 2px;
+    }
+    
+    #center-marker::before {
+      top: 50%; left: 0;
+      transform: translateY(-50%);
+      width: 100%; height: 2px;
+    }
+    
+    #center-marker::after {
+      left: 50%; top: 0;
+      transform: translateX(-50%);
+      width: 2px; height: 100%;
+    }
+    
+    #center-marker.aligned {
+      opacity: 1;
+    }
+    
+    #center-marker.aligned::before,
+    #center-marker.aligned::after {
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+    }
+    
+    /* Target info panel */
+    #target-info {
+      position: absolute;
+      top: 100px;
+      left: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 16px 20px;
+      border: 2px solid transparent;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+    }
+    
+    #target-info.found {
+      opacity: 1;
+      transform: translateY(0);
+      border-color: #22c55e;
+    }
+    
+    #target-info h2 {
+      color: white;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    #target-info .subtitle {
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+    }
+    
+    #target-info .points-badge {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    
+    /* Alignment progress */
+    #alignment-status {
+      position: absolute;
+      bottom: 180px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    
+    #alignment-text {
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    
+    #alignment-text.ready {
+      color: #22c55e;
+      font-weight: 600;
+    }
+    
+    /* Capture button */
+    #capture-area {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    
+    #capture-btn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: 4px solid rgba(255,255,255,0.4);
+      pointer-events: auto;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      transition: all 0.3s;
+      opacity: 0.5;
+    }
+    
+    #capture-btn.ready {
+      background: white;
+      border-color: #22c55e;
+      opacity: 1;
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+    }
+    
+    #capture-btn.ready:active {
+      transform: scale(0.95);
+    }
+    
+    /* Progress ring */
+    #progress-ring {
+      position: absolute;
+      width: 96px;
+      height: 96px;
+      transform: rotate(-90deg);
+    }
+    
+    #progress-ring circle {
+      fill: none;
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+    
+    #progress-bg {
+      stroke: rgba(255,255,255,0.1);
+    }
+    
+    #progress-bar {
+      stroke: #22c55e;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 283;
+      transition: stroke-dashoffset 0.1s linear;
+    }
     
     /* Success overlay */
     #success-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.95);
+      background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.98) 100%);
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 2000;
+      padding: 20px;
     }
     
-    #success-overlay.show { display: flex; }
-    
-    #success-overlay .badge {
-      background: #22c55e;
-      color: white;
-      padding: 12px 32px;
-      border-radius: 30px;
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 20px;
+    #success-overlay.show {
+      display: flex;
     }
     
-    #success-overlay .points-earned {
+    .success-icon {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 48px;
-      font-weight: bold;
-      color: white;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
+      animation: success-pop 0.5s ease;
     }
     
-    #success-overlay .done-btn {
+    @keyframes success-pop {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    
+    .capture-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 8px;
+    }
+    
+    .capture-subtitle {
+      font-size: 16px;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 24px;
+    }
+    
+    /* Points animation */
+    .points-earned {
+      font-size: 56px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #22c55e, #4ade80);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      animation: points-fly 0.6s ease;
+    }
+    
+    @keyframes points-fly {
+      0% { transform: translateY(30px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    .points-label {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 32px;
+    }
+    
+    /* Territory card */
+    .territory-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 24px;
+    }
+    
+    .territory-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .territory-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    
+    .territory-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .territory-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .territory-stats {
+      display: flex;
+      gap: 16px;
+    }
+    
+    .stat-item {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+    }
+    
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    
+    /* Action buttons */
+    .action-btn {
+      width: 100%;
+      max-width: 320px;
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      margin-bottom: 12px;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .action-btn.primary {
       background: white;
       color: black;
-      border: none;
-      padding: 16px 48px;
-      border-radius: 16px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
+    }
+    
+    .action-btn.secondary {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    /* Scanning hint */
+    #scanning-hint {
+      position: absolute;
+      bottom: 140px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+    }
+    
+    /* Loading state */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+    }
+    
+    #loading-overlay.hidden {
+      display: none;
+    }
+    
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #a855f7;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
+  <!-- Loading -->
+  <div id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading AR Scanner...</div>
+  </div>
+
   <div id="ui-overlay">
     <div id="top-bar">
       <button class="back-btn" onclick="goBack()">←</button>
@@ -206,36 +526,82 @@
       </div>
     </div>
     
-    <div id="viewfinder">
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
+    <!-- Alignment frame -->
+    <div id="alignment-frame">
+      <div class="frame-corner tl"></div>
+      <div class="frame-corner tr"></div>
+      <div class="frame-corner bl"></div>
+      <div class="frame-corner br"></div>
+      <div id="center-marker"></div>
     </div>
     
+    <!-- Target info -->
     <div id="target-info">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <h2 id="art-name">Street Art</h2>
-          <p id="art-area">Location</p>
+          <div class="subtitle"><span id="art-area">Location</span> • <span id="art-hood">Hood</span></div>
         </div>
-        <div class="points">+<span id="art-points">100</span></div>
+        <div class="points-badge">+<span id="art-points">100</span></div>
       </div>
     </div>
     
-    <p id="scanning-hint">Point camera at street art</p>
-    <button id="capture-btn" onclick="captureArt()">📸</button>
+    <div id="scanning-hint">Point camera at street art to scan</div>
+    
+    <div id="alignment-status">
+      <div id="alignment-text">Searching...</div>
+    </div>
+    
+    <div id="capture-area">
+      <div style="position: relative;">
+        <svg id="progress-ring" viewBox="0 0 96 96">
+          <circle id="progress-bg" cx="48" cy="48" r="45"></circle>
+          <circle id="progress-bar" cx="48" cy="48" r="45"></circle>
+        </svg>
+        <button id="capture-btn" style="position: absolute; top: 8px; left: 8px;">📷</button>
+      </div>
+    </div>
   </div>
   
+  <!-- Success overlay -->
   <div id="success-overlay">
-    <div class="badge">✓ CAPTURED!</div>
-    <div class="points-earned">+<span id="earned-points">100</span> pts</div>
-    <div id="territory-info" style="color: rgba(255,255,255,0.7); font-size: 14px; margin: 10px 0 20px;">
-      <span id="art-captured-name">Art Name</span> now belongs to <span id="team-captured" style="font-weight: bold;">Team</span>!<br>
-      <span style="font-size: 12px; opacity: 0.7;">Territory expanded in <span id="hood-captured">Vysočany</span></span>
+    <div class="success-icon">✓</div>
+    <div class="capture-title">Captured!</div>
+    <div class="capture-subtitle" id="captured-art-name">Kolbenova 1</div>
+    
+    <div class="points-earned">+<span id="earned-points">100</span></div>
+    <div class="points-label">Points Earned</div>
+    
+    <div class="territory-card">
+      <div class="territory-header">
+        <div class="territory-icon" id="territory-icon" style="background: rgba(34, 197, 94, 0.2);">🏴</div>
+        <div>
+          <div class="territory-title" id="territory-title">Territory Expanded!</div>
+          <div class="territory-subtitle" id="territory-hood">Vysočany District</div>
+        </div>
+      </div>
+      <div class="territory-stats">
+        <div class="stat-item">
+          <div class="stat-value" id="stat-captured">1</div>
+          <div class="stat-label">Captured</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="stat-total">21</div>
+          <div class="stat-label">In Hood</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="stat-score">100</div>
+          <div class="stat-label">Your Score</div>
+        </div>
+      </div>
     </div>
-    <button class="done-btn" onclick="viewOnMap()">View on Map</button>
-    <button class="done-btn" style="background: transparent; border: 2px solid white; color: white; margin-top: 10px;" onclick="continueScan()">Scan More</button>
+    
+    <button class="action-btn primary" onclick="viewOnMap()">
+      🗺️ View on Map
+    </button>
+    <button class="action-btn secondary" onclick="continueScan()">
+      📷 Scan More Art
+    </button>
   </div>
 
   <a-scene 
@@ -246,174 +612,234 @@
     device-orientation-permission-ui="enabled: false">
     
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    
-    <!-- We'll create target entities dynamically or just listen for any target -->
   </a-scene>
 
   <script>
-    // Target Index to Art ID mapping - Vysočany street art (21 pieces)
+    // Vysočany street art mapping (21 pieces)
     const TARGET_TO_ART = {
-      0: 'art-01',   // Kolbenova 1
-      1: 'art-02',   // Kolbenova 2
-      2: 'art-03',   // Kolbenova 3
-      3: 'art-04',   // Kolbenova 4
-      4: 'art-05',   // Kolbenova 5
-      5: 'art-06',   // Kolbenova 6
-      6: 'art-07',   // Hloubětín 1
-      7: 'art-08',   // Hloubětín 2
-      8: 'art-09',   // Vysočany 1
-      9: 'art-10',   // Vysočany 2
-      10: 'art-11',  // Vysočany 3
-      11: 'art-12',  // Vysočany 4
-      12: 'art-13',  // Vysočany 5
-      13: 'art-14',  // Vysočany 6
-      14: 'art-15',  // Vysočany 7
-      15: 'art-16',  // Vysočany 8
-      16: 'art-17',  // Hloubětín 3
-      17: 'art-18',  // Hloubětín 4
-      18: 'art-19',  // Hloubětín 5
-      19: 'art-20',  // Harfa
-      20: 'art-21',  // Harfa 2
+      0: 'art-01', 1: 'art-02', 2: 'art-03', 3: 'art-04', 4: 'art-05',
+      5: 'art-06', 6: 'art-07', 7: 'art-08', 8: 'art-09', 9: 'art-10',
+      10: 'art-11', 11: 'art-12', 12: 'art-13', 13: 'art-14', 14: 'art-15',
+      15: 'art-16', 16: 'art-17', 17: 'art-18', 18: 'art-19', 19: 'art-20', 20: 'art-21'
     };
     
-    // Art data - Vysočany hood
     const ART_DATA = {
-      'art-01': { name: 'Kolbenova 1', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.110192, 14.503811] },
-      'art-02': { name: 'Kolbenova 2', area: 'Vysočany', points: 50, hood: 'vysocany', location: [50.110203, 14.503764] },
-      'art-03': { name: 'Kolbenova 3', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.109847, 14.504250] },
-      'art-04': { name: 'Kolbenova 4', area: 'Vysočany', points: 25, hood: 'vysocany', location: [50.109981, 14.504933] },
-      'art-05': { name: 'Kolbenova 5', area: 'Vysočany', points: 200, hood: 'vysocany', location: [50.109764, 14.505742] },
-      'art-06': { name: 'Kolbenova 6', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.109672, 14.505847] },
-      'art-07': { name: 'Hloubětín 1', area: 'Hloubětín', points: 100, hood: 'vysocany', location: [50.110383, 14.508192] },
-      'art-08': { name: 'Hloubětín 2', area: 'Hloubětín', points: 200, hood: 'vysocany', location: [50.110508, 14.509567] },
-      'art-09': { name: 'Vysočany 1', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.110817, 14.505475] },
-      'art-10': { name: 'Vysočany 2', area: 'Vysočany', points: 50, hood: 'vysocany', location: [50.110986, 14.504672] },
-      'art-11': { name: 'Vysočany 3', area: 'Vysočany', points: 25, hood: 'vysocany', location: [50.110706, 14.504081] },
-      'art-12': { name: 'Vysočany 4', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.110217, 14.503650] },
-      'art-13': { name: 'Vysočany 5', area: 'Vysočany', points: 50, hood: 'vysocany', location: [50.109600, 14.505878] },
-      'art-14': { name: 'Vysočany 6', area: 'Vysočany', points: 200, hood: 'vysocany', location: [50.109736, 14.508125] },
-      'art-15': { name: 'Vysočany 7', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.109908, 14.508189] },
-      'art-16': { name: 'Vysočany 8', area: 'Vysočany', points: 25, hood: 'vysocany', location: [50.109517, 14.509489] },
-      'art-17': { name: 'Hloubětín 3', area: 'Hloubětín', points: 100, hood: 'vysocany', location: [50.110383, 14.509569] },
-      'art-18': { name: 'Hloubětín 4', area: 'Hloubětín', points: 50, hood: 'vysocany', location: [50.110369, 14.509569] },
-      'art-19': { name: 'Hloubětín 5', area: 'Hloubětín', points: 200, hood: 'vysocany', location: [50.110717, 14.509906] },
-      'art-20': { name: 'Harfa', area: 'Vysočany', points: 100, hood: 'vysocany', location: [50.109428, 14.498994] },
-      'art-21': { name: 'Harfa 2', area: 'Vysočany', points: 50, hood: 'vysocany', location: [50.110039, 14.504783] },
+      'art-01': { name: 'Kolbenova 1', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.110192, 14.503811] },
+      'art-02': { name: 'Kolbenova 2', area: 'Vysočany', points: 50, hood: 'Vysočany', location: [50.110203, 14.503764] },
+      'art-03': { name: 'Kolbenova 3', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.109847, 14.504250] },
+      'art-04': { name: 'Kolbenova 4', area: 'Vysočany', points: 25, hood: 'Vysočany', location: [50.109981, 14.504933] },
+      'art-05': { name: 'Kolbenova 5', area: 'Vysočany', points: 200, hood: 'Vysočany', location: [50.109764, 14.505742] },
+      'art-06': { name: 'Kolbenova 6', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.109672, 14.505847] },
+      'art-07': { name: 'Hloubětín 1', area: 'Hloubětín', points: 100, hood: 'Vysočany', location: [50.110383, 14.508192] },
+      'art-08': { name: 'Hloubětín 2', area: 'Hloubětín', points: 200, hood: 'Vysočany', location: [50.110508, 14.509567] },
+      'art-09': { name: 'Vysočany 1', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.110817, 14.505475] },
+      'art-10': { name: 'Vysočany 2', area: 'Vysočany', points: 50, hood: 'Vysočany', location: [50.110986, 14.504672] },
+      'art-11': { name: 'Vysočany 3', area: 'Vysočany', points: 25, hood: 'Vysočany', location: [50.110706, 14.504081] },
+      'art-12': { name: 'Vysočany 4', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.110217, 14.503650] },
+      'art-13': { name: 'Vysočany 5', area: 'Vysočany', points: 50, hood: 'Vysočany', location: [50.109600, 14.505878] },
+      'art-14': { name: 'Vysočany 6', area: 'Vysočany', points: 200, hood: 'Vysočany', location: [50.109736, 14.508125] },
+      'art-15': { name: 'Vysočany 7', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.109908, 14.508189] },
+      'art-16': { name: 'Vysočany 8', area: 'Vysočany', points: 25, hood: 'Vysočany', location: [50.109517, 14.509489] },
+      'art-17': { name: 'Hloubětín 3', area: 'Hloubětín', points: 100, hood: 'Vysočany', location: [50.110383, 14.509569] },
+      'art-18': { name: 'Hloubětín 4', area: 'Hloubětín', points: 50, hood: 'Vysočany', location: [50.110369, 14.509569] },
+      'art-19': { name: 'Hloubětín 5', area: 'Hloubětín', points: 200, hood: 'Vysočany', location: [50.110717, 14.509906] },
+      'art-20': { name: 'Harfa', area: 'Vysočany', points: 100, hood: 'Vysočany', location: [50.109428, 14.498994] },
+      'art-21': { name: 'Harfa 2', area: 'Vysočany', points: 50, hood: 'Vysočany', location: [50.110039, 14.504783] },
     };
     
+    // State
     let currentTargetIndex = null;
     let currentArtId = null;
-    let playerTeam = localStorage.getItem('streetart-ctf-player') ? 
-      JSON.parse(localStorage.getItem('streetart-ctf-player')).team : 'red';
+    let isAligned = false;
+    let holdTimer = null;
+    let holdProgress = 0;
     
-    // Set team color
+    // Get player data
+    const playerData = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
+    const playerTeam = playerData.team || 'red';
     const teamColors = { red: '#ff6b6b', blue: '#4dabf7' };
-    document.getElementById('team-dot').style.backgroundColor = teamColors[playerTeam] || '#ff6b6b';
-    document.getElementById('team-name').textContent = playerTeam ? playerTeam.charAt(0).toUpperCase() + playerTeam.slice(1) : 'Team';
     
-    const sceneEl = document.querySelector('a-scene');
+    // UI Elements
+    const loadingOverlay = document.getElementById('loading-overlay');
     const targetInfo = document.getElementById('target-info');
+    const alignmentText = document.getElementById('alignment-text');
     const captureBtn = document.getElementById('capture-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const corners = document.querySelectorAll('.frame-corner');
+    const centerMarker = document.getElementById('center-marker');
     const scanningHint = document.getElementById('scanning-hint');
-    const corners = document.querySelectorAll('.corner');
     
-    // Add target entities for all possible targets
+    // Set team
+    document.getElementById('team-dot').style.backgroundColor = teamColors[playerTeam];
+    document.getElementById('team-name').textContent = playerTeam.charAt(0).toUpperCase() + playerTeam.slice(1);
+    
+    // Scene setup
+    const sceneEl = document.querySelector('a-scene');
+    
     sceneEl.addEventListener('loaded', () => {
-      // Create target entities for indices 0-20
+      // Create target entities
       for (let i = 0; i <= 20; i++) {
         const entity = document.createElement('a-entity');
         entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
         entity.setAttribute('data-target-index', i);
         sceneEl.appendChild(entity);
       }
-      console.log('✅ AR Scanner ready - 21 targets loaded');
+      console.log('✅ AR Scanner ready');
     });
     
+    sceneEl.addEventListener('arReady', () => {
+      loadingOverlay.classList.add('hidden');
+      console.log('AR Ready');
+    });
+    
+    sceneEl.addEventListener('arError', () => {
+      loadingOverlay.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;"><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div>Camera access required</div><button onclick="location.reload()" style="margin-top: 16px; padding: 12px 24px; background: white; border: none; border-radius: 8px; font-weight: bold;">Retry</button></div>';
+    });
+    
+    // Target found
     sceneEl.addEventListener('targetFound', (event) => {
       const targetIndex = parseInt(event.target.getAttribute('data-target-index'));
-      console.log('🎯 Target found! Index:', targetIndex);
+      console.log('🎯 Target found:', targetIndex);
       
       currentTargetIndex = targetIndex;
       currentArtId = TARGET_TO_ART[targetIndex];
       
       if (currentArtId && ART_DATA[currentArtId]) {
         const art = ART_DATA[currentArtId];
+        
+        // Update UI
         document.getElementById('art-name').textContent = art.name;
-        document.getElementById('art-area').textContent = art.area + ' • ' + art.hood;
+        document.getElementById('art-area').textContent = art.area;
+        document.getElementById('art-hood').textContent = art.hood;
         document.getElementById('art-points').textContent = art.points;
         
         targetInfo.classList.add('found');
-        captureBtn.classList.add('ready');
-        scanningHint.textContent = 'Hold steady and capture!';
+        scanningHint.style.display = 'none';
         
-        corners.forEach(c => c.classList.add('found'));
-      } else {
-        // Unknown target
-        document.getElementById('art-name').textContent = `Target #${targetIndex + 1}`;
-        document.getElementById('art-area').textContent = 'Unknown location';
-        document.getElementById('art-points').textContent = '100';
-        
-        targetInfo.classList.add('found');
-        captureBtn.classList.add('ready');
-        corners.forEach(c => c.classList.add('found'));
+        // Align corners (simulated - in real AR would track position)
+        setAligned(true);
       }
     });
     
-    sceneEl.addEventListener('targetLost', (event) => {
+    // Target lost
+    sceneEl.addEventListener('targetLost', () => {
       console.log('Target lost');
       currentTargetIndex = null;
       currentArtId = null;
       
       targetInfo.classList.remove('found');
-      captureBtn.classList.remove('ready');
-      scanningHint.textContent = 'Point camera at street art';
-      corners.forEach(c => c.classList.remove('found'));
+      scanningHint.style.display = 'block';
+      setAligned(false);
+      resetHold();
     });
+    
+    function setAligned(aligned) {
+      isAligned = aligned;
+      corners.forEach(c => c.classList.toggle('aligned', aligned));
+      centerMarker.classList.toggle('aligned', aligned);
+      captureBtn.classList.toggle('ready', aligned);
+      alignmentText.textContent = aligned ? 'Hold to capture!' : 'Searching...';
+      alignmentText.classList.toggle('ready', aligned);
+    }
+    
+    // Hold to capture
+    captureBtn.addEventListener('touchstart', startHold);
+    captureBtn.addEventListener('mousedown', startHold);
+    captureBtn.addEventListener('touchend', endHold);
+    captureBtn.addEventListener('mouseup', endHold);
+    captureBtn.addEventListener('mouseleave', endHold);
+    
+    function startHold(e) {
+      e.preventDefault();
+      if (!isAligned || !currentArtId) return;
+      
+      holdProgress = 0;
+      holdTimer = setInterval(() => {
+        holdProgress += 2;
+        updateProgress(holdProgress);
+        
+        if (holdProgress >= 100) {
+          clearInterval(holdTimer);
+          captureArt();
+        }
+      }, 20);
+    }
+    
+    function endHold() {
+      resetHold();
+    }
+    
+    function resetHold() {
+      if (holdTimer) {
+        clearInterval(holdTimer);
+        holdTimer = null;
+      }
+      holdProgress = 0;
+      updateProgress(0);
+    }
+    
+    function updateProgress(percent) {
+      const offset = 283 - (283 * percent / 100);
+      progressBar.style.strokeDashoffset = offset;
+    }
     
     function captureArt() {
       if (!currentArtId) return;
       
-      const art = ART_DATA[currentArtId] || { points: 100, name: 'Unknown', hood: 'vysocany' };
+      const art = ART_DATA[currentArtId] || { points: 100, name: 'Unknown', hood: 'Vysočany' };
       
-      // Save capture to localStorage (will sync to Firebase via main app)
+      // Save capture
       const captures = JSON.parse(localStorage.getItem('streetart-ctf-captures') || '{}');
       captures[currentArtId] = playerTeam;
       localStorage.setItem('streetart-ctf-captures', JSON.stringify(captures));
       
-      // Update player score
-      const playerData = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
-      playerData.score = (playerData.score || 0) + art.points;
-      playerData.capturedArt = [...new Set([...(playerData.capturedArt || []), currentArtId])];
-      localStorage.setItem('streetart-ctf-player', JSON.stringify(playerData));
+      // Update player
+      const player = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
+      player.score = (player.score || 0) + art.points;
+      player.capturedArt = [...new Set([...(player.capturedArt || []), currentArtId])];
+      localStorage.setItem('streetart-ctf-player', JSON.stringify(player));
       
-      // Update success overlay with details
+      // Count captures in hood
+      const hoodCaptures = Object.keys(captures).filter(id => 
+        ART_DATA[id] && ART_DATA[id].hood === art.hood
+      ).length;
+      
+      // Update success overlay
       document.getElementById('earned-points').textContent = art.points;
-      document.getElementById('art-captured-name').textContent = art.name;
-      document.getElementById('team-captured').textContent = playerTeam.charAt(0).toUpperCase() + playerTeam.slice(1);
-      document.getElementById('team-captured').style.color = teamColors[playerTeam];
-      document.getElementById('hood-captured').textContent = art.hood === 'vysocany' ? 'Vysočany' : art.hood;
+      document.getElementById('captured-art-name').textContent = art.name;
+      document.getElementById('territory-hood').textContent = art.hood + ' District';
+      document.getElementById('territory-icon').style.background = `rgba(${playerTeam === 'red' ? '255,107,107' : '77,171,247'}, 0.2)`;
+      document.getElementById('stat-captured').textContent = hoodCaptures;
+      document.getElementById('stat-score').textContent = player.score;
       
+      // Show success
       document.getElementById('success-overlay').classList.add('show');
       
-      console.log('✅ Captured:', currentArtId, 'for', playerTeam, '- Points:', art.points);
+      console.log('✅ Captured:', currentArtId, 'Score:', player.score);
     }
     
     function viewOnMap() {
-      // Go to map centered on the captured art
       const path = window.location.pathname;
       const basePath = path.substring(0, path.lastIndexOf('/') + 1);
+      // Pass captured art location for map to center on
+      if (currentArtId && ART_DATA[currentArtId]) {
+        localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({
+          artId: currentArtId,
+          location: ART_DATA[currentArtId].location,
+          team: playerTeam
+        }));
+      }
       window.location.href = basePath + 'index.html#/map';
     }
     
     function continueScan() {
-      // Hide success and continue scanning
       document.getElementById('success-overlay').classList.remove('show');
       currentArtId = null;
       currentTargetIndex = null;
+      resetHold();
     }
     
     function goBack() {
-      // Go back to main app
       const path = window.location.pathname;
       const basePath = path.substring(0, path.lastIndexOf('/') + 1);
       window.location.href = basePath + 'index.html#/';
