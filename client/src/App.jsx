@@ -32,7 +32,7 @@ function AppContent() {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/" element={isOnboarded ? <Navigate to="/map" replace /> : <Navigate to="/onboarding" replace />} />
+          <Route path="/" element={isOnboarded ? <Home /> : <Navigate to="/onboarding" replace />} />
           <Route path="/map" element={<RequireOnboarding><Map /></RequireOnboarding>} />
           <Route path="/scanner" element={<RequireOnboarding><Scanner /></RequireOnboarding>} />
           <Route path="/leaderboard" element={<RequireOnboarding><Leaderboard /></RequireOnboarding>} />
