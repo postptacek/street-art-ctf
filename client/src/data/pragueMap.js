@@ -147,11 +147,11 @@ export function getPointValue(point) {
   return SIZES[point.size]?.points || 100
 }
 
-// Simple circle polygon around a point
-function createCircle(lat, lng, radius = 0.001, segments = 16) {
+// Create a hexagonal territory around a point
+function createHexagon(lat, lng, radius = 0.0008) {
   const points = []
-  for (let i = 0; i < segments; i++) {
-    const angle = (i / segments) * 2 * Math.PI
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * 2 * Math.PI + Math.PI / 6 // Start rotated for flat top
     points.push([
       lat + radius * Math.cos(angle),
       lng + radius * 1.6 * Math.sin(angle) // Adjust for lat/lng ratio
@@ -160,11 +160,75 @@ function createCircle(lat, lng, radius = 0.001, segments = 16) {
   return points
 }
 
+// Create an organic blob shape around a point
+function createBlob(lat, lng, radius = 0.0008, seed = 0) {
+  const points = []
+  const segments = 8
+  for (let i = 0; i < segments; i++) {
+    const angle = (i / segments) * 2 * Math.PI
+    // Add some variation based on seed for organic look
+    const variation = 0.7 + 0.3 * Math.sin(seed + i * 2.5)
+    const r = radius * variation
+    points.push([
+      lat + r * Math.cos(angle),
+      lng + r * 1.6 * Math.sin(angle)
+    ])
+  }
+  return points
+}
+
+// Calculate distance between two points in degrees
+function distance(p1, p2) {
+  const dx = p1[0] - p2[0]
+  const dy = (p1[1] - p2[1]) * 1.6 // Adjust for lat/lng ratio
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+// Cluster nearby points (DBSCAN-like)
+function clusterPoints(points, maxDistance = 0.003) {
+  const clusters = []
+  const visited = new Set()
+  
+  points.forEach((point, idx) => {
+    if (visited.has(idx)) return
+    
+    const cluster = [point]
+    visited.add(idx)
+    
+    // Find all nearby unvisited points
+    const queue = [point]
+    while (queue.length > 0) {
+      const current = queue.shift()
+      
+      points.forEach((other, otherIdx) => {
+        if (visited.has(otherIdx)) return
+        if (distance(current.location, other.location) <= maxDistance) {
+          visited.add(otherIdx)
+          cluster.push(other)
+          queue.push(other)
+        }
+      })
+    }
+    
+    clusters.push(cluster)
+  })
+  
+  return clusters
+}
+
+// Merge overlapping hexagons into one shape
+function mergeHexagons(hexagons) {
+  if (hexagons.length === 1) return hexagons[0]
+  
+  // For multiple hexagons, create a convex hull around all points
+  const allPoints = hexagons.flat()
+  return convexHull([...allPoints])
+}
+
 // Convex hull algorithm (Graham scan)
 function convexHull(points) {
   if (points.length < 3) return points
   
-  // Find bottom-most point (or left-most if tie)
   let start = 0
   for (let i = 1; i < points.length; i++) {
     if (points[i][0] < points[start][0] || 
@@ -173,18 +237,15 @@ function convexHull(points) {
     }
   }
   
-  // Swap to first position
   [points[0], points[start]] = [points[start], points[0]]
   const pivot = points[0]
   
-  // Sort by polar angle
   const sorted = points.slice(1).sort((a, b) => {
     const angleA = Math.atan2(a[1] - pivot[1], a[0] - pivot[0])
     const angleB = Math.atan2(b[1] - pivot[1], b[0] - pivot[0])
     return angleA - angleB
   })
   
-  // Build hull
   const hull = [pivot]
   for (const p of sorted) {
     while (hull.length > 1) {
@@ -200,15 +261,13 @@ function convexHull(points) {
   return hull
 }
 
-// Expand a polygon outward by a buffer distance
+// Expand a polygon outward
 function expandPolygon(polygon, buffer) {
   if (polygon.length < 3) return polygon
   
-  // Find centroid
   const cx = polygon.reduce((s, p) => s + p[0], 0) / polygon.length
   const cy = polygon.reduce((s, p) => s + p[1], 0) / polygon.length
   
-  // Expand each point outward from centroid
   return polygon.map(p => {
     const dx = p[0] - cx
     const dy = p[1] - cy
@@ -219,7 +278,7 @@ function expandPolygon(polygon, buffer) {
   })
 }
 
-// Main function: generate all team territories
+// Main function: generate all team territories with clustering
 export function generateTeamTerritories(artPoints) {
   const territories = {}
   TEAMS.forEach(team => territories[team] = [])
@@ -239,24 +298,41 @@ export function generateTeamTerritories(artPoints) {
     const points = teamPoints[team]
     if (points.length === 0) return
     
-    if (points.length === 1) {
-      // Single point: simple circle
-      const p = points[0]
-      territories[team].push({
-        polygon: createCircle(p.location[0], p.location[1], 0.0015, 12),
-        points: points
-      })
-    } else {
-      // Multiple points: convex hull with buffer
-      const coords = points.map(p => p.location)
-      const hull = convexHull([...coords])
-      const expanded = expandPolygon(hull, 0.001)
-      
-      territories[team].push({
-        polygon: expanded,
-        points: points
-      })
-    }
+    // Cluster nearby points (separate Vysocany from Palmovka etc)
+    const clusters = clusterPoints(points, 0.004) // ~400m max distance
+    
+    clusters.forEach((cluster, clusterIdx) => {
+      if (cluster.length === 1) {
+        // Single point: hexagon territory
+        const p = cluster[0]
+        const seed = p.location[0] * 1000 + p.location[1] * 1000
+        territories[team].push({
+          polygon: createBlob(p.location[0], p.location[1], 0.001, seed),
+          points: cluster
+        })
+      } else if (cluster.length === 2) {
+        // Two points: create connected blobs
+        const hexagons = cluster.map((p, i) => {
+          const seed = p.location[0] * 1000 + p.location[1] * 1000
+          return createBlob(p.location[0], p.location[1], 0.0008, seed)
+        })
+        const merged = mergeHexagons(hexagons)
+        const expanded = expandPolygon(merged, 0.0003)
+        territories[team].push({
+          polygon: expanded,
+          points: cluster
+        })
+      } else {
+        // Multiple points: convex hull with organic edge
+        const coords = cluster.map(p => p.location)
+        const hull = convexHull([...coords])
+        const expanded = expandPolygon(hull, 0.0006)
+        territories[team].push({
+          polygon: expanded,
+          points: cluster
+        })
+      }
+    })
   })
   
   return territories
