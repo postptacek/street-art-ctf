@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Street Art CTF - Scanner</title>
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      overflow: hidden; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000;
+    }
+    
+    #ui-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    
+    #top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .team-badge {
+      padding: 8px 16px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .team-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    
+    .back-btn {
+      width: 44px;
+      height: 44px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      border: none;
+      color: white;
+      font-size: 24px;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    
+    #target-info {
+      position: absolute;
+      top: 80px;
+      left: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 16px;
+      border: 2px solid #22c55e;
+      display: none;
+    }
+    
+    #target-info.found { display: block; }
+    
+    #target-info h2 {
+      color: white;
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+    
+    #target-info p {
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+    }
+    
+    #target-info .points {
+      color: #22c55e;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    #capture-btn {
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: white;
+      border: 4px solid #22c55e;
+      pointer-events: auto;
+      cursor: pointer;
+      display: none;
+      font-size: 32px;
+    }
+    
+    #capture-btn.ready { display: flex; align-items: center; justify-content: center; }
+    
+    #scanning-hint {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    /* Viewfinder frame */
+    #viewfinder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 280px;
+      height: 280px;
+      pointer-events: none;
+    }
+    
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255,255,255,0.5);
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    
+    .corner.found { border-color: #22c55e; transform: scale(1.1); }
+    
+    .corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; border-radius: 8px 0 0 0; }
+    .corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; border-radius: 0 8px 0 0; }
+    .corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; border-radius: 0 0 0 8px; }
+    .corner.br { bottom: 0; right: 0; border-left: none; border-top: none; border-radius: 0 0 8px 0; }
+    
+    /* Success overlay */
+    #success-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    
+    #success-overlay.show { display: flex; }
+    
+    #success-overlay .badge {
+      background: #22c55e;
+      color: white;
+      padding: 12px 32px;
+      border-radius: 30px;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    
+    #success-overlay .points-earned {
+      font-size: 48px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 30px;
+    }
+    
+    #success-overlay .done-btn {
+      background: white;
+      color: black;
+      border: none;
+      padding: 16px 48px;
+      border-radius: 16px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui-overlay">
+    <div id="top-bar">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <div class="team-badge">
+        <div class="team-dot" id="team-dot"></div>
+        <span id="team-name">Team</span>
+      </div>
+    </div>
+    
+    <div id="viewfinder">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+    </div>
+    
+    <div id="target-info">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 id="art-name">Street Art</h2>
+          <p id="art-area">Location</p>
+        </div>
+        <div class="points">+<span id="art-points">100</span></div>
+      </div>
+    </div>
+    
+    <p id="scanning-hint">Point camera at street art</p>
+    <button id="capture-btn" onclick="captureArt()">📸</button>
+  </div>
+  
+  <div id="success-overlay">
+    <div class="badge">✓ CAPTURED!</div>
+    <div class="points-earned">+<span id="earned-points">100</span> pts</div>
+    <button class="done-btn" onclick="goBack()">Done</button>
+  </div>
+
+  <a-scene 
+    mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 10;" 
+    color-space="sRGB" 
+    renderer="colorManagement: true" 
+    vr-mode-ui="enabled: false" 
+    device-orientation-permission-ui="enabled: false">
+    
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    
+    <!-- We'll create target entities dynamically or just listen for any target -->
+  </a-scene>
+
+  <script>
+    // Target Index to Art ID mapping
+    // This maps the MindAR target index to our art point IDs
+    const TARGET_TO_ART = {
+      0: 'art-34',  // Poděbrady 1
+      1: 'art-35',  // Poděbrady 2
+      2: 'art-36',  // Poděbrady 3
+      3: 'art-37',  // Poděbrady 4
+      4: 'art-38',  // Poděbrady 5
+      5: 'art-39',  // Poděbrady 6
+      6: 'art-40',  // Poděbrady 7
+      7: 'art-41',  // Poděbrady 8
+      8: 'art-42',  // Poděbrady 9
+      9: 'art-43',  // Poděbrady 10
+      10: 'art-44', // Poděbrady 11
+      11: 'art-45', // Poděbrady 12
+      // Add more mappings as needed
+    };
+    
+    // Art data (simplified - will come from parent app)
+    const ART_DATA = {
+      'art-34': { name: 'Poděbrady 1', area: 'Kolonáda', points: 100, hood: 'podebrady' },
+      'art-35': { name: 'Poděbrady 2', area: 'Kolonáda', points: 100, hood: 'podebrady' },
+      'art-36': { name: 'Poděbrady 3', area: 'Lázeňský park', points: 200, hood: 'podebrady' },
+      'art-37': { name: 'Poděbrady 4', area: 'Lázeňský park', points: 100, hood: 'podebrady' },
+      'art-38': { name: 'Poděbrady 5', area: 'Nábřeží', points: 50, hood: 'podebrady' },
+      'art-39': { name: 'Poděbrady 6', area: 'Nábřeží', points: 200, hood: 'podebrady' },
+      'art-40': { name: 'Poděbrady 7', area: 'Náměstí', points: 100, hood: 'podebrady' },
+      'art-41': { name: 'Poděbrady 8', area: 'Náměstí', points: 25, hood: 'podebrady' },
+      'art-42': { name: 'Poděbrady 9', area: 'Poděbrady', points: 100, hood: 'podebrady' },
+      'art-43': { name: 'Poděbrady 10', area: 'Poděbrady', points: 200, hood: 'podebrady' },
+      'art-44': { name: 'Poděbrady 11', area: 'Poděbrady', points: 100, hood: 'podebrady' },
+      'art-45': { name: 'Poděbrady 12', area: 'Poděbrady', points: 50, hood: 'podebrady' },
+    };
+    
+    let currentTargetIndex = null;
+    let currentArtId = null;
+    let playerTeam = localStorage.getItem('streetart-ctf-player') ? 
+      JSON.parse(localStorage.getItem('streetart-ctf-player')).team : 'red';
+    
+    // Set team color
+    const teamColors = { red: '#ff6b6b', blue: '#4dabf7' };
+    document.getElementById('team-dot').style.backgroundColor = teamColors[playerTeam] || '#ff6b6b';
+    document.getElementById('team-name').textContent = playerTeam ? playerTeam.charAt(0).toUpperCase() + playerTeam.slice(1) : 'Team';
+    
+    const sceneEl = document.querySelector('a-scene');
+    const targetInfo = document.getElementById('target-info');
+    const captureBtn = document.getElementById('capture-btn');
+    const scanningHint = document.getElementById('scanning-hint');
+    const corners = document.querySelectorAll('.corner');
+    
+    // Add target entities for all possible targets
+    sceneEl.addEventListener('loaded', () => {
+      // Create target entities for indices 0-20
+      for (let i = 0; i <= 20; i++) {
+        const entity = document.createElement('a-entity');
+        entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
+        entity.setAttribute('data-target-index', i);
+        sceneEl.appendChild(entity);
+      }
+      console.log('✅ AR Scanner ready - 21 targets loaded');
+    });
+    
+    sceneEl.addEventListener('targetFound', (event) => {
+      const targetIndex = parseInt(event.target.getAttribute('data-target-index'));
+      console.log('🎯 Target found! Index:', targetIndex);
+      
+      currentTargetIndex = targetIndex;
+      currentArtId = TARGET_TO_ART[targetIndex];
+      
+      if (currentArtId && ART_DATA[currentArtId]) {
+        const art = ART_DATA[currentArtId];
+        document.getElementById('art-name').textContent = art.name;
+        document.getElementById('art-area').textContent = art.area + ' • ' + art.hood;
+        document.getElementById('art-points').textContent = art.points;
+        
+        targetInfo.classList.add('found');
+        captureBtn.classList.add('ready');
+        scanningHint.textContent = 'Hold steady and capture!';
+        
+        corners.forEach(c => c.classList.add('found'));
+      } else {
+        // Unknown target
+        document.getElementById('art-name').textContent = `Target #${targetIndex + 1}`;
+        document.getElementById('art-area').textContent = 'Unknown location';
+        document.getElementById('art-points').textContent = '100';
+        
+        targetInfo.classList.add('found');
+        captureBtn.classList.add('ready');
+        corners.forEach(c => c.classList.add('found'));
+      }
+    });
+    
+    sceneEl.addEventListener('targetLost', (event) => {
+      console.log('Target lost');
+      currentTargetIndex = null;
+      currentArtId = null;
+      
+      targetInfo.classList.remove('found');
+      captureBtn.classList.remove('ready');
+      scanningHint.textContent = 'Point camera at street art';
+      corners.forEach(c => c.classList.remove('found'));
+    });
+    
+    function captureArt() {
+      if (!currentArtId) return;
+      
+      const art = ART_DATA[currentArtId] || { points: 100 };
+      
+      // Save capture to localStorage (will sync to Firebase via main app)
+      const captures = JSON.parse(localStorage.getItem('streetart-ctf-captures') || '{}');
+      captures[currentArtId] = playerTeam;
+      localStorage.setItem('streetart-ctf-captures', JSON.stringify(captures));
+      
+      // Update player score
+      const playerData = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
+      playerData.score = (playerData.score || 0) + art.points;
+      playerData.capturedArt = [...(playerData.capturedArt || []), currentArtId];
+      localStorage.setItem('streetart-ctf-player', JSON.stringify(playerData));
+      
+      // Show success
+      document.getElementById('earned-points').textContent = art.points;
+      document.getElementById('success-overlay').classList.add('show');
+      
+      console.log('✅ Captured:', currentArtId, 'for', playerTeam);
+    }
+    
+    function goBack() {
+      // Go back to main app
+      window.location.href = window.location.origin + window.location.pathname.replace('ar-scanner.html', '') + '#/scanner';
+    }
+  </script>
+</body>
+</html>

@@ -580,6 +580,16 @@ function Scanner() {
           <p className="text-white/40 text-xs">
             {nearbyArt ? 'Hold to capture' : 'Get closer to street art'}
           </p>
+          
+          {/* AR Scanner button */}
+          <motion.button
+            onClick={() => window.location.href = '/ar-scanner.html'}
+            className="mt-4 px-6 py-3 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-400 text-sm font-medium flex items-center gap-2"
+            whileTap={{ scale: 0.95 }}
+          >
+            <Target size={18} />
+            Open AR Scanner (MindAR)
+          </motion.button>
         </div>
       )}
       
