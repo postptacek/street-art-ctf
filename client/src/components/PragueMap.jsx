@@ -229,7 +229,7 @@ function PointPanel({ point, onClose }) {
                   className="text-xs px-2 py-1 rounded-full"
                   style={{ backgroundColor: `${color}20`, color }}
                 >
-                  Captured by {point.capturedBy}
+                  Team {point.capturedBy}
                 </span>
               ) : (
                 <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
@@ -237,6 +237,14 @@ function PointPanel({ point, onClose }) {
                 </span>
               )}
             </div>
+            
+            {/* Captured by player info */}
+            {point.capturedByPlayer && (
+              <div className="mt-3 pt-3 border-t border-white/10">
+                <p className="text-xs text-white/40">Last captured by</p>
+                <p className="text-sm font-medium text-white mt-0.5">{point.capturedByPlayer}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -319,7 +327,7 @@ export default function PragueMap() {
   // Map settings
   const [showSettings, setShowSettings] = useState(false)
   const [showLines, setShowLines] = useState(true)
-  const [territoryMode, setTerritoryMode] = useState('circles')
+  const [territoryMode, setTerritoryMode] = useState('off')
   
   // Sync with context
   useEffect(() => {

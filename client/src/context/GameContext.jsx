@@ -119,7 +119,11 @@ export function GameProvider({ children }) {
           firebaseStatuses[doc.id] = data.status
         }
         if (data.capturedBy) {
-          firebaseCaptures[doc.id] = data.capturedBy
+          firebaseCaptures[doc.id] = {
+            team: data.capturedBy,
+            playerName: data.playerName || 'Unknown',
+            capturedAt: data.capturedAt?.toDate?.() || null
+          }
           const artPoint = ART_POINTS.find(p => p.id === doc.id)
           allCaptures.push({
             id: doc.id,
@@ -143,7 +147,7 @@ export function GameProvider({ children }) {
         snapshot.docChanges().forEach(change => {
           if (change.type === 'added' || change.type === 'modified') {
             const data = change.doc.data()
-            const prevOwner = prevCapturesRef.current[change.doc.id]
+            const prevOwner = prevCapturesRef.current[change.doc.id]?.team
             
             // Show notification if territory changed hands
             if (data.capturedBy && prevOwner !== data.capturedBy) {
@@ -170,12 +174,17 @@ export function GameProvider({ children }) {
       prevCapturesRef.current = firebaseCaptures
       
       // Merge Firebase captures and status with local art points
-      setArtPoints(ART_POINTS.map(point => ({
-        ...point,
-        capturedBy: firebaseCaptures[point.id] || null,
-        // Use Firebase status if set, otherwise use static status
-        status: firebaseStatuses[point.id] || point.status
-      })))
+      setArtPoints(ART_POINTS.map(point => {
+        const capture = firebaseCaptures[point.id]
+        return {
+          ...point,
+          capturedBy: capture?.team || null,
+          capturedByPlayer: capture?.playerName || null,
+          capturedAt: capture?.capturedAt || null,
+          // Use Firebase status if set, otherwise use static status
+          status: firebaseStatuses[point.id] || point.status
+        }
+      }))
       
       // Also save to localStorage as backup
       saveToStorage(STORAGE_KEYS.captures, firebaseCaptures)
