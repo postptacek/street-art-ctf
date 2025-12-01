@@ -18,10 +18,10 @@ function generateRandomName() {
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const { player, joinTeam, setPlayerName } = useGame()
-  const [step, setStep] = useState(0) // 0: intro, 1: name, 2: team, 3: tutorial
-  const [name, setName] = useState(player.name || '')
-  const [selectedTeam, setSelectedTeam] = useState(null)
+  const { player, joinTeam, setPlayerName, allPlayers } = useGame()
+  const [step, setStep] = useState(0) // 0: intro, 1: name, 2: tutorial (team auto-assigned)
+  const [name, setName] = useState(() => player.name && player.name !== 'Street Artist' ? player.name : generateRandomName())
+  const [assignedTeam, setAssignedTeam] = useState(null)
   
   // Skip if already onboarded
   useEffect(() => {
@@ -30,6 +30,15 @@ export default function Onboarding() {
     }
   }, [])
   
+  // Auto-assign team based on player count balance
+  useEffect(() => {
+    const redCount = allPlayers.filter(p => p.team === 'red').length
+    const blueCount = allPlayers.filter(p => p.team === 'blue').length
+    // Assign to team with fewer players, or random if equal
+    const team = redCount < blueCount ? 'red' : blueCount < redCount ? 'blue' : (Math.random() < 0.5 ? 'red' : 'blue')
+    setAssignedTeam(team)
+  }, [allPlayers])
+  
   const handleGenerateName = () => {
     setName(generateRandomName())
   }
@@ -37,11 +46,12 @@ export default function Onboarding() {
   const handleNext = () => {
     if (step === 1 && name.trim()) {
       setPlayerName(name.trim())
+      // Auto-join the balanced team
+      if (assignedTeam) {
+        joinTeam(assignedTeam)
+      }
     }
-    if (step === 2 && selectedTeam) {
-      joinTeam(selectedTeam)
-    }
-    if (step === 3) {
+    if (step === 2) {
       navigate('/map')
       return
     }
@@ -49,8 +59,7 @@ export default function Onboarding() {
   }
   
   const canProceed = () => {
-    if (step === 1) return name.trim().length >= 2
-    if (step === 2) return selectedTeam !== null
+    if (step === 1) return name.trim().length >= 2 && assignedTeam
     return true
   }
 
@@ -58,7 +67,7 @@ export default function Onboarding() {
     <div className="h-screen bg-[#0a0a0f] flex flex-col overflow-hidden">
       {/* Progress dots */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        {[0, 1, 2, 3].map(i => (
+        {[0, 1, 2].map(i => (
           <div 
             key={i}
             className={`h-1.5 rounded-sm transition-all duration-300 ${
@@ -159,66 +168,8 @@ export default function Onboarding() {
           </motion.div>
         )}
 
-        {/* Step 2: Team */}
+        {/* Step 2: Tutorial (team auto-assigned) */}
         {step === 2 && (
-          <motion.div
-            key="team"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
-          >
-            <h1 className="text-2xl font-bold mb-2">Choose your team</h1>
-            <p className="text-white/40 mb-8">Fight for territory together</p>
-            
-            <div className="flex gap-4 w-full max-w-sm">
-              {/* Red Team */}
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedTeam('red')}
-                className={`flex-1 p-5 rounded-lg border-2 transition-all ${
-                  selectedTeam === 'red' 
-                    ? 'bg-red-500/20 border-red-500' 
-                    : 'bg-white/5 border-white/10 hover:border-red-500/50'
-                }`}
-              >
-                <div className={`w-14 h-14 mx-auto rounded-lg flex items-center justify-center mb-3 ${
-                  selectedTeam === 'red' ? 'bg-red-500' : 'bg-red-500/30'
-                }`}>
-                  <div className="w-6 h-6 rounded-full bg-white/90" />
-                </div>
-                <div className="font-bold text-lg mb-1" style={{ color: '#ff6b6b' }}>
-                  Red Team
-                </div>
-                <div className="text-xs text-white/40">The Flames</div>
-              </motion.button>
-              
-              {/* Blue Team */}
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedTeam('blue')}
-                className={`flex-1 p-5 rounded-lg border-2 transition-all ${
-                  selectedTeam === 'blue' 
-                    ? 'bg-blue-500/20 border-blue-500' 
-                    : 'bg-white/5 border-white/10 hover:border-blue-500/50'
-                }`}
-              >
-                <div className={`w-14 h-14 mx-auto rounded-lg flex items-center justify-center mb-3 ${
-                  selectedTeam === 'blue' ? 'bg-blue-500' : 'bg-blue-500/30'
-                }`}>
-                  <div className="w-6 h-6 rounded-full bg-white/90" />
-                </div>
-                <div className="font-bold text-lg mb-1" style={{ color: '#4dabf7' }}>
-                  Blue Team
-                </div>
-                <div className="text-xs text-white/40">The Waves</div>
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Step 3: Tutorial */}
-        {step === 3 && (
           <motion.div
             key="tutorial"
             initial={{ opacity: 0, y: 20 }}
@@ -232,9 +183,9 @@ export default function Onboarding() {
             
             <h1 className="text-2xl font-bold mb-2">Welcome, {name}!</h1>
             <p className="text-white/40 mb-8">
-              You're on Team <span style={{ color: selectedTeam === 'red' ? '#ff6b6b' : '#4dabf7' }} className="font-bold">
-                {selectedTeam === 'red' ? 'Red' : 'Blue'}
-              </span>
+              You've been assigned to Team <span style={{ color: assignedTeam === 'red' ? '#ff6b6b' : '#4dabf7' }} className="font-bold">
+                {assignedTeam === 'red' ? 'Red' : 'Blue'}
+              </span> for balance
             </p>
             
             <div className="w-full max-w-xs space-y-3 mb-8">
@@ -284,7 +235,7 @@ export default function Onboarding() {
               : 'bg-white/10 text-white/30 cursor-not-allowed'
           }`}
         >
-          {step === 3 ? "Let's Go" : 'Continue'}
+          {step === 2 ? "Let's Go" : 'Continue'}
           <ChevronRight size={20} />
         </motion.button>
       </div>

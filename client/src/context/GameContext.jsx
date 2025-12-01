@@ -271,11 +271,26 @@ export function GameProvider({ children }) {
     blue: Math.max(globalTeamScores.blue, calculatedScores.blue)
   }
 
-  // Join a team
-  const joinTeam = useCallback((teamColor) => {
+  // Join a team and sync to Firebase
+  const joinTeam = useCallback(async (teamColor) => {
     if (!TEAMS.includes(teamColor)) return
     setPlayer(prev => ({ ...prev, team: teamColor }))
-  }, [])
+    
+    // Sync player to Firebase for team count tracking
+    if (isOnline && player.id) {
+      try {
+        await setDoc(doc(db, PLAYERS_COLLECTION, player.id), {
+          name: player.name,
+          team: teamColor,
+          score: player.score || 0,
+          captures: player.captureCount || 0,
+          joinedAt: new Date()
+        }, { merge: true })
+      } catch (err) {
+        console.warn('Failed to sync player to Firebase:', err)
+      }
+    }
+  }, [isOnline, player.id, player.name, player.score, player.captureCount])
   
   // Set player name
   const setPlayerName = useCallback((name) => {
