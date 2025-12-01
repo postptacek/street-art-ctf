@@ -9,7 +9,15 @@ const GameContext = createContext(null)
 // Storage keys (for local backup)
 const STORAGE_KEYS = {
   player: 'streetart-ctf-player',
-  captures: 'streetart-ctf-captures'
+  captures: 'streetart-ctf-captures',
+  discoveries: 'streetart-discoveries', // Personal discoveries (permanent)
+  gameMode: 'streetart-game-mode' // 'solo' or 'team'
+}
+
+// Game modes
+export const GAME_MODES = {
+  SOLO: 'solo',    // Focus on discovery, no teams
+  TEAM: 'team'     // CTF multiplayer with territories
 }
 
 // Firestore collections (matching ar-scanner.html)
@@ -48,11 +56,21 @@ export function GameProvider({ children }) {
   const [firebaseUser, setFirebaseUser] = useState(null)
   const [isOnline, setIsOnline] = useState(true)
   
+  // Game mode - 'solo' (default) or 'team'
+  const [gameMode, setGameModeState] = useState(() => 
+    loadFromStorage(STORAGE_KEYS.gameMode, GAME_MODES.SOLO)
+  )
+  
+  // Personal discoveries - permanent, independent of team control
+  const [discoveries, setDiscoveries] = useState(() => 
+    loadFromStorage(STORAGE_KEYS.discoveries, {})
+  )
+  
   // Player state - persisted with game stats
   const [player, setPlayer] = useState(() => loadFromStorage(STORAGE_KEYS.player, {
     id: `player-${Date.now()}`,
     name: 'Street Artist',
-    team: null,
+    team: null, // Only used in team mode
     score: 0,
     capturedArt: [],
     // Game stats
@@ -63,7 +81,10 @@ export function GameProvider({ children }) {
     lastCaptureLocation: null,
     captureCount: 0,
     recaptureCount: 0,
-    firstCaptureCount: 0
+    firstCaptureCount: 0,
+    // Discovery stats (for solo mode)
+    discoveryCount: 0,
+    uniqueAreasVisited: []
   }))
   
   // Art points state - merged with real data
@@ -502,6 +523,71 @@ export function GameProvider({ children }) {
     setScanResult(null)
   }, [])
 
+  // Set game mode (solo/team)
+  const setGameMode = useCallback((mode) => {
+    if (mode === GAME_MODES.SOLO || mode === GAME_MODES.TEAM) {
+      setGameModeState(mode)
+      saveToStorage(STORAGE_KEYS.gameMode, mode)
+    }
+  }, [])
+
+  // Discover art (for solo mode - permanent personal achievement)
+  const discoverArt = useCallback(async (artId, location = null) => {
+    const art = artPoints.find(a => a.id === artId)
+    if (!art) return { success: false, message: 'Art not found' }
+    
+    // Check if already discovered
+    if (discoveries[artId]) {
+      return { success: false, message: 'Already discovered!', alreadyDiscovered: true }
+    }
+    
+    const now = new Date()
+    const discoveryData = {
+      artId,
+      artName: art.name,
+      area: art.area,
+      size: art.size,
+      points: getPointValue(art),
+      discoveredAt: now.toISOString(),
+      location: location || art.location
+    }
+    
+    // Update discoveries
+    const newDiscoveries = { ...discoveries, [artId]: discoveryData }
+    setDiscoveries(newDiscoveries)
+    saveToStorage(STORAGE_KEYS.discoveries, newDiscoveries)
+    
+    // Update player stats
+    const uniqueAreas = new Set([...player.uniqueAreasVisited, art.area])
+    setPlayer(prev => ({
+      ...prev,
+      score: prev.score + discoveryData.points,
+      discoveryCount: prev.discoveryCount + 1,
+      uniqueAreasVisited: [...uniqueAreas],
+      lastCaptureTime: now.getTime(),
+      lastCaptureLocation: location || art.location
+    }))
+    
+    // Sync to Firebase
+    if (isOnline && player.id) {
+      try {
+        await setDoc(doc(db, 'streetart-discoveries', `${player.id}_${artId}`), {
+          ...discoveryData,
+          playerId: player.id,
+          playerName: player.name
+        })
+      } catch (err) {
+        console.warn('Failed to sync discovery to Firebase:', err)
+      }
+    }
+    
+    return { 
+      success: true, 
+      message: 'Discovered!',
+      discovery: discoveryData
+    }
+  }, [artPoints, discoveries, player, isOnline])
+
   // Reset all data (for testing)
   const resetAll = useCallback(async () => {
     localStorage.removeItem(STORAGE_KEYS.player)
@@ -543,10 +629,17 @@ export function GameProvider({ children }) {
     isOnline,
     teams: TEAMS,
     
+    // Game mode
+    gameMode,
+    discoveries,
+    discoveryCount: Object.keys(discoveries).length,
+    
     // Actions
+    setGameMode,
     joinTeam,
     setPlayerName,
     captureArt,
+    discoverArt,
     startCapture,
     confirmCapture,
     cancelCapture,
@@ -555,7 +648,8 @@ export function GameProvider({ children }) {
     resetAll,
     
     // Helpers
-    TEAM_COLORS
+    TEAM_COLORS,
+    GAME_MODES
   }
 
   return (

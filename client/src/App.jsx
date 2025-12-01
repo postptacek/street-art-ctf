@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { GameProvider, useGame, TEAM_COLORS } from './context/GameContext'
+import { GameProvider, useGame, TEAM_COLORS, GAME_MODES } from './context/GameContext'
 import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
 import Map from './pages/Map'
@@ -173,10 +173,19 @@ function CaptureNotification() {
   )
 }
 
+// Check if user has completed onboarding
+function checkOnboarded(player, gameMode) {
+  const hasName = player.name && player.name !== 'Street Artist'
+  const hasMode = gameMode === GAME_MODES.SOLO || gameMode === GAME_MODES.TEAM
+  // Solo mode doesn't need a team, team mode does
+  const hasTeamIfNeeded = gameMode === GAME_MODES.SOLO || player.team
+  return hasName && hasMode && hasTeamIfNeeded
+}
+
 // Wrapper to check if user is onboarded
 function RequireOnboarding({ children }) {
-  const { player } = useGame()
-  const isOnboarded = player.team && player.name && player.name !== 'Street Artist'
+  const { player, gameMode } = useGame()
+  const isOnboarded = checkOnboarded(player, gameMode)
   
   if (!isOnboarded) {
     return <Navigate to="/onboarding" replace />
@@ -187,8 +196,8 @@ function RequireOnboarding({ children }) {
 
 function AppContent() {
   const location = useLocation()
-  const { player } = useGame()
-  const isOnboarded = player.team && player.name && player.name !== 'Street Artist'
+  const { player, gameMode } = useGame()
+  const isOnboarded = checkOnboarded(player, gameMode)
   const hideNav = location.pathname === '/onboarding' || location.pathname === '/admin'
   
   return (
