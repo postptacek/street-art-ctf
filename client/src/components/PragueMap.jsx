@@ -20,7 +20,7 @@ import {
   getTeamColor,
   getPointValue
 } from '../data/pragueMap'
-import { X, MapPin, Crosshair, Sparkles, Code, RotateCcw, Ghost, Train, Circle } from 'lucide-react'
+import { X, MapPin, Crosshair, Sparkles, Code, RotateCcw, Ghost, Train, Circle, Settings, Square, Hexagon, Minus } from 'lucide-react'
 
 // Fix Leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl
@@ -247,6 +247,67 @@ function PointPanel({ point, onClose }) {
 // Team cycle for dev mode (null = unclaimed, then cycle through teams)
 const TEAM_CYCLE = [null, ...TEAMS]
 
+// Territory modes
+const TERRITORY_MODES = [
+  { id: 'off', label: 'Off', icon: Minus },
+  { id: 'circles', label: 'Circles', icon: Circle },
+  { id: 'squares', label: 'Squares', icon: Square },
+  { id: 'hexagons', label: 'Hexagons', icon: Hexagon },
+]
+
+// Generate territory shapes around captured points
+const generateTerritoryShapes = (points, mode) => {
+  if (mode === 'off') return []
+  
+  const capturedPoints = points.filter(p => p.capturedBy && p.status !== 'ghost')
+  const shapes = []
+  
+  capturedPoints.forEach(point => {
+    const [lat, lng] = point.location
+    const radius = 0.002 // ~200m radius
+    const team = point.capturedBy
+    
+    if (mode === 'circles') {
+      // Circle approximation with many sides
+      const sides = 32
+      const coords = []
+      for (let i = 0; i < sides; i++) {
+        const angle = (i / sides) * 2 * Math.PI
+        coords.push([
+          lat + radius * Math.cos(angle),
+          lng + radius * Math.sin(angle) * 1.5 // Adjust for lat/lng ratio
+        ])
+      }
+      shapes.push({ team, coords, pointId: point.id })
+    } else if (mode === 'squares') {
+      const r = radius * 0.8
+      shapes.push({
+        team,
+        coords: [
+          [lat - r, lng - r * 1.5],
+          [lat - r, lng + r * 1.5],
+          [lat + r, lng + r * 1.5],
+          [lat + r, lng - r * 1.5],
+        ],
+        pointId: point.id
+      })
+    } else if (mode === 'hexagons') {
+      const r = radius * 0.9
+      const coords = []
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * 2 * Math.PI + Math.PI / 6
+        coords.push([
+          lat + r * Math.cos(angle),
+          lng + r * Math.sin(angle) * 1.5
+        ])
+      }
+      shapes.push({ team, coords, pointId: point.id })
+    }
+  })
+  
+  return shapes
+}
+
 // Main Prague Map component
 export default function PragueMap() {
   const { player, artPoints, captureArt } = useGame()
@@ -254,6 +315,11 @@ export default function PragueMap() {
   const [devMode, setDevMode] = useState(false)
   const [localArtPoints, setLocalArtPoints] = useState(artPoints)
   const [currentHood, setCurrentHood] = useState(HOODS.vysocany)
+  
+  // Map settings
+  const [showSettings, setShowSettings] = useState(false)
+  const [showLines, setShowLines] = useState(true)
+  const [territoryMode, setTerritoryMode] = useState('circles')
   
   // Sync with context
   useEffect(() => {
@@ -289,6 +355,11 @@ export default function PragueMap() {
   const teamLines = useMemo(() => {
     return generateTeamLines(displayPoints)
   }, [displayPoints])
+  
+  // Generate territory shapes
+  const territoryShapes = useMemo(() => {
+    return generateTerritoryShapes(displayPoints, territoryMode)
+  }, [displayPoints, territoryMode])
   
   // Calculate scores
   const teamScores = useMemo(() => {
@@ -371,8 +442,23 @@ export default function PragueMap() {
         ))}
       </div>
 
-      {/* Dev Mode Controls */}
+      {/* Map Controls (right side) */}
       <div className="absolute top-10 right-4 z-[1000] flex flex-col gap-2">
+        {/* Settings Button */}
+        <motion.button
+          onClick={() => setShowSettings(!showSettings)}
+          className={`w-10 h-10 rounded-xl backdrop-blur-sm border flex items-center justify-center transition-colors ${
+            showSettings 
+              ? 'bg-white/20 border-white/30 text-white' 
+              : 'bg-black/80 border-white/10 text-white/50'
+          }`}
+          whileTap={{ scale: 0.95 }}
+          title="Map Settings"
+        >
+          <Settings size={18} />
+        </motion.button>
+        
+        {/* Dev Mode */}
         <motion.button
           onClick={() => setDevMode(!devMode)}
           className={`w-10 h-10 rounded-xl backdrop-blur-sm border flex items-center justify-center transition-colors ${
@@ -399,6 +485,63 @@ export default function PragueMap() {
           </motion.button>
         )}
       </div>
+      
+      {/* Settings Panel */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="absolute top-24 right-4 z-[1000] w-48 bg-black/90 backdrop-blur-xl rounded-xl border border-white/10 overflow-hidden"
+          >
+            <div className="p-3 border-b border-white/10">
+              <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider">Display</h3>
+            </div>
+            
+            {/* Show Lines Toggle */}
+            <div className="p-3 border-b border-white/5">
+              <button
+                onClick={() => setShowLines(!showLines)}
+                className="w-full flex items-center justify-between"
+              >
+                <span className="text-sm text-white/70">Show Lines</span>
+                <div className={`w-10 h-5 rounded-full transition-colors ${showLines ? 'bg-blue-500' : 'bg-white/20'}`}>
+                  <motion.div 
+                    className="w-4 h-4 bg-white rounded-full mt-0.5"
+                    animate={{ x: showLines ? 22 : 2 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                </div>
+              </button>
+            </div>
+            
+            {/* Territory Mode */}
+            <div className="p-3">
+              <p className="text-xs text-white/40 mb-2">Territory Style</p>
+              <div className="grid grid-cols-2 gap-1">
+                {TERRITORY_MODES.map(mode => {
+                  const Icon = mode.icon
+                  return (
+                    <button
+                      key={mode.id}
+                      onClick={() => setTerritoryMode(mode.id)}
+                      className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs transition-colors ${
+                        territoryMode === mode.id
+                          ? 'bg-white/20 text-white'
+                          : 'bg-white/5 text-white/50 hover:bg-white/10'
+                      }`}
+                    >
+                      <Icon size={12} />
+                      {mode.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Dev Mode Banner */}
       <AnimatePresence>
@@ -462,8 +605,23 @@ export default function PragueMap() {
           />
         ))}
         
+        {/* Territory shapes - rendered below lines and markers */}
+        {territoryShapes.map((shape, idx) => (
+          <Polygon
+            key={`territory-${shape.pointId}`}
+            positions={shape.coords}
+            pathOptions={{
+              color: getTeamColor(shape.team),
+              fillColor: getTeamColor(shape.team),
+              fillOpacity: 0.15,
+              weight: 1,
+              opacity: 0.4
+            }}
+          />
+        ))}
+        
         {/* Team connection lines - connects nearby captured points */}
-        {Object.entries(teamLines).map(([team, lines]) => 
+        {showLines && Object.entries(teamLines).map(([team, lines]) => 
           lines.map((line, idx) => (
             <Polyline
               key={`${team}-line-${idx}`}
