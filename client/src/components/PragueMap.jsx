@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapContainer, TileLayer, Polygon, CircleMarker, Polyline, useMap, useMapEvents, Tooltip } from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, CircleMarker, Polyline, Marker, useMap, useMapEvents, Tooltip } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useGame } from '../context/GameContext'
@@ -29,6 +29,30 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 })
+
+// Create custom chumper icons for different team states
+const createChumperIcon = (capturedBy, isGhost = false) => {
+  // Determine the CSS filter based on capture state
+  let filter = ''
+  if (isGhost) {
+    filter = 'grayscale(100%) opacity(0.5)'
+  } else if (!capturedBy) {
+    // Uncaptured - black and white (desaturated)
+    filter = 'grayscale(100%)'
+  } else if (capturedBy === 'red') {
+    // Red team - shift hue (blue to red is roughly 180 degrees)
+    filter = 'hue-rotate(160deg) saturate(1.5)'
+  }
+  // Blue team - no filter needed (original image is blue)
+  
+  return L.divIcon({
+    html: `<img src="/chumper.png" style="width: 32px; height: 32px; filter: ${filter};" />`,
+    className: 'chumper-marker',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16]
+  })
+}
 
 // Zoom display component for dev mode
 function ZoomDisplay({ devMode }) {
@@ -456,23 +480,14 @@ export default function PragueMap() {
         
         {/* Art point markers - rendered last (above territories) */}
         {displayPoints.map(point => {
-          const color = point.capturedBy ? getTeamColor(point.capturedBy) : '#ffffff'
-          const isCaptured = !!point.capturedBy
           const isGhost = point.status === 'ghost'
+          const icon = createChumperIcon(point.capturedBy, isGhost)
           
           return (
-            <CircleMarker
+            <Marker
               key={point.id}
-              center={point.location}
-              radius={8}
-              pathOptions={{
-                color: devMode ? '#a855f7' : isGhost ? '#6b7280' : color,
-                fillColor: isCaptured ? color : isGhost ? '#374151' : '#0a0a0f',
-                fillOpacity: isGhost ? 0.4 : (isCaptured ? 0.8 : 1),
-                weight: devMode ? 3 : 2,
-                opacity: isGhost ? 0.5 : 1,
-                dashArray: isGhost ? '3, 3' : undefined
-              }}
+              position={point.location}
+              icon={icon}
               eventHandlers={{
                 click: (e) => {
                   e.originalEvent.stopPropagation()

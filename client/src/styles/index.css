@@ -335,3 +335,17 @@ input:focus, textarea:focus {
 .leaflet-interactive.capture-pulse {
   animation: capture-pulse 2s ease-in-out infinite;
 }
+
+/* Chumper marker styling - remove default Leaflet divIcon background */
+.chumper-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.chumper-marker img {
+  transition: filter 0.3s ease, transform 0.2s ease;
+}
+
+.chumper-marker:hover img {
+  transform: scale(1.2);
+}
