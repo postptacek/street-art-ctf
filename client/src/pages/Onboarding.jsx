@@ -19,7 +19,7 @@ function generateRandomName() {
 export default function Onboarding() {
   const navigate = useNavigate()
   const { player, joinTeam, setPlayerName, allPlayers } = useGame()
-  const [step, setStep] = useState(0) // 0: intro, 1: name, 2: tutorial (team auto-assigned)
+  const [step, setStep] = useState(0) // 0: intro, 1: name, 2: team reveal, 3: tutorial
   const [name, setName] = useState(() => player.name && player.name !== 'Street Artist' ? player.name : generateRandomName())
   const [assignedTeam, setAssignedTeam] = useState(null)
   
@@ -51,7 +51,7 @@ export default function Onboarding() {
         joinTeam(assignedTeam)
       }
     }
-    if (step === 2) {
+    if (step === 3) {
       navigate('/map')
       return
     }
@@ -62,12 +62,15 @@ export default function Onboarding() {
     if (step === 1) return name.trim().length >= 2 && assignedTeam
     return true
   }
+  
+  const teamColor = assignedTeam === 'red' ? '#ff6b6b' : '#4dabf7'
+  const teamName = assignedTeam === 'red' ? 'Red' : 'Blue'
 
   return (
     <div className="h-screen bg-[#0a0a0f] flex flex-col overflow-hidden">
       {/* Progress dots */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        {[0, 1, 2].map(i => (
+        {[0, 1, 2, 3].map(i => (
           <div 
             key={i}
             className={`h-1.5 rounded-sm transition-all duration-300 ${
@@ -168,8 +171,80 @@ export default function Onboarding() {
           </motion.div>
         )}
 
-        {/* Step 2: Tutorial (team auto-assigned) */}
+        {/* Step 2: Team Reveal - Full Screen */}
         {step === 2 && (
+          <motion.div
+            key="team-reveal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex-1 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden"
+          >
+            {/* Background glow */}
+            <motion.div 
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 0.15 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            >
+              <div 
+                className="w-[600px] h-[600px] rounded-full blur-3xl"
+                style={{ backgroundColor: teamColor }}
+              />
+            </motion.div>
+            
+            {/* Content */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              className="relative z-10"
+            >
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-white/50 text-lg mb-2"
+              >
+                Welcome, {name}!
+              </motion.p>
+              
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-white/40 text-sm mb-6"
+              >
+                You've been assigned to
+              </motion.p>
+              
+              <motion.div
+                initial={{ scale: 0, rotate: -10 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.8, type: 'spring', stiffness: 200 }}
+              >
+                <h1 
+                  className="text-6xl font-bold mb-4"
+                  style={{ color: teamColor }}
+                >
+                  Team {teamName}
+                </h1>
+              </motion.div>
+              
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+                className="text-white/30 text-sm"
+              >
+                {assignedTeam === 'red' ? 'The Flames 🔥' : 'The Waves 🌊'}
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Step 3: Tutorial */}
+        {step === 3 && (
           <motion.div
             key="tutorial"
             initial={{ opacity: 0, y: 20 }}
@@ -177,47 +252,63 @@ export default function Onboarding() {
             exit={{ opacity: 0, y: -20 }}
             className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
           >
-            <div className="mb-4">
-              <ChumpAnimation size={100} />
-            </div>
+            <h1 className="text-2xl font-bold mb-2">How to Play</h1>
+            <p className="text-white/40 mb-8 text-sm">It's simple!</p>
             
-            <h1 className="text-2xl font-bold mb-2">Welcome, {name}!</h1>
-            <p className="text-white/40 mb-8">
-              You've been assigned to Team <span style={{ color: assignedTeam === 'red' ? '#ff6b6b' : '#4dabf7' }} className="font-bold">
-                {assignedTeam === 'red' ? 'Red' : 'Blue'}
-              </span> for balance
-            </p>
-            
-            <div className="w-full max-w-xs space-y-3 mb-8">
-              <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-left">
-                <div className="font-medium mb-1 flex items-center gap-2">
-                  <Target size={14} className="text-white/50" />
-                  How to Play
+            <div className="w-full max-w-sm space-y-4">
+              {/* Step 1 */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-start gap-4 p-5 rounded-2xl bg-white/5 border border-white/10"
+              >
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 flex items-center justify-center flex-shrink-0">
+                  <Camera size={24} className="text-white" />
                 </div>
-                <div className="text-xs text-white/40">
-                  Find street art around you. Point your camera at it to scan and capture it for your team.
+                <div className="text-left">
+                  <h3 className="font-semibold text-base mb-1">Find & Scan</h3>
+                  <p className="text-sm text-white/50 leading-relaxed">
+                    Explore Prague to find street art. Use your camera to scan and capture it.
+                  </p>
                 </div>
-              </div>
+              </motion.div>
               
-              <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-left">
-                <div className="font-medium mb-1 flex items-center gap-2">
-                  <Map size={14} className="text-white/50" />
-                  Check the Map
+              {/* Step 2 */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-start gap-4 p-5 rounded-2xl bg-white/5 border border-white/10"
+              >
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center flex-shrink-0">
+                  <Map size={24} className="text-white" />
                 </div>
-                <div className="text-xs text-white/40">
-                  See which art is nearby and which territories each team controls.
+                <div className="text-left">
+                  <h3 className="font-semibold text-base mb-1">Claim Territory</h3>
+                  <p className="text-sm text-white/50 leading-relaxed">
+                    Each capture claims territory for your team. Check the map to see who controls what.
+                  </p>
                 </div>
-              </div>
+              </motion.div>
               
-              <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-left">
-                <div className="font-medium mb-1 flex items-center gap-2">
-                  <Zap size={14} className="text-white/50" />
-                  Score Points
+              {/* Step 3 */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex items-start gap-4 p-5 rounded-2xl bg-white/5 border border-white/10"
+              >
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/30 to-orange-500/30 flex items-center justify-center flex-shrink-0">
+                  <Zap size={24} className="text-white" />
                 </div>
-                <div className="text-xs text-white/40">
-                  Each capture earns points. Big murals = more points. Steal from enemies for bonus!
+                <div className="text-left">
+                  <h3 className="font-semibold text-base mb-1">Score Points</h3>
+                  <p className="text-sm text-white/50 leading-relaxed">
+                    Bigger art = more points. Steal from enemies for bonus points!
+                  </p>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         )}
@@ -235,7 +326,7 @@ export default function Onboarding() {
               : 'bg-white/10 text-white/30 cursor-not-allowed'
           }`}
         >
-          {step === 2 ? "Let's Go" : 'Continue'}
+          {step === 3 ? "Let's Go!" : 'Continue'}
           <ChevronRight size={20} />
         </motion.button>
       </div>
