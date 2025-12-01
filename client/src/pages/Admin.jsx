@@ -43,18 +43,19 @@ export default function Admin() {
     setTimeout(() => setMessage(null), 3000)
   }
   
-  // Toggle point status (active/ghost)
+  // Toggle point status (active/ghost) - using captures collection with merge
   const toggleStatus = async (pointId, currentStatus) => {
     setLoading(prev => ({ ...prev, [pointId]: true }))
     try {
       const newStatus = currentStatus === 'ghost' ? 'active' : 'ghost'
-      await setDoc(doc(db, 'streetart-points-meta', pointId), {
+      // Store status in the captures collection (same permissions)
+      await setDoc(doc(db, 'streetart-captures', pointId), {
         status: newStatus,
-        updatedAt: new Date()
+        statusUpdatedAt: new Date()
       }, { merge: true })
       showMessage('success', `Point ${pointId} set to ${newStatus}`)
     } catch (err) {
-      showMessage('error', 'Failed to update status')
+      showMessage('error', 'Failed to update: ' + err.message)
       console.error(err)
     }
     setLoading(prev => ({ ...prev, [pointId]: false }))
@@ -110,13 +111,13 @@ export default function Admin() {
     ? artPoints 
     : artPoints.filter(p => p.hood === selectedHood)
   
-  // Stats
+  // Stats - use artPoints which has merged Firebase status
   const stats = {
     total: artPoints.length,
     captured: artPoints.filter(p => p.capturedBy).length,
     red: artPoints.filter(p => p.capturedBy === 'red').length,
     blue: artPoints.filter(p => p.capturedBy === 'blue').length,
-    ghost: ART_POINTS.filter(p => p.status === 'ghost').length,
+    ghost: artPoints.filter(p => p.status === 'ghost').length,
     players: allPlayers.length
   }
   
@@ -177,7 +178,7 @@ export default function Admin() {
   }
   
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-24">
+    <div className="min-h-screen bg-[#0a0a0f] pb-24 overflow-y-auto">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-xl border-b border-white/10 px-4 py-3">
         <div className="flex items-center justify-between">
@@ -292,8 +293,8 @@ export default function Admin() {
         </h2>
         
         {filteredPoints.map(point => {
-          const basePoint = ART_POINTS.find(p => p.id === point.id)
-          const isGhost = basePoint?.status === 'ghost'
+          // Status comes from merged Firebase data in artPoints
+          const isGhost = point.status === 'ghost'
           
           return (
             <div 
@@ -329,7 +330,7 @@ export default function Admin() {
               
               <div className="flex gap-2">
                 <button
-                  onClick={() => toggleStatus(point.id, basePoint?.status)}
+                  onClick={() => toggleStatus(point.id, point.status)}
                   disabled={loading[point.id]}
                   className={`flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 ${
                     isGhost 

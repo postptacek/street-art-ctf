@@ -109,10 +109,15 @@ export function GameProvider({ children }) {
     const capturesRef = collection(db, CAPTURES_COLLECTION)
     const unsubscribe = onSnapshot(capturesRef, (snapshot) => {
       const firebaseCaptures = {}
+      const firebaseStatuses = {} // Track status overrides from Firebase
       const allCaptures = []
       
       snapshot.forEach(doc => {
         const data = doc.data()
+        // Store status if present (from admin panel)
+        if (data.status) {
+          firebaseStatuses[doc.id] = data.status
+        }
         if (data.capturedBy) {
           firebaseCaptures[doc.id] = data.capturedBy
           const artPoint = ART_POINTS.find(p => p.id === doc.id)
@@ -164,10 +169,12 @@ export function GameProvider({ children }) {
       isFirstLoad = false
       prevCapturesRef.current = firebaseCaptures
       
-      // Merge Firebase captures with local art points
+      // Merge Firebase captures and status with local art points
       setArtPoints(ART_POINTS.map(point => ({
         ...point,
-        capturedBy: firebaseCaptures[point.id] || null
+        capturedBy: firebaseCaptures[point.id] || null,
+        // Use Firebase status if set, otherwise use static status
+        status: firebaseStatuses[point.id] || point.status
       })))
       
       // Also save to localStorage as backup
