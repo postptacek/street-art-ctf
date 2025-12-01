@@ -11,11 +11,9 @@ function Scanner() {
   useEffect(() => {
     if (player.team && !redirecting) {
       setRedirecting(true)
-      // Small delay for smooth transition
-      setTimeout(() => {
-        const basePath = import.meta.env.BASE_URL || '/'
-        window.location.href = basePath + 'ar-scanner.html'
-      }, 500)
+      // Redirect immediately - no delay
+      const basePath = import.meta.env.BASE_URL || '/'
+      window.location.href = basePath + 'ar-scanner.html'
     }
   }, [player.team, redirecting])
 
