@@ -7,6 +7,7 @@ import Map from './pages/Map'
 import Scanner from './pages/Scanner'
 import Leaderboard from './pages/Leaderboard'
 import Profile from './pages/Profile'
+import Admin from './pages/Admin'
 import Navigation from './components/Navigation'
 import { Swords, Flag, Flame, Zap, Target } from 'lucide-react'
 
@@ -188,7 +189,7 @@ function AppContent() {
   const location = useLocation()
   const { player } = useGame()
   const isOnboarded = player.team && player.name && player.name !== 'Street Artist'
-  const hideNav = location.pathname === '/onboarding'
+  const hideNav = location.pathname === '/onboarding' || location.pathname === '/admin'
   
   return (
     <div className="h-full w-full flex flex-col">
@@ -205,6 +206,7 @@ function AppContent() {
           <Route path="/scanner" element={<RequireOnboarding><Scanner /></RequireOnboarding>} />
           <Route path="/leaderboard" element={<RequireOnboarding><Leaderboard /></RequireOnboarding>} />
           <Route path="/profile" element={<RequireOnboarding><Profile /></RequireOnboarding>} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </AnimatePresence>
       {!hideNav && isOnboarded && <Navigation />}
