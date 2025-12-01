@@ -169,8 +169,11 @@ function LocationButton() {
 }
 
 // Point detail panel
-function PointPanel({ point, onClose, isDiscovered }) {
+function PointPanel({ point, onClose, isDiscovered, isSoloView }) {
   const teamColor = point.capturedBy ? getTeamColor(point.capturedBy) : '#495057'
+  const displayColor = isSoloView 
+    ? (isDiscovered ? '#a855f7' : '#495057')
+    : teamColor
   const pts = getPointValue(point)
   const isGhost = point.status === 'ghost'
   
@@ -184,7 +187,7 @@ function PointPanel({ point, onClose, isDiscovered }) {
     >
       <div 
         className="bg-black/90 backdrop-blur-xl rounded-2xl p-4 border"
-        style={{ borderColor: isDiscovered ? '#a855f740' : `${teamColor}40` }}
+        style={{ borderColor: `${displayColor}40` }}
       >
         <button 
           onClick={onClose}
@@ -196,22 +199,21 @@ function PointPanel({ point, onClose, isDiscovered }) {
         <div className="flex items-start gap-3">
           <div 
             className="w-12 h-12 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: `${teamColor}20`, border: `1px solid ${teamColor}40` }}
+            style={{ backgroundColor: `${displayColor}20`, border: `1px solid ${displayColor}40` }}
           >
             {isGhost ? (
               <Ghost size={20} className="text-white/30" />
+            ) : isSoloView ? (
+              isDiscovered ? <Sparkles size={20} style={{ color: displayColor }} /> : <MapPin size={20} style={{ color: displayColor }} />
             ) : point.capturedBy ? (
-              <Sparkles size={20} style={{ color: teamColor }} />
+              <Sparkles size={20} style={{ color: displayColor }} />
             ) : (
-              <MapPin size={20} style={{ color: teamColor }} />
+              <MapPin size={20} style={{ color: displayColor }} />
             )}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-lg text-white">{point.name}</h3>
-              {isDiscovered && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400">✓ YOURS</span>
-              )}
               {isGhost && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/40">GHOST</span>
               )}
@@ -230,25 +232,39 @@ function PointPanel({ point, onClose, isDiscovered }) {
               )}
             </div>
             
-            {/* Points and territory status */}
+            {/* Points and status - changes based on view mode */}
             <div className="flex items-center gap-3 mt-2">
-              <span className="text-lg font-bold" style={{ color: teamColor }}>{pts} pts</span>
-              {point.capturedBy ? (
-                <span 
-                  className="text-xs px-2 py-1 rounded-full"
-                  style={{ backgroundColor: `${teamColor}20`, color: teamColor }}
-                >
-                  Team {point.capturedBy}
-                </span>
+              <span className="text-lg font-bold" style={{ color: displayColor }}>{pts} pts</span>
+              {isSoloView ? (
+                // Solo view - show discovery status
+                isDiscovered ? (
+                  <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400">
+                    ✓ Discovered
+                  </span>
+                ) : (
+                  <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
+                    {isGhost ? 'Gone' : 'Not found yet'}
+                  </span>
+                )
               ) : (
-                <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
-                  {isGhost ? 'Gone' : 'Unclaimed'}
-                </span>
+                // Multi view - show team status
+                point.capturedBy ? (
+                  <span 
+                    className="text-xs px-2 py-1 rounded-full"
+                    style={{ backgroundColor: `${teamColor}20`, color: teamColor }}
+                  >
+                    Team {point.capturedBy}
+                  </span>
+                ) : (
+                  <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
+                    {isGhost ? 'Gone' : 'Unclaimed'}
+                  </span>
+                )
               )}
             </div>
             
-            {/* Last captured by */}
-            {point.capturedByPlayer && (
+            {/* Last captured by - only in multi view */}
+            {!isSoloView && point.capturedByPlayer && (
               <div className="mt-3 pt-3 border-t border-white/10">
                 <p className="text-xs text-white/40">Last captured by</p>
                 <p className="text-sm font-medium text-white mt-0.5">{point.capturedByPlayer}</p>
@@ -333,6 +349,9 @@ export default function PragueMap() {
   const [localArtPoints, setLocalArtPoints] = useState(artPoints)
   const [currentHood, setCurrentHood] = useState(HOODS.vysocany)
   
+  // View mode: 'solo' shows only your discoveries, 'multi' shows team captures
+  const [viewMode, setViewMode] = useState('solo')
+  
   // Map settings
   const [showSettings, setShowSettings] = useState(false)
   const [showLines, setShowLines] = useState(true)
@@ -389,52 +408,99 @@ export default function PragueMap() {
   const discoveryCount = Object.keys(discoveries).length
   const totalArtCount = ART_POINTS.length
   
+  const isSoloView = viewMode === 'solo'
+  
   return (
     <div className="relative w-full h-full">
-      {/* Team score bar */}
-      <div className="absolute top-4 left-4 right-4 z-[1000] flex gap-0.5 h-1.5 rounded-full overflow-hidden bg-black/40 backdrop-blur-sm">
-        {Object.entries(teamScores).map(([team, score]) => {
-          const percentage = (score / totalScore) * 100
-          return (
-            <motion.div
-              key={team}
-              className="h-full"
-              style={{ backgroundColor: getTeamColor(team) }}
-              initial={{ width: 0 }}
-              animate={{ width: `${percentage}%` }}
-              transition={{ duration: 0.8 }}
-            />
-          )
-        })}
-      </div>
-
-      {/* Legend - Team scores + Personal progress */}
-      <div className="absolute top-10 left-4 z-[1000] bg-black/80 backdrop-blur-sm rounded-xl p-3 border border-white/10">
-        <p className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Territory</p>
-        <div className="space-y-1.5">
-          {TEAMS.map(team => (
-            <div key={team} className="flex items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded"
-                style={{ backgroundColor: getTeamColor(team) }}
-              />
-              <span className={`text-xs capitalize font-medium ${team === player.team ? 'text-white' : 'text-white/70'}`}>
-                {team} {team === player.team && '(you)'}
-              </span>
-              <span className="text-xs text-white/40 ml-auto">{teamScores[team] || 0}</span>
-            </div>
-          ))}
+      {/* View mode toggle */}
+      <div className="absolute top-4 left-4 right-4 z-[1000] flex items-center gap-3">
+        <div className="flex bg-black/60 backdrop-blur-sm rounded-lg p-1 border border-white/10">
+          <button
+            onClick={() => setViewMode('solo')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              isSoloView 
+                ? 'bg-purple-500 text-white' 
+                : 'text-white/50 hover:text-white/70'
+            }`}
+          >
+            My Collection
+          </button>
+          <button
+            onClick={() => setViewMode('multi')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              !isSoloView 
+                ? 'bg-gradient-to-r from-red-500 to-blue-500 text-white' 
+                : 'text-white/50 hover:text-white/70'
+            }`}
+          >
+            Team Battle
+          </button>
         </div>
         
-        {/* Personal discoveries */}
-        <div className="mt-2 pt-2 border-t border-white/10">
-          <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1.5">Your Collection</p>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-purple-500" />
-            <span className="text-xs text-white/70">Discovered</span>
-            <span className="text-xs text-purple-400 ml-auto font-medium">{discoveryCount}/{totalArtCount}</span>
-          </div>
+        {/* Progress bar */}
+        <div className="flex-1 flex gap-0.5 h-1.5 rounded-full overflow-hidden bg-black/40 backdrop-blur-sm">
+          {isSoloView ? (
+            <motion.div
+              className="h-full bg-purple-500"
+              initial={{ width: 0 }}
+              animate={{ width: `${(discoveryCount / totalArtCount) * 100}%` }}
+              transition={{ duration: 0.8 }}
+            />
+          ) : (
+            Object.entries(teamScores).map(([team, score]) => {
+              const percentage = (score / totalScore) * 100
+              return (
+                <motion.div
+                  key={team}
+                  className="h-full"
+                  style={{ backgroundColor: getTeamColor(team) }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${percentage}%` }}
+                  transition={{ duration: 0.8 }}
+                />
+              )
+            })
+          )}
         </div>
+      </div>
+
+      {/* Legend - changes based on view mode */}
+      <div className="absolute top-14 left-4 z-[1000] bg-black/80 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+        {isSoloView ? (
+          <>
+            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Your Collection</p>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-purple-500" />
+                <span className="text-xs text-white/70">Discovered</span>
+                <span className="text-xs text-purple-400 ml-auto font-medium">{discoveryCount}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-white/20" />
+                <span className="text-xs text-white/50">Not found</span>
+                <span className="text-xs text-white/30 ml-auto">{totalArtCount - discoveryCount}</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Team Battle</p>
+            <div className="space-y-1.5">
+              {TEAMS.map(team => (
+                <div key={team} className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded"
+                    style={{ backgroundColor: getTeamColor(team) }}
+                  />
+                  <span className={`text-xs capitalize font-medium ${team === player.team ? 'text-white' : 'text-white/70'}`}>
+                    {team} {team === player.team && '(you)'}
+                  </span>
+                  <span className="text-xs text-white/40 ml-auto">{teamScores[team] || 0}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
         
         <div className="mt-2 pt-2 border-t border-white/10">
           <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1.5">Transport</p>
@@ -626,8 +692,8 @@ export default function PragueMap() {
           />
         ))}
         
-        {/* Territory shapes - rendered below lines and markers */}
-        {territoryShapes.map((shape, idx) => (
+        {/* Territory shapes - only in multi view */}
+        {!isSoloView && territoryShapes.map((shape, idx) => (
           <Polygon
             key={`territory-${shape.pointId}`}
             positions={shape.coords}
@@ -641,8 +707,8 @@ export default function PragueMap() {
           />
         ))}
         
-        {/* Team connection lines - connects nearby captured points */}
-        {showLines && Object.entries(teamLines).map(([team, lines]) => 
+        {/* Team connection lines - only in multi view */}
+        {!isSoloView && showLines && Object.entries(teamLines).map(([team, lines]) => 
           lines.map((line, idx) => (
             <Polyline
               key={`${team}-line-${idx}`}
@@ -663,8 +729,12 @@ export default function PragueMap() {
         {displayPoints.map(point => {
           const isGhost = point.status === 'ghost'
           const isDiscovered = discoveries[point.id]
-          // Show team color, with special indicator for discovered points
-          const icon = createChumperIcon(point.capturedBy, isGhost, isDiscovered)
+          // In solo view: show discovered (purple) vs not found (gray)
+          // In multi view: show team colors
+          const markerTeam = isSoloView 
+            ? (isDiscovered ? 'discovered' : null)
+            : point.capturedBy
+          const icon = createChumperIcon(markerTeam, isGhost, isDiscovered && !isSoloView)
           
           return (
             <Marker
@@ -689,6 +759,7 @@ export default function PragueMap() {
             point={selectedPoint}
             onClose={() => setSelectedPoint(null)}
             isDiscovered={discoveries[selectedPoint.id]}
+            isSoloView={isSoloView}
           />
         )}
       </AnimatePresence>
