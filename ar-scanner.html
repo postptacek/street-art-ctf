@@ -99,7 +99,7 @@
   
   <div id="success">
     <div class="success-icon" id="s-icon"><div class="success-check" id="s-check">&#10003;</div></div>
-    <div class="success-title">Captured!</div>
+    <div class="success-title" id="s-title">Captured!</div>
     <div class="success-sub" id="s-name">-</div>
     <div class="success-pts" id="s-pts">+0</div>
     <div class="success-team" id="s-team">Points added</div>
@@ -237,7 +237,25 @@
       const localPlayer = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
       localPlayer.score = (localPlayer.score || 0) + finalPoints;
       localPlayer.capturedArt = [...new Set([...(localPlayer.capturedArt || []), currentId])];
+      localPlayer.discoveryCount = (localPlayer.discoveryCount || 0) + 1;
       localStorage.setItem('streetart-ctf-player', JSON.stringify(localPlayer));
+      
+      // Check if this is a new discovery (before saving)
+      const discoveries = JSON.parse(localStorage.getItem('streetart-discoveries')||'{}');
+      const isNewDiscovery = !discoveries[currentId];
+      
+      // Save to personal discoveries (permanent collection)
+      if (isNewDiscovery) {
+        discoveries[currentId] = {
+          artId: currentId,
+          artName: art.name,
+          area: art.area,
+          points: finalPoints,
+          discoveredAt: new Date().toISOString(),
+          location: art.loc
+        };
+        localStorage.setItem('streetart-discoveries', JSON.stringify(discoveries));
+      }
       
       localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({artId: currentId, location: art.loc, team: team}));
       
@@ -262,15 +280,18 @@
       document.getElementById('s-icon').style.background = colors[team]+'20';
       document.getElementById('s-check').style.borderColor = colors[team];
       document.getElementById('s-check').style.color = colors[team];
+      document.getElementById('s-title').textContent = isNewDiscovery ? 'Discovered!' : 'Captured!';
       document.getElementById('s-name').textContent = art.name + ' - ' + art.area;
       document.getElementById('s-pts').textContent = '+' + finalPoints;
       document.getElementById('s-pts').style.color = colors[team];
       
-      // Show bonus or recapture message
+      // Show bonus message or discovery info
       if (bonusText) {
         document.getElementById('s-team').innerHTML = '<span style="color:' + (isRecapture ? '#f59e0b' : '#22c55e') + '">' + bonusText + '</span>';
+      } else if (isNewDiscovery) {
+        document.getElementById('s-team').innerHTML = '<span style="color:#a855f7">Added to your collection!</span>';
       } else {
-        document.getElementById('s-team').textContent = 'Team ' + (team === 'red' ? 'Red' : 'Blue');
+        document.getElementById('s-team').textContent = 'Captured for Team ' + (team === 'red' ? 'Red' : 'Blue');
       }
       
       document.getElementById('success').classList.add('show');
