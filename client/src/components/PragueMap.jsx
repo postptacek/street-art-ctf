@@ -31,6 +31,8 @@ L.Icon.Default.mergeOptions({
 })
 
 // Create custom chumper icons for different team states
+const CHUMPER_URL = `${import.meta.env.BASE_URL}chumper.png`
+
 const createChumperIcon = (capturedBy, isGhost = false) => {
   // Determine the CSS filter based on capture state
   let filter = ''
@@ -46,7 +48,7 @@ const createChumperIcon = (capturedBy, isGhost = false) => {
   // Blue team - no filter needed (original image is blue)
   
   return L.divIcon({
-    html: `<img src="/chumper.png" style="width: 32px; height: 32px; filter: ${filter};" />`,
+    html: `<img src="${CHUMPER_URL}" style="width: 32px; height: 32px; filter: ${filter};" />`,
     className: 'chumper-marker',
     iconSize: [32, 32],
     iconAnchor: [16, 16],
