@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion'
 import { useGame, TEAM_COLORS } from '../context/GameContext'
-import { Users, Clock, Swords, Flag, Cloud, WifiOff } from 'lucide-react'
+import { Users, Clock, Cloud, WifiOff } from 'lucide-react'
 import ChumpAnimation from '../components/ChumpAnimation'
+
+const CHUMPER_URL = `${import.meta.env.BASE_URL}chumper.png`
 
 const teams = [
   { color: 'red', name: 'Red Team' },
@@ -194,11 +196,16 @@ function Home() {
                     className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: `${teamColor}20` }}
                   >
-                    {capture.isRecapture ? (
-                      <Swords size={14} style={{ color: teamColor }} />
-                    ) : (
-                      <Flag size={14} style={{ color: teamColor }} />
-                    )}
+                    <img 
+                      src={CHUMPER_URL} 
+                      alt="" 
+                      className="w-5 h-5"
+                      style={{ 
+                        filter: capture.team === 'red' 
+                          ? 'hue-rotate(160deg) saturate(1.5)' 
+                          : 'none' 
+                      }}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{capture.artName}</p>
