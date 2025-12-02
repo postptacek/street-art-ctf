@@ -44,9 +44,6 @@ const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false) =>
   } else if (capturedBy === 'red') {
     // Red team - shift hue (blue to red)
     filter = 'hue-rotate(160deg) saturate(1.5)'
-  } else if (capturedBy === 'discovered') {
-    // Solo mode discovered - purple tint
-    filter = 'hue-rotate(270deg) saturate(1.2) brightness(1.1)'
   }
   // Blue team - no filter needed (original image is blue)
   
@@ -732,10 +729,10 @@ export default function PragueMap() {
         {displayPoints.map(point => {
           const isGhost = point.status === 'ghost'
           const isDiscovered = discoveries[point.id]
-          // In solo view: show discovered (purple) vs not found (gray)
-          // In multi view: show team colors
+          // In solo view: show YOUR team color for discovered, gray for not found
+          // In multi view: show capturing team's color
           const markerTeam = isSoloView 
-            ? (isDiscovered ? 'discovered' : null)
+            ? (isDiscovered ? player.team : null)
             : point.capturedBy
           const icon = createChumperIcon(markerTeam, isGhost, isDiscovered && !isSoloView)
           
