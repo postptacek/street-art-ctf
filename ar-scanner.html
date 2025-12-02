@@ -209,17 +209,46 @@
         return;
       }
       
+      // Calculate streak
+      const localPlayer = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
+      const now = new Date();
+      const today = now.toDateString();
+      const lastCapture = localPlayer.lastCaptureTime ? new Date(localPlayer.lastCaptureTime) : null;
+      const lastCaptureDay = lastCapture ? lastCapture.toDateString() : null;
+      
+      let currentStreak = localPlayer.streak || 0;
+      if (lastCaptureDay === today) {
+        // Same day - increment streak
+        currentStreak += 1;
+      } else {
+        // New day or first capture - start streak at 1
+        currentStreak = 1;
+      }
+      
+      // Streak bonus: each capture after first gives +10% (max +50% at 6+ captures)
+      const streakBonus = Math.min((currentStreak - 1) * 0.1, 0.5);
+      const streakMultiplier = 1 + streakBonus;
+      
       // Calculate points: first capture = 1.5x, recapture = 1.25x, normal = 1x
       let basePoints = art.points;
       let finalPoints = basePoints;
       let bonusText = '';
       
       if (isFirstCapture) {
-        finalPoints = Math.round(basePoints * 1.5);
+        finalPoints = Math.round(basePoints * 1.5 * streakMultiplier);
         bonusText = 'FIRST CAPTURE +50%';
       } else if (isRecapture) {
-        finalPoints = Math.round(basePoints * 1.25);
+        finalPoints = Math.round(basePoints * 1.25 * streakMultiplier);
         bonusText = 'RECAPTURED +25%';
+      } else {
+        finalPoints = Math.round(basePoints * streakMultiplier);
+      }
+      
+      // Add streak info to bonus text
+      if (currentStreak > 1) {
+        const streakPct = Math.round(streakBonus * 100);
+        bonusText = bonusText ? bonusText + ' • ' : '';
+        bonusText += '🔥 STREAK x' + currentStreak + ' (+' + streakPct + '%)';
       }
       
       console.log('Capturing:', art.name, 'for', finalPoints, 'pts', bonusText);
@@ -234,10 +263,18 @@
       localCaptures[currentId] = team;
       localStorage.setItem('streetart-ctf-captures', JSON.stringify(localCaptures));
       
-      const localPlayer = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
+      // Update player stats (reuse localPlayer from streak calculation)
       localPlayer.score = (localPlayer.score || 0) + finalPoints;
       localPlayer.capturedArt = [...new Set([...(localPlayer.capturedArt || []), currentId])];
       localPlayer.discoveryCount = (localPlayer.discoveryCount || 0) + 1;
+      localPlayer.streak = currentStreak;
+      localPlayer.maxStreak = Math.max(localPlayer.maxStreak || 0, currentStreak);
+      localPlayer.lastCaptureTime = now.toISOString();
+      // Track unique areas visited
+      if (!localPlayer.uniqueAreasVisited) localPlayer.uniqueAreasVisited = [];
+      if (!localPlayer.uniqueAreasVisited.includes(art.area)) {
+        localPlayer.uniqueAreasVisited.push(art.area);
+      }
       localStorage.setItem('streetart-ctf-player', JSON.stringify(localPlayer));
       
       // Check if this is a new discovery (before saving)
