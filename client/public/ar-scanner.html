@@ -70,7 +70,11 @@
     .success-title { color: white; font-size: 24px; font-weight: 600; margin-bottom: 8px; }
     .success-sub { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 16px; }
     .success-pts { font-size: 48px; font-weight: 700; margin-bottom: 8px; }
-    .success-team { color: rgba(255,255,255,0.4); font-size: 13px; margin-bottom: 32px; }
+    .success-team { color: rgba(255,255,255,0.4); font-size: 13px; margin-bottom: 16px; }
+    .success-streak { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 24px; }
+    .streak-fire { font-size: 20px; }
+    .streak-text { color: #f59e0b; font-size: 14px; font-weight: 600; }
+    .streak-bonus { color: rgba(255,255,255,0.5); font-size: 12px; }
     .success-nav { color: rgba(255,255,255,0.3); font-size: 13px; }
   </style>
 </head>
@@ -103,11 +107,12 @@
     <div class="success-sub" id="s-name">-</div>
     <div class="success-pts" id="s-pts">+0</div>
     <div class="success-team" id="s-team">Points added</div>
+    <div class="success-streak" id="s-streak" style="display:none"></div>
     <div class="success-nav">Opening map...</div>
   </div>
   
   <a-scene 
-    mindar-image="imageTargetSrc: https://raw.githubusercontent.com/postptacek/street-art-ctf/main/client/targets.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 100; uiLoading: no; uiScanning: no; uiError: no" 
+    mindar-image="imageTargetSrc: targets.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 100; uiLoading: no; uiScanning: no; uiError: no" 
     color-space="sRGB" 
     renderer="colorManagement: true" 
     vr-mode-ui="enabled: false" 
@@ -128,8 +133,32 @@
 
     firebase.initializeApp({apiKey:"AIzaSyCES_Zfi78paxI--dycL2LmBK0-g4fvvEM",authDomain:"famu-nodes.firebaseapp.com",projectId:"famu-nodes",storageBucket:"famu-nodes.firebasestorage.app",messagingSenderId:"67316044555",appId:"1:67316044555:web:72a88c28871236912f480e"});
     const db = firebase.firestore();
-    const ART = {'art-01':{name:'Kolbenova 1',area:'Vysocany',points:100,loc:[50.110192,14.503811]},'art-02':{name:'Kolbenova 2',area:'Vysocany',points:50,loc:[50.110203,14.503764]},'art-03':{name:'Kolbenova 3',area:'Vysocany',points:100,loc:[50.109847,14.504250]},'art-04':{name:'Kolbenova 4',area:'Vysocany',points:25,loc:[50.109981,14.504933]},'art-05':{name:'Kolbenova 5',area:'Vysocany',points:200,loc:[50.109764,14.505742]},'art-06':{name:'Kolbenova 6',area:'Vysocany',points:100,loc:[50.109672,14.505847]},'art-07':{name:'Hloubetin 1',area:'Hloubetin',points:100,loc:[50.110383,14.508192]},'art-08':{name:'Hloubetin 2',area:'Hloubetin',points:200,loc:[50.110508,14.509567]},'art-09':{name:'Vysocany 1',area:'Vysocany',points:100,loc:[50.110817,14.505475]},'art-10':{name:'Vysocany 2',area:'Vysocany',points:50,loc:[50.110986,14.504672]}};
-    const MAP = {0:'art-01',1:'art-02',2:'art-03',3:'art-04',4:'art-05',5:'art-06',6:'art-07',7:'art-08',8:'art-09',9:'art-10'};
+    // All 21 chumpster targets
+    const ART = {
+      'art-01':{name:'Chump 1',area:'Vysocany',points:100,loc:[50.110192,14.503811]},
+      'art-02':{name:'Chump 2',area:'Vysocany',points:100,loc:[50.110203,14.503764]},
+      'art-03':{name:'Chump 3',area:'Vysocany',points:100,loc:[50.109847,14.504250]},
+      'art-04':{name:'Chump 4',area:'Vysocany',points:100,loc:[50.109981,14.504933]},
+      'art-05':{name:'Chump 5',area:'Vysocany',points:150,loc:[50.109764,14.505742]},
+      'art-06':{name:'Chump 6',area:'Vysocany',points:100,loc:[50.109672,14.505847]},
+      'art-07':{name:'Chump 7',area:'Hloubetin',points:100,loc:[50.110383,14.508192]},
+      'art-08':{name:'Chump 8',area:'Hloubetin',points:150,loc:[50.110508,14.509567]},
+      'art-09':{name:'Chump 9',area:'Vysocany',points:100,loc:[50.110817,14.505475]},
+      'art-10':{name:'Chump 10',area:'Vysocany',points:100,loc:[50.110986,14.504672]},
+      'art-11':{name:'Chump 11',area:'Hloubetin',points:100,loc:[50.1105,14.5100]},
+      'art-12':{name:'Chump 12',area:'Hloubetin',points:150,loc:[50.1108,14.5105]},
+      'art-13':{name:'Chump 13',area:'Podebrady',points:100,loc:[50.1110,14.5110]},
+      'art-14':{name:'Chump 14',area:'Podebrady',points:100,loc:[50.1112,14.5115]},
+      'art-15':{name:'Chump 15',area:'Podebrady',points:150,loc:[50.1115,14.5120]},
+      'art-16':{name:'Chump 16',area:'Podebrady',points:100,loc:[50.1118,14.5125]},
+      'art-17':{name:'Chump 17',area:'Vysocany',points:100,loc:[50.1120,14.5130]},
+      'art-18':{name:'Chump 18',area:'Vysocany',points:150,loc:[50.1122,14.5135]},
+      'art-19':{name:'Chump 19',area:'Hloubetin',points:100,loc:[50.1125,14.5140]},
+      'art-20':{name:'Chump 20',area:'Hloubetin',points:200,loc:[50.1128,14.5145]},
+      'art-21':{name:'Chump 21',area:'Podebrady',points:200,loc:[50.1130,14.5150]}
+    };
+    const MAP = {0:'art-01',1:'art-02',2:'art-03',3:'art-04',4:'art-05',5:'art-06',6:'art-07',7:'art-08',8:'art-09',9:'art-10',10:'art-11',11:'art-12',12:'art-13',13:'art-14',14:'art-15',15:'art-16',16:'art-17',17:'art-18',18:'art-19',19:'art-20',20:'art-21'};
+    const TARGET_COUNT = 21;
     const COOLDOWN = 10*60*1000;
     let currentId = null, canCap = false;
     const player = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
@@ -331,6 +360,16 @@
         document.getElementById('s-team').textContent = 'Captured for Team ' + (team === 'red' ? 'Red' : 'Blue');
       }
       
+      // Show streak info if streak > 1
+      var streakEl = document.getElementById('s-streak');
+      if (currentStreak > 1) {
+        var streakPct = Math.round(streakBonus * 100);
+        streakEl.innerHTML = '<span class="streak-fire">🔥</span><span class="streak-text">Streak x' + currentStreak + '</span><span class="streak-bonus">+' + streakPct + '% bonus</span>';
+        streakEl.style.display = 'flex';
+      } else {
+        streakEl.style.display = 'none';
+      }
+      
       document.getElementById('success').classList.add('show');
       
       setTimeout(function() { 
@@ -345,7 +384,7 @@
       var arSystem = scene.systems['mindar-image-system'];
       console.log('AR System:', arSystem);
       
-      for (var i = 0; i < 10; i++) {
+      for (var i = 0; i < TARGET_COUNT; i++) {
         (function(idx) {
           var e = document.createElement('a-entity');
           e.setAttribute('mindar-image-target', 'targetIndex: '+idx);
