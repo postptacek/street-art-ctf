@@ -1,21 +1,53 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useGame, TEAM_COLORS } from '../context/GameContext'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { ART_POINTS, getPointValue } from '../data/pragueMap'
 import { 
-  Trophy, Target, Flame, RotateCcw, Shuffle, Zap
+  Trophy, Target, Flame, RotateCcw, Shuffle, Zap, MapPin, CheckCircle2
 } from 'lucide-react'
 
+// District definitions
+const DISTRICTS = {
+  'Vysocany': { name: 'Vysočany', icon: '🏭', color: '#4dabf7' },
+  'Hloubetin': { name: 'Hloubětín', icon: '🏘️', color: '#ff6b6b' },
+  'Podebrady': { name: 'Poděbrady', icon: '🏰', color: '#51cf66' }
+}
+
 function Profile() {
-  const { player, artPoints, resetAll } = useGame()
+  const { player, artPoints, resetAll, discoveries } = useGame()
   const [isRandomizing, setIsRandomizing] = useState(false)
 
   // Get player's captured art with points
   const capturedArt = artPoints?.filter(art => 
     player.capturedArt.includes(art.id)
   ) || []
+  
+  // Calculate district progress
+  const districtProgress = useMemo(() => {
+    const progress = {}
+    const discoveredIds = Object.keys(discoveries || {})
+    
+    Object.keys(DISTRICTS).forEach(district => {
+      const districtArt = ART_POINTS.filter(art => art.area === district)
+      const discovered = districtArt.filter(art => discoveredIds.includes(art.id))
+      progress[district] = {
+        total: districtArt.length,
+        found: discovered.length,
+        complete: discovered.length === districtArt.length && districtArt.length > 0
+      }
+    })
+    
+    return progress
+  }, [discoveries])
+  
+  // Total city progress
+  const totalProgress = useMemo(() => {
+    const total = ART_POINTS.length
+    const found = Object.keys(discoveries || {}).length
+    return { total, found, percent: Math.round((found / total) * 100) }
+  }, [discoveries])
 
   const teamColor = player.team ? TEAM_COLORS[player.team].hex : '#64748b'
   const teamName = player.team === 'red' ? 'Red Team' : 'Blue Team'
@@ -114,6 +146,73 @@ function Profile() {
           <p className="text-2xl font-bold text-white">{player.maxStreak || 0}</p>
           <p className="text-[10px] text-white/40 uppercase">Best Streak</p>
         </motion.div>
+      </div>
+
+      {/* District Collection Progress */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <MapPin size={14} className="text-purple-400" />
+          <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">Collection Progress</h2>
+        </div>
+        
+        {/* City Progress Bar */}
+        <div className="p-3 rounded-xl bg-white/5 border border-white/10 mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-white font-medium">Prague</span>
+            <span className="text-xs text-white/60">{totalProgress.found}/{totalProgress.total}</span>
+          </div>
+          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <motion.div 
+              className="h-full rounded-full"
+              style={{ backgroundColor: teamColor }}
+              initial={{ width: 0 }}
+              animate={{ width: `${totalProgress.percent}%` }}
+              transition={{ duration: 0.8 }}
+            />
+          </div>
+          <p className="text-[10px] text-white/40 mt-1">{totalProgress.percent}% Complete</p>
+        </div>
+        
+        {/* Districts */}
+        <div className="space-y-2">
+          {Object.entries(DISTRICTS).map(([key, district]) => {
+            const prog = districtProgress[key] || { found: 0, total: 0, complete: false }
+            const percent = prog.total > 0 ? Math.round((prog.found / prog.total) * 100) : 0
+            return (
+              <motion.div
+                key={key}
+                className={`p-3 rounded-xl border flex items-center gap-3 ${
+                  prog.complete 
+                    ? 'bg-green-500/10 border-green-500/30' 
+                    : 'bg-white/5 border-white/10'
+                }`}
+                whileHover={{ scale: 1.01 }}
+              >
+                <div 
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
+                  style={{ backgroundColor: `${district.color}20` }}
+                >
+                  {prog.complete ? <CheckCircle2 size={20} className="text-green-400" /> : district.icon}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white font-medium">{district.name}</span>
+                    <span className="text-[10px] text-white/40">{prog.found}/{prog.total}</span>
+                  </div>
+                  <div className="h-1.5 bg-white/10 rounded-full mt-1.5 overflow-hidden">
+                    <motion.div 
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: prog.complete ? '#22c55e' : district.color }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${percent}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
       </div>
 
       {/* Detailed Stats */}
@@ -222,7 +321,7 @@ function Profile() {
 
       {/* Version */}
       <p className="text-center text-[10px] text-white/20 mt-6">
-        Street Art CTF v1.2.0
+        Street Art CTF v2.1.0
       </p>
     </motion.div>
   )

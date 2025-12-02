@@ -408,6 +408,17 @@ export default function PragueMap() {
   const discoveryCount = Object.keys(discoveries).length
   const totalArtCount = ART_POINTS.length
   
+  // Current hood discovery stats
+  const hoodDiscoveryStats = useMemo(() => {
+    const hoodArt = ART_POINTS.filter(art => {
+      // Map hood names to area names
+      const areaMap = { 'palmovka': 'Palmovka', 'vysocany': 'Vysocany', 'podebrady': 'Podebrady' }
+      return art.area === areaMap[currentHood.id] || art.area === currentHood.name
+    })
+    const discovered = hoodArt.filter(art => discoveries[art.id])
+    return { found: discovered.length, total: hoodArt.length }
+  }, [discoveries, currentHood])
+  
   const isSoloView = viewMode === 'solo'
   
   return (
@@ -458,10 +469,15 @@ export default function PragueMap() {
         {/* Stats pill */}
         <div className="ml-auto flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/10">
           {isSoloView ? (
-            <span className="text-[10px] text-white/70">
-              <span className={player.team === 'red' ? 'text-red-400' : 'text-blue-400'}>{discoveryCount}</span>
-              <span className="text-white/40">/{totalArtCount}</span>
-            </span>
+            <>
+              <span className="text-[10px] text-white/70">
+                <span className={player.team === 'red' ? 'text-red-400' : 'text-blue-400'}>{hoodDiscoveryStats.found}</span>
+                <span className="text-white/40">/{hoodDiscoveryStats.total}</span>
+              </span>
+              {hoodDiscoveryStats.found === hoodDiscoveryStats.total && hoodDiscoveryStats.total > 0 && (
+                <span className="text-[10px]">✓</span>
+              )}
+            </>
           ) : (
             <>
               <span className="text-[10px] text-red-400">{teamScores.red || 0}</span>
