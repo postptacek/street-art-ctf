@@ -5,14 +5,15 @@ import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { ART_POINTS, getPointValue } from '../data/pragueMap'
 import { 
-  Trophy, Target, Flame, RotateCcw, Shuffle, Zap, MapPin, CheckCircle2
+  Trophy, Target, Flame, RotateCcw, Shuffle, Zap, MapPin, CheckCircle2,
+  Swords, Flag, Footprints, TrendingUp, Map, Building2
 } from 'lucide-react'
 
 // District definitions
 const DISTRICTS = {
-  'Vysocany': { name: 'Vysočany', icon: '🏭', color: '#4dabf7' },
-  'Hloubetin': { name: 'Hloubětín', icon: '🏘️', color: '#ff6b6b' },
-  'Podebrady': { name: 'Poděbrady', icon: '🏰', color: '#51cf66' }
+  'Vysocany': { name: 'Vysočany', color: '#4dabf7' },
+  'Hloubetin': { name: 'Hloubětín', color: '#ff6b6b' },
+  'Podebrady': { name: 'Poděbrady', color: '#51cf66' }
 }
 
 function Profile() {
@@ -91,86 +92,65 @@ function Profile() {
   }
 
   return (
-    <motion.div
-      className="flex-1 overflow-y-auto pb-24 px-5 pt-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
+    <div className="flex-1 overflow-y-auto pb-24 px-4 pt-6">
       {/* Profile Header */}
-      <div className="text-center mb-8">
-        <motion.div
-          className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
-          style={{ 
-            background: `linear-gradient(135deg, ${teamColor}, ${teamColor}50)`,
-          }}
-          whileHover={{ scale: 1.05 }}
+      <div className="flex items-center gap-4 mb-6">
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: `${teamColor}20` }}
         >
-          <span className="text-3xl font-black text-white">
+          <span className="text-xl font-bold" style={{ color: teamColor }}>
             {player.name?.charAt(0)?.toUpperCase() || '?'}
           </span>
-        </motion.div>
-        
-        <h1 className="text-2xl font-bold text-white mb-1">{player.name}</h1>
-        <p className="text-sm" style={{ color: teamColor }}>{teamName}</p>
+        </div>
+        <div>
+          <h1 className="text-lg font-semibold text-white">{player.name}</h1>
+          <p className="text-xs text-white/40">{teamName}</p>
+        </div>
       </div>
 
       {/* Main Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <motion.div 
-          className="p-4 rounded-2xl text-center"
-          style={{ backgroundColor: '#eab30815', border: '1px solid #eab30830' }}
-          whileHover={{ scale: 1.02 }}
-        >
-          <Trophy size={24} className="mx-auto mb-2 text-yellow-500" />
-          <p className="text-2xl font-bold text-white">{player.score}</p>
-          <p className="text-[10px] text-white/40 uppercase">Score</p>
-        </motion.div>
-        
-        <motion.div 
-          className="p-4 rounded-2xl text-center"
-          style={{ backgroundColor: '#22c55e15', border: '1px solid #22c55e30' }}
-          whileHover={{ scale: 1.02 }}
-        >
-          <Target size={24} className="mx-auto mb-2 text-green-500" />
-          <p className="text-2xl font-bold text-white">{player.captureCount || capturedArt.length}</p>
-          <p className="text-[10px] text-white/40 uppercase">Captures</p>
-        </motion.div>
-        
-        <motion.div 
-          className="p-4 rounded-2xl text-center"
-          style={{ backgroundColor: '#f9731615', border: '1px solid #f9731630' }}
-          whileHover={{ scale: 1.02 }}
-        >
-          <Flame size={24} className="mx-auto mb-2 text-orange-500" />
-          <p className="text-2xl font-bold text-white">{player.maxStreak || 0}</p>
-          <p className="text-[10px] text-white/40 uppercase">Best Streak</p>
-        </motion.div>
-      </div>
-
-      {/* District Collection Progress */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <MapPin size={14} className="text-purple-400" />
-          <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">Collection Progress</h2>
+      <div className="grid grid-cols-3 gap-2 mb-6">
+        <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 text-center">
+          <Trophy size={18} className="mx-auto mb-1.5 text-yellow-500/80" />
+          <p className="text-xl font-semibold text-white">{player.score}</p>
+          <p className="text-[9px] text-white/30 uppercase">Score</p>
         </div>
         
-        {/* City Progress Bar */}
-        <div className="p-3 rounded-xl bg-white/5 border border-white/10 mb-3">
+        <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 text-center">
+          <Target size={18} className="mx-auto mb-1.5 text-green-500/80" />
+          <p className="text-xl font-semibold text-white">{player.captureCount || capturedArt.length}</p>
+          <p className="text-[9px] text-white/30 uppercase">Captures</p>
+        </div>
+        
+        <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 text-center">
+          <Flame size={18} className="mx-auto mb-1.5 text-orange-500/80" />
+          <p className="text-xl font-semibold text-white">{player.maxStreak || 0}</p>
+          <p className="text-[9px] text-white/30 uppercase">Best Streak</p>
+        </div>
+      </div>
+
+      {/* Collection Progress */}
+      <div className="mb-6">
+        <h2 className="text-xs font-medium text-white/30 uppercase tracking-wider mb-3">
+          Collection
+        </h2>
+        
+        {/* City Progress */}
+        <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 mb-2">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-white font-medium">Prague</span>
-            <span className="text-xs text-white/60">{totalProgress.found}/{totalProgress.total}</span>
+            <div className="flex items-center gap-2">
+              <Map size={14} className="text-white/40" />
+              <span className="text-sm text-white/80">Prague</span>
+            </div>
+            <span className="text-xs text-white/40">{totalProgress.found}/{totalProgress.total}</span>
           </div>
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-            <motion.div 
-              className="h-full rounded-full"
-              style={{ backgroundColor: teamColor }}
-              initial={{ width: 0 }}
-              animate={{ width: `${totalProgress.percent}%` }}
-              transition={{ duration: 0.8 }}
+          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <div 
+              className="h-full rounded-full transition-all duration-500"
+              style={{ backgroundColor: teamColor, width: `${totalProgress.percent}%` }}
             />
           </div>
-          <p className="text-[10px] text-white/40 mt-1">{totalProgress.percent}% Complete</p>
         </div>
         
         {/* Districts */}
@@ -179,151 +159,145 @@ function Profile() {
             const prog = districtProgress[key] || { found: 0, total: 0, complete: false }
             const percent = prog.total > 0 ? Math.round((prog.found / prog.total) * 100) : 0
             return (
-              <motion.div
+              <div
                 key={key}
-                className={`p-3 rounded-xl border flex items-center gap-3 ${
+                className={`p-3 rounded-lg border flex items-center gap-3 ${
                   prog.complete 
-                    ? 'bg-green-500/10 border-green-500/30' 
-                    : 'bg-white/5 border-white/10'
+                    ? 'bg-green-500/10 border-green-500/20' 
+                    : 'bg-white/[0.02] border-white/5'
                 }`}
-                whileHover={{ scale: 1.01 }}
               >
                 <div 
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-                  style={{ backgroundColor: `${district.color}20` }}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${district.color}15` }}
                 >
-                  {prog.complete ? <CheckCircle2 size={20} className="text-green-400" /> : district.icon}
+                  {prog.complete 
+                    ? <CheckCircle2 size={18} className="text-green-400" /> 
+                    : <Building2 size={18} style={{ color: district.color }} />
+                  }
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white font-medium">{district.name}</span>
-                    <span className="text-[10px] text-white/40">{prog.found}/{prog.total}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-white/90">{district.name}</span>
+                    <span className="text-xs text-white/40">{prog.found}/{prog.total}</span>
                   </div>
-                  <div className="h-1.5 bg-white/10 rounded-full mt-1.5 overflow-hidden">
-                    <motion.div 
-                      className="h-full rounded-full"
-                      style={{ backgroundColor: prog.complete ? '#22c55e' : district.color }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${percent}%` }}
-                      transition={{ duration: 0.5 }}
+                  <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ 
+                        backgroundColor: prog.complete ? '#22c55e' : district.color,
+                        width: `${percent}%`
+                      }}
                     />
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )
           })}
         </div>
       </div>
 
-      {/* Detailed Stats */}
-      <div className="mb-8">
-        <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
-          Lifetime Stats
+      {/* Stats Grid */}
+      <div className="mb-6">
+        <h2 className="text-xs font-medium text-white/30 uppercase tracking-wider mb-3">
+          Stats
         </h2>
         <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <span className="text-sm">⚔️</span>
-            </div>
+          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex items-center gap-3">
+            <Swords size={16} className="text-purple-400" />
             <div>
-              <p className="text-lg font-bold text-white">{player.recaptureCount || 0}</p>
+              <p className="text-base font-semibold text-white">{player.recaptureCount || 0}</p>
               <p className="text-[10px] text-white/40">Recaptures</p>
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <span className="text-sm">🏴</span>
-            </div>
+          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex items-center gap-3">
+            <Flag size={16} className="text-blue-400" />
             <div>
-              <p className="text-lg font-bold text-white">{player.firstCaptureCount || 0}</p>
+              <p className="text-base font-semibold text-white">{player.firstCaptureCount || 0}</p>
               <p className="text-[10px] text-white/40">First Captures</p>
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-              <span className="text-sm">🚶</span>
-            </div>
+          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex items-center gap-3">
+            <Footprints size={16} className="text-green-400" />
             <div>
-              <p className="text-lg font-bold text-white">{player.totalDistance ? (player.totalDistance / 1000).toFixed(1) : '0'}km</p>
-              <p className="text-[10px] text-white/40">Distance Walked</p>
+              <p className="text-base font-semibold text-white">{player.totalDistance ? (player.totalDistance / 1000).toFixed(1) : '0'} km</p>
+              <p className="text-[10px] text-white/40">Distance</p>
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
-              <span className="text-sm">🔥</span>
-            </div>
+          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex items-center gap-3">
+            <TrendingUp size={16} className="text-orange-400" />
             <div>
-              <p className="text-lg font-bold text-white">{player.streak || 0}</p>
+              <p className="text-base font-semibold text-white">{player.streak || 0}</p>
               <p className="text-[10px] text-white/40">Current Streak</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Your Captures */}
+      {/* Recent Discoveries */}
       {capturedArt.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
-            Your Captures
+        <div className="mb-6">
+          <h2 className="text-xs font-medium text-white/30 uppercase tracking-wider mb-3">
+            Recent Discoveries
           </h2>
-          <div className="grid grid-cols-4 gap-2">
-            {capturedArt.slice(0, 8).map((art, idx) => (
-              <motion.div
+          <div className="space-y-1">
+            {capturedArt.slice(0, 5).map((art) => (
+              <div
                 key={art.id}
-                className="aspect-square rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: `${teamColor}20`, border: `1px solid ${teamColor}30` }}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
+                className="p-2 rounded-lg bg-white/[0.02] border border-white/5 flex items-center gap-3"
               >
-                <span className="text-lg">🎨</span>
-              </motion.div>
-            ))}
-            {capturedArt.length > 8 && (
-              <div 
-                className="aspect-square rounded-xl flex items-center justify-center bg-white/5"
-              >
-                <span className="text-xs text-white/40">+{capturedArt.length - 8}</span>
+                <div 
+                  className="w-8 h-8 rounded flex items-center justify-center"
+                  style={{ backgroundColor: `${teamColor}15` }}
+                >
+                  <Target size={14} style={{ color: teamColor }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white/80 truncate">{art.name}</p>
+                  <p className="text-[10px] text-white/30">{art.area}</p>
+                </div>
               </div>
+            ))}
+            {capturedArt.length > 5 && (
+              <p className="text-[10px] text-white/30 text-center pt-1">
+                +{capturedArt.length - 5} more
+              </p>
             )}
           </div>
         </div>
       )}
 
-      {/* Game Master */}
+      {/* Admin Tools */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Zap size={14} className="text-purple-400" />
-          <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">Game Master</h2>
+        <h2 className="text-xs font-medium text-white/30 uppercase tracking-wider mb-3">
+          Admin
+        </h2>
+        <div className="space-y-2">
+          <button
+            onClick={randomizeTeams}
+            disabled={isRandomizing}
+            className="w-full p-3 rounded-lg bg-white/[0.02] border border-white/5 flex items-center gap-3 text-white/60 hover:text-white/80 transition-colors disabled:opacity-50"
+          >
+            <Shuffle size={16} />
+            <span className="text-sm">
+              {isRandomizing ? 'Randomizing...' : 'Randomize Territories'}
+            </span>
+          </button>
+          
+          <button
+            onClick={resetAll}
+            className="w-full p-3 rounded-lg bg-white/[0.02] border border-white/5 flex items-center gap-3 text-white/40 hover:text-red-400 transition-colors"
+          >
+            <RotateCcw size={16} />
+            <span className="text-sm">Reset All Data</span>
+          </button>
         </div>
-        <motion.button
-          onClick={randomizeTeams}
-          disabled={isRandomizing}
-          className="w-full p-4 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center gap-3 disabled:opacity-50"
-          whileTap={{ scale: 0.98 }}
-        >
-          <Shuffle size={20} className="text-purple-400" />
-          <span className="text-sm text-purple-300">
-            {isRandomizing ? 'Randomizing...' : 'Randomize All Territories'}
-          </span>
-        </motion.button>
       </div>
 
-      {/* Reset */}
-      <motion.button
-        onClick={resetAll}
-        className="w-full p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white/40 hover:text-white/60 transition-colors"
-        whileTap={{ scale: 0.98 }}
-      >
-        <RotateCcw size={14} />
-        <span className="text-xs">Reset Game Data</span>
-      </motion.button>
-
-      {/* Version */}
-      <p className="text-center text-[10px] text-white/20 mt-6">
-        Street Art CTF v2.1.0
+      <p className="text-center text-[10px] text-white/20">
+        v2.1.0
       </p>
-    </motion.div>
+    </div>
   )
 }
 
