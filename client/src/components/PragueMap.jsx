@@ -738,7 +738,7 @@ export default function PragueMap() {
           
           return (
             <Marker
-              key={point.id}
+              key={`${point.id}-${markerTeam || 'none'}-${isDiscovered ? 'd' : ''}`}
               position={point.location}
               icon={icon}
               eventHandlers={{
