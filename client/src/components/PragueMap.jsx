@@ -412,151 +412,91 @@ export default function PragueMap() {
   
   return (
     <div className="relative w-full h-full">
-      {/* View mode toggle */}
-      <div className="absolute top-4 left-4 right-4 z-[1000] flex items-center gap-3">
-        <div className="flex bg-black/60 backdrop-blur-sm rounded-lg p-1 border border-white/10">
+      {/* Top bar - View toggle + Hood selector + Stats */}
+      <div className="absolute top-2 left-2 right-2 z-[1000] flex items-center gap-2">
+        {/* View mode toggle */}
+        <div className="flex bg-black/70 backdrop-blur-sm rounded-lg p-0.5 border border-white/10">
           <button
             onClick={() => setViewMode('solo')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+            className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
               isSoloView 
-                ? 'bg-purple-500 text-white' 
-                : 'text-white/50 hover:text-white/70'
+                ? (player.team === 'red' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white')
+                : 'text-white/50'
             }`}
           >
-            My Collection
+            Collection
           </button>
           <button
             onClick={() => setViewMode('multi')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+            className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
               !isSoloView 
                 ? 'bg-gradient-to-r from-red-500 to-blue-500 text-white' 
-                : 'text-white/50 hover:text-white/70'
+                : 'text-white/50'
             }`}
           >
-            Team Battle
+            Battle
           </button>
         </div>
+
+        {/* Hood Selector */}
+        <div className="flex gap-0.5 bg-black/70 backdrop-blur-sm rounded-lg p-0.5 border border-white/10">
+          {Object.values(HOODS).map(hood => (
+            <button
+              key={hood.id}
+              onClick={() => setCurrentHood(hood)}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
+                currentHood.id === hood.id
+                  ? 'bg-white/20 text-white'
+                  : 'text-white/50'
+              }`}
+            >
+              {hood.name}
+            </button>
+          ))}
+        </div>
         
-        {/* Progress bar */}
-        <div className="flex-1 flex gap-0.5 h-1.5 rounded-full overflow-hidden bg-black/40 backdrop-blur-sm">
+        {/* Stats pill */}
+        <div className="ml-auto flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/10">
           {isSoloView ? (
-            <motion.div
-              className="h-full bg-purple-500"
-              initial={{ width: 0 }}
-              animate={{ width: `${(discoveryCount / totalArtCount) * 100}%` }}
-              transition={{ duration: 0.8 }}
-            />
+            <span className="text-[10px] text-white/70">
+              <span className={player.team === 'red' ? 'text-red-400' : 'text-blue-400'}>{discoveryCount}</span>
+              <span className="text-white/40">/{totalArtCount}</span>
+            </span>
           ) : (
-            Object.entries(teamScores).map(([team, score]) => {
-              const percentage = (score / totalScore) * 100
-              return (
-                <motion.div
-                  key={team}
-                  className="h-full"
-                  style={{ backgroundColor: getTeamColor(team) }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${percentage}%` }}
-                  transition={{ duration: 0.8 }}
-                />
-              )
-            })
+            <>
+              <span className="text-[10px] text-red-400">{teamScores.red || 0}</span>
+              <span className="text-[10px] text-white/30">vs</span>
+              <span className="text-[10px] text-blue-400">{teamScores.blue || 0}</span>
+            </>
           )}
         </div>
-      </div>
-
-      {/* Legend - changes based on view mode */}
-      <div className="absolute top-14 left-4 z-[1000] bg-black/80 backdrop-blur-sm rounded-xl p-3 border border-white/10">
-        {isSoloView ? (
-          <>
-            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Your Collection</p>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-purple-500" />
-                <span className="text-xs text-white/70">Discovered</span>
-                <span className="text-xs text-purple-400 ml-auto font-medium">{discoveryCount}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-white/20" />
-                <span className="text-xs text-white/50">Not found</span>
-                <span className="text-xs text-white/30 ml-auto">{totalArtCount - discoveryCount}</span>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Team Battle</p>
-            <div className="space-y-1.5">
-              {TEAMS.map(team => (
-                <div key={team} className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded"
-                    style={{ backgroundColor: getTeamColor(team) }}
-                  />
-                  <span className={`text-xs capitalize font-medium ${team === player.team ? 'text-white' : 'text-white/70'}`}>
-                    {team} {team === player.team && '(you)'}
-                  </span>
-                  <span className="text-xs text-white/40 ml-auto">{teamScores[team] || 0}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
         
-        <div className="mt-2 pt-2 border-t border-white/10">
-          <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1.5">Transport</p>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-0.5 bg-yellow-500" />
-            <span className="text-xs text-yellow-500/70">Metro B</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Hood Selector */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 z-[1000] flex gap-1 bg-black/80 backdrop-blur-sm rounded-xl p-1 border border-white/10">
-        {Object.values(HOODS).map(hood => (
-          <motion.button
-            key={hood.id}
-            onClick={() => setCurrentHood(hood)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              currentHood.id === hood.id
-                ? 'bg-white/20 text-white'
-                : 'text-white/50 hover:text-white/70'
-            }`}
-            whileTap={{ scale: 0.95 }}
-          >
-            {hood.name}
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Map Controls (right side) */}
-      <div className="absolute top-10 right-4 z-[1000] flex flex-col gap-2">
-        {/* Settings Button */}
+        {/* Settings */}
         <motion.button
           onClick={() => setShowSettings(!showSettings)}
-          className={`w-10 h-10 rounded-xl backdrop-blur-sm border flex items-center justify-center transition-colors ${
+          className={`w-7 h-7 rounded-lg backdrop-blur-sm border flex items-center justify-center transition-colors ${
             showSettings 
               ? 'bg-white/20 border-white/30 text-white' 
-              : 'bg-black/80 border-white/10 text-white/50'
+              : 'bg-black/70 border-white/10 text-white/50'
           }`}
           whileTap={{ scale: 0.95 }}
-          title="Map Settings"
         >
-          <Settings size={18} />
+          <Settings size={14} />
         </motion.button>
-        
-        {/* Dev Mode */}
+      </div>
+
+      {/* Dev Mode (bottom right, hidden by default) */}
+      <div className="absolute bottom-24 right-4 z-[1000] flex flex-col gap-2">
         <motion.button
           onClick={() => setDevMode(!devMode)}
-          className={`w-10 h-10 rounded-xl backdrop-blur-sm border flex items-center justify-center transition-colors ${
+          className={`w-8 h-8 rounded-lg backdrop-blur-sm border flex items-center justify-center transition-colors ${
             devMode 
               ? 'bg-purple-500/30 border-purple-500/50 text-purple-400' 
-              : 'bg-black/80 border-white/10 text-white/50'
+              : 'bg-black/50 border-white/10 text-white/30'
           }`}
           whileTap={{ scale: 0.95 }}
-          title="Developer Mode"
         >
-          <Code size={18} />
+          <Code size={14} />
         </motion.button>
         
         {devMode && (
@@ -564,11 +504,10 @@ export default function PragueMap() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={handleReset}
-            className="w-10 h-10 rounded-xl bg-black/80 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/50 hover:text-white/80 transition-colors"
+            className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/30"
             whileTap={{ scale: 0.95 }}
-            title="Reset All Points"
           >
-            <RotateCcw size={18} />
+            <RotateCcw size={14} />
           </motion.button>
         )}
       </div>
