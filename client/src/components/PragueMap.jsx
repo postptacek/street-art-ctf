@@ -42,8 +42,11 @@ const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false) =>
     // Uncaptured - black and white (desaturated)
     filter = 'grayscale(100%)'
   } else if (capturedBy === 'red') {
-    // Red team - shift hue (blue to red is roughly 180 degrees)
+    // Red team - shift hue (blue to red)
     filter = 'hue-rotate(160deg) saturate(1.5)'
+  } else if (capturedBy === 'discovered') {
+    // Solo mode discovered - purple tint
+    filter = 'hue-rotate(270deg) saturate(1.2) brightness(1.1)'
   }
   // Blue team - no filter needed (original image is blue)
   
