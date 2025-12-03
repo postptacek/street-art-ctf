@@ -79,29 +79,36 @@ function CaptureNotification() {
           {captureNotification.artName}
         </motion.p>
         
-        {/* Points - big number */}
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, type: 'spring', stiffness: 150 }}
-          className="mb-2"
-        >
-          <span 
-            className="text-8xl font-black"
-            style={{ color: teamColor }}
-          >
-            +{points}
-          </span>
-        </motion.div>
+        {/* Points - big number (hide for recaptures) */}
+        {!isRecapture && (
+          <>
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3, type: 'spring', stiffness: 150 }}
+              className="mb-2"
+            >
+              <span 
+                className="text-8xl font-black"
+                style={{ color: teamColor }}
+              >
+                +{points}
+              </span>
+            </motion.div>
+            
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-sm tracking-widest text-black/30 mb-6"
+            >
+              POINTS
+            </motion.p>
+          </>
+        )}
         
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-sm tracking-widest text-black/30 mb-6"
-        >
-          POINTS
-        </motion.p>
+        {/* Spacer for recaptures */}
+        {isRecapture && <div className="mb-6" />}
         
         {/* Streak badge */}
         {streak > 1 && (

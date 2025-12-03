@@ -394,8 +394,17 @@
       document.getElementById('s-label').textContent = isNewDiscovery ? 'NEW DISCOVERY' : (isRecapture ? 'TERRITORY STOLEN' : 'SUCCESS');
       document.getElementById('s-title').textContent = isNewDiscovery ? 'DISCOVERED' : (isRecapture ? 'STOLEN' : 'CAPTURED');
       document.getElementById('s-name').textContent = art.name + ' · ' + art.area;
-      document.getElementById('s-pts').textContent = '+' + finalPoints;
-      document.getElementById('s-pts').style.color = teamColor;
+      
+      // Hide points for recaptures (stolen)
+      if (isRecapture) {
+        document.querySelector('.success-points').style.display = 'none';
+        document.querySelector('.success-pts-label').style.display = 'none';
+      } else {
+        document.querySelector('.success-points').style.display = 'block';
+        document.querySelector('.success-pts-label').style.display = 'block';
+        document.getElementById('s-pts').textContent = '+' + finalPoints;
+        document.getElementById('s-pts').style.color = teamColor;
+      }
       
       // Player info
       document.getElementById('s-player').textContent = pname;
