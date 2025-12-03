@@ -397,39 +397,60 @@ export default function PragueMap() {
   
   return (
     <div className="relative w-full h-full">
-      {/* Top bar - White mode with safe area */}
-      <div className="absolute top-0 left-0 right-0 pt-safe px-3 pb-2 z-[1000] flex items-center gap-2 font-nohemi" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
-        {/* View mode toggle */}
-        <div className="flex bg-[#FAFAFA] shadow-lg">
-          <button
-            onClick={() => setViewMode('solo')}
-            className={`px-3 py-2 text-xs font-bold tracking-wide transition-all ${
-              isSoloView 
-                ? 'bg-black text-white'
-                : 'text-black/40'
-            }`}
-          >
-            SOLO
-          </button>
-          <button
-            onClick={() => setViewMode('multi')}
-            className={`px-3 py-2 text-xs font-bold tracking-wide transition-all ${
-              !isSoloView 
-                ? 'bg-black text-white'
-                : 'text-black/40'
-            }`}
-          >
-            BATTLE
-          </button>
+      {/* Top bar - White mode with safe area, two rows */}
+      <div className="absolute top-0 left-0 right-0 pt-safe px-3 pb-2 z-[1000] flex flex-col gap-2 font-nohemi" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
+        {/* Row 1: Mode toggle + Stats */}
+        <div className="flex items-center gap-2">
+          {/* View mode toggle */}
+          <div className="flex bg-[#FAFAFA] shadow-lg">
+            <button
+              onClick={() => setViewMode('solo')}
+              className={`px-3 py-2 text-xs font-bold tracking-wide transition-all ${
+                isSoloView 
+                  ? 'bg-black text-white'
+                  : 'text-black/40'
+              }`}
+            >
+              SOLO
+            </button>
+            <button
+              onClick={() => setViewMode('multi')}
+              className={`px-3 py-2 text-xs font-bold tracking-wide transition-all ${
+                !isSoloView 
+                  ? 'bg-black text-white'
+                  : 'text-black/40'
+              }`}
+            >
+              BATTLE
+            </button>
+          </div>
+          
+          {/* Stats pill */}
+          <div className="ml-auto flex items-center gap-3 bg-[#FAFAFA] shadow-lg px-4 py-2">
+            {isSoloView ? (
+              <>
+                <span className="text-xs font-bold" style={{ color: TEAM_CONFIG[player.team]?.color }}>
+                  {hoodDiscoveryStats.found}
+                </span>
+                <span className="text-xs text-black/30">/ {hoodDiscoveryStats.total}</span>
+              </>
+            ) : (
+              <>
+                <span className="text-sm font-black" style={{ color: TEAM_CONFIG.red.color }}>{teamScores.red || 0}</span>
+                <span className="text-xs text-black/20">vs</span>
+                <span className="text-sm font-black" style={{ color: TEAM_CONFIG.blue.color }}>{teamScores.blue || 0}</span>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Hood Selector */}
-        <div className="flex bg-[#FAFAFA] shadow-lg">
+        {/* Row 2: Hood Selector - scrollable */}
+        <div className="flex overflow-x-auto bg-[#FAFAFA] shadow-lg -mx-1">
           {Object.values(HOODS).map(hood => (
             <button
               key={hood.id}
               onClick={() => setCurrentHood(hood)}
-              className={`px-3 py-2 text-xs font-bold transition-all ${
+              className={`px-3 py-2 text-xs font-bold transition-all whitespace-nowrap ${
                 currentHood.id === hood.id
                   ? 'text-black'
                   : 'text-black/30'
@@ -438,24 +459,6 @@ export default function PragueMap() {
               {hood.name.toUpperCase()}
             </button>
           ))}
-        </div>
-        
-        {/* Stats pill */}
-        <div className="ml-auto flex items-center gap-3 bg-[#FAFAFA] shadow-lg px-4 py-2">
-          {isSoloView ? (
-            <>
-              <span className="text-xs font-bold" style={{ color: TEAM_CONFIG[player.team]?.color }}>
-                {hoodDiscoveryStats.found}
-              </span>
-              <span className="text-xs text-black/30">/ {hoodDiscoveryStats.total}</span>
-            </>
-          ) : (
-            <>
-              <span className="text-sm font-black" style={{ color: TEAM_CONFIG.red.color }}>{teamScores.red || 0}</span>
-              <span className="text-xs text-black/20">vs</span>
-              <span className="text-sm font-black" style={{ color: TEAM_CONFIG.blue.color }}>{teamScores.blue || 0}</span>
-            </>
-          )}
         </div>
       </div>
 
