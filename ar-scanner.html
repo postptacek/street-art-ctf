@@ -8,147 +8,146 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { 
       width: 100%; height: 100%; overflow: hidden; 
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
       background: #000; 
       position: fixed;
       top: 0; left: 0;
     }
     
-    #loading { position: fixed; inset: 0; background: #0a0a0f; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+    /* Loading - White mode */
+    #loading { position: fixed; inset: 0; background: #FAFAFA; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
     #loading.hidden { display: none; }
-    #chump-anim { width: 120px; height: 120px; image-rendering: pixelated; margin-bottom: 16px; }
+    #chump-anim { width: 100px; height: 100px; image-rendering: pixelated; margin-bottom: 24px; }
+    #loading-text { font-size: 12px; letter-spacing: 0.2em; color: rgba(0,0,0,0.3); font-weight: 700; }
     
-    #header { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
-    .back-btn { width: 40px; height: 40px; border-radius: 8px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 20px; cursor: pointer; }
-    .team-badge { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 13px; }
-    .team-dot { width: 10px; height: 10px; border-radius: 50%; }
+    /* Header - White floating */
+    #header { position: fixed; top: 12px; left: 12px; right: 12px; padding-top: env(safe-area-inset-top); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+    .back-btn { width: 44px; height: 44px; background: #FAFAFA; border: none; color: black; font-size: 20px; cursor: pointer; font-weight: 700; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .team-badge { padding: 12px 16px; background: #FAFAFA; box-shadow: 0 4px 20px rgba(0,0,0,0.15); font-size: 11px; font-weight: 900; letter-spacing: 0.1em; }
     
-    #target-info { position: fixed; top: 70px; left: 16px; right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); padding: 14px; display: flex; align-items: center; justify-content: space-between; z-index: 100; opacity: 0; transform: translateY(-10px); transition: all 0.2s; pointer-events: none; }
+    /* Target info - White card */
+    #target-info { position: fixed; top: 80px; left: 12px; right: 12px; background: #FAFAFA; padding: 20px; display: flex; align-items: center; justify-content: space-between; z-index: 100; opacity: 0; transform: translateY(-10px); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; box-shadow: 0 4px 30px rgba(0,0,0,0.2); }
     #target-info.found { opacity: 1; transform: translateY(0); }
-    .art-title { color: white; font-size: 16px; font-weight: 600; }
-    .art-sub { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
-    .points { background: #22c55e; color: white; padding: 6px 14px; border-radius: 8px; font-size: 18px; font-weight: 700; }
-    .points.cooldown { background: #f59e0b; }
+    .art-title { color: black; font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
+    .art-sub { color: rgba(0,0,0,0.4); font-size: 12px; margin-top: 4px; letter-spacing: 0.05em; }
+    .points { color: white; padding: 10px 20px; font-size: 20px; font-weight: 900; }
+    .points.cooldown { background: rgba(0,0,0,0.3) !important; color: rgba(255,255,255,0.5); }
     
-    #hint { position: fixed; bottom: 140px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.5); font-size: 13px; z-index: 100; pointer-events: none; }
+    /* Hint */
+    #hint { position: fixed; bottom: 160px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 700; letter-spacing: 0.15em; z-index: 100; pointer-events: none; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
     
-    #capture-area { position: fixed; bottom: 0; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: max(24px, env(safe-area-inset-bottom)); z-index: 200; pointer-events: none; }
-    #status { margin-bottom: 12px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.5); }
-    #status.ready { color: #22c55e; }
-    #status.cooldown { color: #f59e0b; }
+    /* Capture area - White mode */
+    #capture-area { position: fixed; bottom: 0; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; padding: 24px; padding-bottom: max(32px, env(safe-area-inset-bottom)); z-index: 200; pointer-events: none; }
+    #status { margin-bottom: 16px; font-size: 11px; font-weight: 900; letter-spacing: 0.15em; color: rgba(255,255,255,0.5); text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    #status.ready { color: white; }
+    #status.cooldown { color: rgba(255,255,255,0.4); }
     
     #capture-btn { 
-      width: 72px; height: 72px; border-radius: 50%; 
+      width: 80px; height: 80px;
+      border-radius: 50%;
       background: rgba(255,255,255,0.15);
-      border: 3px solid rgba(255,255,255,0.3); 
+      border: 4px solid rgba(255,255,255,0.3); 
       cursor: pointer; 
-      opacity: 0.4; 
-      transition: all 0.15s;
+      opacity: 0.5; 
+      transition: all 0.2s;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
     #capture-btn.ready { 
-      border-color: #22c55e; 
-      background: #22c55e;
+      border-color: white; 
+      background: white;
       opacity: 1; 
+      box-shadow: 0 0 30px rgba(255,255,255,0.4);
     }
     #capture-btn.ready:active { 
       transform: scale(0.9); 
-      background: #16a34a;
     }
-    #capture-btn:disabled { opacity: 0.25; pointer-events: none; }
+    #capture-btn:disabled { opacity: 0.15; pointer-events: none; }
     
-    /* Success screen - dramatic animation */
-    #success { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 2000; overflow: hidden; }
+    /* Success screen - White mode with team color accent */
+    #success { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 2000; overflow: hidden; background: #FAFAFA; }
     #success.show { display: flex; }
     
-    .success-bg { position: absolute; inset: 0; opacity: 0; animation: bgPulse 0.5s ease-out forwards; }
-    @keyframes bgPulse { 0% { opacity: 0.4; } 100% { opacity: 0.2; } }
+    .success-accent { position: absolute; top: 0; left: 0; right: 0; height: 8px; }
     
-    .success-rays { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-    .ray { position: absolute; width: 4px; height: 50vh; transform-origin: bottom; opacity: 0.15; animation: rayGrow 0.4s ease-out forwards; }
-    @keyframes rayGrow { 0% { transform: scaleY(0) rotate(var(--rot)); } 100% { transform: scaleY(1) rotate(var(--rot)); } }
+    .success-content { position: relative; text-align: center; padding: 32px; animation: contentSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform: translateY(30px); opacity: 0; }
+    @keyframes contentSlide { 0% { transform: translateY(30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
     
-    .success-content { position: relative; text-align: center; padding: 32px; animation: contentPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform: scale(0) rotate(-15deg); }
-    @keyframes contentPop { 0% { transform: scale(0) rotate(-15deg); } 100% { transform: scale(1) rotate(0deg); } }
+    .success-label { font-size: 11px; font-weight: 900; letter-spacing: 0.2em; color: rgba(0,0,0,0.3); margin-bottom: 8px; animation: fadeSlide 0.4s ease-out 0.1s both; }
+    .success-title { color: black; font-size: 48px; font-weight: 900; letter-spacing: -2px; margin-bottom: 4px; animation: fadeSlide 0.4s ease-out 0.15s both; }
+    .success-sub { color: rgba(0,0,0,0.4); font-size: 16px; font-weight: 500; margin-bottom: 32px; animation: fadeSlide 0.4s ease-out 0.2s both; }
+    @keyframes fadeSlide { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
     
-    .success-icon { position: relative; width: 112px; height: 112px; margin: 0 auto 20px; }
-    .success-glow { position: absolute; inset: 0; border-radius: 50%; filter: blur(20px); opacity: 0.5; animation: glowPulse 0.6s ease-in-out infinite alternate; }
-    @keyframes glowPulse { 0% { transform: scale(1); } 100% { transform: scale(1.2); } }
-    .success-circle { position: relative; width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: iconBounce 0.5s ease-out 0.2s infinite; }
-    @keyframes iconBounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    .success-icon-img { width: 56px; height: 56px; filter: brightness(0) invert(1); }
+    .success-points { margin-bottom: 8px; animation: pointsPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both; }
+    .success-pts { font-size: 72px; font-weight: 900; letter-spacing: -3px; }
+    @keyframes pointsPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     
-    .success-title { color: white; font-size: 36px; font-weight: 900; letter-spacing: -1px; margin-bottom: 4px; animation: slideUp 0.3s ease-out 0.1s both; opacity: 0; }
-    .success-sub { color: rgba(255,255,255,0.7); font-size: 16px; font-weight: 600; margin-bottom: 20px; animation: slideUp 0.3s ease-out 0.15s both; opacity: 0; }
-    @keyframes slideUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+    .success-pts-label { font-size: 12px; font-weight: 700; letter-spacing: 0.15em; color: rgba(0,0,0,0.3); margin-bottom: 24px; animation: fadeSlide 0.4s ease-out 0.4s both; }
     
-    .success-points { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: rgba(0,0,0,0.4); border-radius: 100px; margin-bottom: 16px; animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both; }
-    .success-pts { font-size: 32px; font-weight: 900; }
-    .success-streak { display: flex; align-items: center; gap: 4px; color: #f59e0b; font-weight: 700; }
-    .streak-fire { font-size: 18px; }
-    @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+    .success-streak { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(0,0,0,0.05); margin-bottom: 32px; animation: fadeSlide 0.4s ease-out 0.45s both; }
+    .streak-fire { font-size: 20px; }
+    .streak-text { font-size: 14px; font-weight: 900; color: black; }
     
-    .success-player { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 24px; animation: slideUp 0.3s ease-out 0.3s both; opacity: 0; }
-    .success-player span { color: rgba(255,255,255,0.5); font-size: 14px; }
-    .success-player strong { color: white; font-weight: 700; }
-    .success-team-badge { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 900; color: white; }
+    .success-player { animation: fadeSlide 0.4s ease-out 0.5s both; }
+    .success-player-name { font-size: 14px; font-weight: 900; color: black; }
+    .success-team-badge { display: inline-block; margin-left: 8px; padding: 4px 12px; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; color: white; }
     
-    .success-nav { color: rgba(255,255,255,0.3); font-size: 13px; animation: fadeIn 0.3s ease-out 0.4s both; opacity: 0; }
-    @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+    .success-nav { position: absolute; bottom: 32px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; color: rgba(0,0,0,0.2); animation: fadeSlide 0.4s ease-out 0.6s both; }
   </style>
 </head>
 <body>
   <div id="loading">
     <img id="chump-anim" src="animation/frame_00000.png" alt="Loading">
-    <div style="color:rgba(255,255,255,0.5);font-size:13px">Loading AR...</div>
+    <div id="loading-text">LOADING AR</div>
   </div>
   
   <div id="header">
     <button class="back-btn" onclick="goBack()">&larr;</button>
-    <div class="team-badge"><div class="team-dot" id="team-dot"></div><span id="team-name">Team</span></div>
+    <div class="team-badge" id="team-badge">TEAM RED</div>
   </div>
   
   <div id="target-info">
-    <div><div class="art-title" id="art-name">-</div><div class="art-sub" id="art-area">-</div></div>
+    <div>
+      <div class="art-title" id="art-name">-</div>
+      <div class="art-sub" id="art-area">-</div>
+    </div>
     <div class="points" id="art-points">+0</div>
   </div>
   
-  <div id="hint">Point camera at street art</div>
+  <div id="hint">POINT CAMERA AT STREET ART</div>
   
   <div id="capture-area">
-    <div id="status">Searching...</div>
+    <div id="status">SEARCHING</div>
     <button id="capture-btn" disabled></button>
   </div>
   
   <div id="success">
-    <div class="success-bg" id="s-bg"></div>
-    <div class="success-rays" id="s-rays"></div>
+    <div class="success-accent" id="s-accent"></div>
     <div class="success-content">
-      <div class="success-icon">
-        <div class="success-glow" id="s-glow"></div>
-        <div class="success-circle" id="s-circle">
-          <img class="success-icon-img" id="s-icon-img" src="chumper.png" alt="">
-        </div>
-      </div>
-      <div class="success-title" id="s-title">CAPTURED!</div>
-      <div class="success-sub" id="s-name">-</div>
+      <div class="success-label" id="s-label">SUCCESS</div>
+      <div class="success-title" id="s-title">CAPTURED</div>
+      <div class="success-sub" id="s-name">Chump 1 · Vysocany</div>
       <div class="success-points">
-        <span class="success-pts" id="s-pts">+0</span>
-        <div class="success-streak" id="s-streak" style="display:none"></div>
+        <div class="success-pts" id="s-pts">+100</div>
+      </div>
+      <div class="success-pts-label">POINTS</div>
+      <div class="success-streak" id="s-streak" style="display:none">
+        <span class="streak-fire">🔥</span>
+        <span class="streak-text" id="s-streak-text">STREAK x3</span>
       </div>
       <div class="success-player">
-        <span>by</span>
-        <strong id="s-player">Player</strong>
+        <span class="success-player-name" id="s-player">Player</span>
         <span class="success-team-badge" id="s-team-badge">RED</span>
       </div>
-      <div class="success-nav">Opening map...</div>
     </div>
+    <div class="success-nav">OPENING MAP...</div>
   </div>
   
   <a-scene 
@@ -210,10 +209,10 @@
       pid = 'p_' + Math.random().toString(36).substr(2, 9);
       localStorage.setItem('streetart-ctf-pid', pid);
     }
-    const colors = {red:'#ff6b6b',blue:'#4dabf7'};
+    const colors = {red:'#E53935',blue:'#1E88E5'};
     console.log('Player:', pname, 'Team:', team, 'ID:', pid);
-    document.getElementById('team-dot').style.backgroundColor = colors[team];
-    document.getElementById('team-name').textContent = team;
+    document.getElementById('team-badge').textContent = 'TEAM ' + team.toUpperCase();
+    document.getElementById('team-badge').style.color = colors[team];
     
     function goBack() { 
       window.location.href = window.location.pathname.replace('/ar-scanner.html','')+'/#/'; 
@@ -382,29 +381,15 @@
         console.log('Firebase sync attempted');
       } catch(e) { console.log('Firebase sync failed (offline mode):', e.message); }
       
-      // Show dramatic success screen
+      // Show success screen - white mode
       var teamColor = colors[team];
       
-      // Set background and rays color
-      document.getElementById('s-bg').style.backgroundColor = teamColor;
-      var raysContainer = document.getElementById('s-rays');
-      raysContainer.innerHTML = '';
-      for (var r = 0; r < 8; r++) {
-        var ray = document.createElement('div');
-        ray.className = 'ray';
-        ray.style.backgroundColor = teamColor;
-        ray.style.setProperty('--rot', (r * 45) + 'deg');
-        ray.style.animationDelay = (r * 0.03) + 's';
-        raysContainer.appendChild(ray);
-      }
-      
-      // Set icon colors
-      document.getElementById('s-glow').style.backgroundColor = teamColor;
-      document.getElementById('s-circle').style.backgroundColor = teamColor;
-      document.getElementById('s-icon-img').style.filter = team === 'red' ? 'brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(-50deg)' : 'brightness(0) invert(1)';
+      // Set accent bar color
+      document.getElementById('s-accent').style.backgroundColor = teamColor;
       
       // Set text
-      document.getElementById('s-title').textContent = isNewDiscovery ? 'DISCOVERED!' : (isRecapture ? 'STOLEN!' : 'CAPTURED!');
+      document.getElementById('s-label').textContent = isNewDiscovery ? 'NEW DISCOVERY' : (isRecapture ? 'TERRITORY STOLEN' : 'SUCCESS');
+      document.getElementById('s-title').textContent = isNewDiscovery ? 'DISCOVERED' : (isRecapture ? 'STOLEN' : 'CAPTURED');
       document.getElementById('s-name').textContent = art.name + ' · ' + art.area;
       document.getElementById('s-pts').textContent = '+' + finalPoints;
       document.getElementById('s-pts').style.color = teamColor;
@@ -417,8 +402,8 @@
       // Show streak if > 1
       var streakEl = document.getElementById('s-streak');
       if (currentStreak > 1) {
-        streakEl.innerHTML = '<span class="streak-fire">🔥</span>' + currentStreak + 'x';
-        streakEl.style.display = 'flex';
+        document.getElementById('s-streak-text').textContent = 'STREAK x' + currentStreak;
+        streakEl.style.display = 'inline-flex';
       } else {
         streakEl.style.display = 'none';
       }
@@ -461,17 +446,18 @@
               if (chk.msg === 'first') previewPts = Math.round(art.points * 1.5);
               else if (chk.msg === 'recapture') previewPts = Math.round(art.points * 1.25);
               
-              pts.textContent = '+' + previewPts; 
+              pts.textContent = '+' + previewPts;
+              pts.style.backgroundColor = colors[team];
               pts.classList.remove('cooldown'); 
               btn.classList.add('ready'); 
               btn.disabled = false;
               
               if (chk.msg === 'first') {
-                st.innerHTML = '<span style="color:#22c55e">First capture! +50%</span>';
+                st.textContent = 'FIRST CAPTURE +50%';
               } else if (chk.msg === 'recapture') {
-                st.innerHTML = '<span style="color:#f59e0b">Recapture! +25%</span>';
+                st.textContent = 'RECAPTURE +25%';
               } else {
-                st.textContent = 'Tap to capture!';
+                st.textContent = 'TAP TO CAPTURE';
               }
               st.className = 'ready'; 
             } else { 
@@ -479,7 +465,7 @@
               pts.classList.add('cooldown'); 
               btn.classList.remove('ready'); 
               btn.disabled = true; 
-              st.textContent = chk.msg; 
+              st.textContent = chk.msg.toUpperCase(); 
               st.className = 'cooldown'; 
             }
             document.getElementById('target-info').classList.add('found');
@@ -493,7 +479,7 @@
             document.getElementById('hint').style.display = 'block';
             document.getElementById('capture-btn').classList.remove('ready');
             document.getElementById('capture-btn').disabled = true;
-            document.getElementById('status').textContent = 'Searching...';
+            document.getElementById('status').textContent = 'SEARCHING';
             document.getElementById('status').className = '';
           });
         })(i);
