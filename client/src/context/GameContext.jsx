@@ -338,33 +338,27 @@ export function GameProvider({ children }) {
     if (!TEAMS.includes(teamColor)) return
     
     // Use functional update to get latest player state
-    let updatedPlayer
     setPlayer(prev => {
-      updatedPlayer = { ...prev, team: teamColor }
+      const updatedPlayer = { ...prev, team: teamColor }
+      // Save directly to localStorage to ensure persistence
+      saveToStorage(STORAGE_KEYS.player, updatedPlayer)
+      // Fire and forget Firebase sync
+      syncPlayerToFirebase(updatedPlayer).catch(() => {})
       return updatedPlayer
     })
-    
-    // Wait a tick for state to settle, then sync
-    await new Promise(r => setTimeout(r, 50))
-    if (updatedPlayer) {
-      await syncPlayerToFirebase(updatedPlayer)
-    }
   }, [syncPlayerToFirebase])
   
   // Set player name and sync to Firebase
   const setPlayerName = useCallback(async (name) => {
     // Use functional update to get latest player state
-    let updatedPlayer
     setPlayer(prev => {
-      updatedPlayer = { ...prev, name }
+      const updatedPlayer = { ...prev, name }
+      // Save directly to localStorage to ensure persistence
+      saveToStorage(STORAGE_KEYS.player, updatedPlayer)
+      // Fire and forget Firebase sync
+      syncPlayerToFirebase(updatedPlayer).catch(() => {})
       return updatedPlayer
     })
-    
-    // Wait a tick for state to settle
-    await new Promise(r => setTimeout(r, 50))
-    if (updatedPlayer) {
-      await syncPlayerToFirebase(updatedPlayer)
-    }
   }, [syncPlayerToFirebase])
 
   // Find nearest art point to a location
