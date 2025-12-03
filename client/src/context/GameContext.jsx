@@ -317,6 +317,8 @@ export function GameProvider({ children }) {
     if (!isOnline || !playerData.id) return
     // Don't sync if name is still the default
     if (!playerData.name || playerData.name === 'Street Artist') return
+    // Don't sync if no team yet
+    if (!playerData.team) return
     
     try {
       await setDoc(doc(db, PLAYERS_COLLECTION, playerData.id), {
@@ -334,21 +336,36 @@ export function GameProvider({ children }) {
   // Join a team and sync to Firebase
   const joinTeam = useCallback(async (teamColor) => {
     if (!TEAMS.includes(teamColor)) return
-    const newPlayer = { ...player, team: teamColor }
-    setPlayer(newPlayer)
     
-    // Sync player to Firebase (only if name is set)
-    await syncPlayerToFirebase(newPlayer)
-  }, [player, syncPlayerToFirebase])
+    // Use functional update to get latest player state
+    let updatedPlayer
+    setPlayer(prev => {
+      updatedPlayer = { ...prev, team: teamColor }
+      return updatedPlayer
+    })
+    
+    // Wait a tick for state to settle, then sync
+    await new Promise(r => setTimeout(r, 50))
+    if (updatedPlayer) {
+      await syncPlayerToFirebase(updatedPlayer)
+    }
+  }, [syncPlayerToFirebase])
   
   // Set player name and sync to Firebase
   const setPlayerName = useCallback(async (name) => {
-    const newPlayer = { ...player, name }
-    setPlayer(newPlayer)
+    // Use functional update to get latest player state
+    let updatedPlayer
+    setPlayer(prev => {
+      updatedPlayer = { ...prev, name }
+      return updatedPlayer
+    })
     
-    // Sync to Firebase now that we have a real name
-    await syncPlayerToFirebase(newPlayer)
-  }, [player, syncPlayerToFirebase])
+    // Wait a tick for state to settle
+    await new Promise(r => setTimeout(r, 50))
+    if (updatedPlayer) {
+      await syncPlayerToFirebase(updatedPlayer)
+    }
+  }, [syncPlayerToFirebase])
 
   // Find nearest art point to a location
   const findNearestArt = useCallback((lat, lng, maxDistanceMeters = 50) => {
