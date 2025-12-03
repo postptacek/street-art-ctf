@@ -338,6 +338,10 @@
       localPlayer.streak = currentStreak;
       localPlayer.maxStreak = Math.max(localPlayer.maxStreak || 0, currentStreak);
       localPlayer.lastCaptureTime = now.toISOString();
+      // Track capture stats
+      localPlayer.captureCount = (localPlayer.captureCount || 0) + 1;
+      if (isFirstCapture) localPlayer.firstCaptureCount = (localPlayer.firstCaptureCount || 0) + 1;
+      if (isRecapture) localPlayer.recaptureCount = (localPlayer.recaptureCount || 0) + 1;
       // Track unique areas visited
       if (!localPlayer.uniqueAreasVisited) localPlayer.uniqueAreasVisited = [];
       if (!localPlayer.uniqueAreasVisited.includes(art.area)) {
