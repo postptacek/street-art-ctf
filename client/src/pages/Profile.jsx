@@ -11,9 +11,13 @@ const TEAM_CONFIG = {
 }
 
 const DISTRICTS = {
-  'Vysocany': { name: 'Vysočany' },
-  'Hloubetin': { name: 'Hloubětín' },
-  'Podebrady': { name: 'Poděbrady' }
+  'Vysočany': { name: 'Vysočany' },
+  'Hloubětín': { name: 'Hloubětín' },
+  'Poděbrady': { name: 'Poděbrady' },
+  'Palmovka': { name: 'Palmovka' },
+  'Karlín': { name: 'Karlín' },
+  'Libeň': { name: 'Libeň' },
+  'Prosek': { name: 'Prosek' }
 }
 
 function Profile() {
@@ -135,7 +139,7 @@ function Profile() {
         {/* City total */}
         <div className="mb-4">
           <div className="flex justify-between mb-2">
-            <span className="font-bold text-black">Prague</span>
+            <span className="font-bold text-black">Total Collected</span>
             <span className="text-black/40">{totalProgress.found} / {totalProgress.total}</span>
           </div>
           <div className="h-2 bg-black/5">
@@ -243,7 +247,7 @@ function Profile() {
         </div>
       </motion.div>
 
-      <p className="text-center text-xs text-black/20 pb-4">v3.0.3</p>
+      <p className="text-center text-xs text-black/20 pb-4">v3.0.4</p>
     </div>
   )
 }

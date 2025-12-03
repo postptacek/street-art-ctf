@@ -17,12 +17,17 @@ function timeAgo(date) {
 }
 
 function Home() {
-  const { player, teamScores, recentCaptures, isOnline } = useGame()
+  const { player, teamScores, recentCaptures, isOnline, artPoints } = useGame()
   
   const totalScore = teamScores.red + teamScores.blue
   const redPercent = totalScore > 0 ? Math.round((teamScores.red / totalScore) * 100) : 50
   const bluePercent = 100 - redPercent
   const leading = teamScores.red > teamScores.blue ? 'red' : teamScores.blue > teamScores.red ? 'blue' : null
+  
+  // Count current territories held by each team
+  const redTerritories = artPoints?.filter(p => p.capturedBy === 'red' && p.status !== 'ghost').length || 0
+  const blueTerritories = artPoints?.filter(p => p.capturedBy === 'blue' && p.status !== 'ghost').length || 0
+  const totalTerritories = artPoints?.filter(p => p.status !== 'ghost').length || 0
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#FAFAFA] font-nohemi">
@@ -95,6 +100,22 @@ function Home() {
           <span>{redPercent}%</span>
           <span>{bluePercent}%</span>
         </div>
+        
+        {/* Territory counts */}
+        <div className="flex justify-between mt-4 pt-4 border-t border-black/5">
+          <div className="text-center">
+            <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.red.color }}>{redTerritories}</div>
+            <div className="text-xs text-black/30">territories</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-black/20">{totalTerritories - redTerritories - blueTerritories}</div>
+            <div className="text-xs text-black/30">unclaimed</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.blue.color }}>{blueTerritories}</div>
+            <div className="text-xs text-black/30">territories</div>
+          </div>
+        </div>
       </motion.div>
 
       {/* Player Card */}
@@ -139,6 +160,7 @@ function Home() {
           <div className="space-y-1">
             {recentCaptures.map((capture, index) => {
               const config = TEAM_CONFIG[capture.team] || { color: '#888', name: '?' }
+              const isRecapture = capture.isRecapture
               return (
                 <motion.div
                   key={capture.id}
@@ -158,7 +180,11 @@ function Home() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="font-bold" style={{ color: config.color }}>+{capture.points}</div>
+                    {isRecapture ? (
+                      <div className="font-bold text-black/60">STOLEN</div>
+                    ) : (
+                      <div className="font-bold" style={{ color: config.color }}>+{capture.points}</div>
+                    )}
                     <div className="text-xs text-black/30">{timeAgo(capture.capturedAt)}</div>
                   </div>
                 </motion.div>
