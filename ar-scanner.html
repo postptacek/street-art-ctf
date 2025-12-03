@@ -139,7 +139,6 @@
       </div>
       <div class="success-pts-label">POINTS</div>
       <div class="success-streak" id="s-streak" style="display:none">
-        <span class="streak-fire">🔥</span>
         <span class="streak-text" id="s-streak-text">STREAK x3</span>
       </div>
       <div class="success-player">
@@ -316,7 +315,7 @@
       if (currentStreak > 1) {
         const streakPct = Math.round(streakBonus * 100);
         bonusText = bonusText ? bonusText + ' • ' : '';
-        bonusText += '🔥 STREAK x' + currentStreak + ' (+' + streakPct + '%)';
+        bonusText += 'STREAK x' + currentStreak + ' (+' + streakPct + '%)';
       }
       
       console.log('Capturing:', art.name, 'for', finalPoints, 'pts', bonusText);
