@@ -73,25 +73,30 @@ export default function Onboarding() {
     }
   }, [])
   
-  useEffect(() => {
+  // Assign team only once when entering step 2 (team reveal)
+  const assignTeamOnce = () => {
+    if (assignedTeam) return assignedTeam // Already assigned
     const redCount = allPlayers.filter(p => p.team === 'red').length
     const blueCount = allPlayers.filter(p => p.team === 'blue').length
     const team = redCount < blueCount ? 'red' : blueCount < redCount ? 'blue' : (Math.random() < 0.5 ? 'red' : 'blue')
-    setAssignedTeam(team)
-  }, [allPlayers])
+    return team
+  }
   
   const handleGenerateName = () => setName(generateRandomName())
   
   const handleNext = () => {
     if (step === 1 && name.trim()) {
       setPlayerName(name.trim())
-      if (assignedTeam) joinTeam(assignedTeam)
+      // Assign team NOW and save it
+      const team = assignTeamOnce()
+      setAssignedTeam(team)
+      joinTeam(team)
     }
     if (step === 3) { navigate('/map'); return }
     setStep(step + 1)
   }
   
-  const canProceed = () => step === 1 ? name.trim().length >= 2 && assignedTeam : true
+  const canProceed = () => step === 1 ? name.trim().length >= 2 : true
   
   const teamColor = assignedTeam === 'red' ? '#E53935' : '#1E88E5'
   const teamName = assignedTeam === 'red' ? 'RED' : 'BLUE'
