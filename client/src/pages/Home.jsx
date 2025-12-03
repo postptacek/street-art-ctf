@@ -120,44 +120,6 @@ function Home() {
         </motion.div>
       )}
 
-      {/* Solo Progress */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35 }}
-        className="px-6 mb-8"
-      >
-        <p className="text-sm tracking-widest text-black/40 mb-4">YOUR COLLECTION</p>
-        
-        <div className="flex gap-6 mb-4">
-          <div>
-            <div className="text-4xl font-black text-black">{player.capturedArt?.length || 0}</div>
-            <div className="text-xs text-black/40">discovered</div>
-          </div>
-          <div>
-            <div className="text-4xl font-black text-black">{player.maxStreak || 0}</div>
-            <div className="text-xs text-black/40">best streak</div>
-          </div>
-          <div>
-            <div className="text-4xl font-black text-black">{player.streak || 0}</div>
-            <div className="text-xs text-black/40">current</div>
-          </div>
-        </div>
-        
-        {/* Collection progress bar */}
-        <div className="h-1 bg-black/5">
-          <motion.div 
-            className="h-full bg-black"
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.min(((player.capturedArt?.length || 0) / 21) * 100, 100)}%` }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-          />
-        </div>
-        <div className="text-xs text-black/30 mt-2">
-          {player.capturedArt?.length || 0} / 21 Chumpsters found
-        </div>
-      </motion.div>
-
       {/* Live Activity */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

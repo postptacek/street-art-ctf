@@ -80,7 +80,7 @@ function Profile() {
           animate={{ opacity: 1, y: 0 }}
           className="text-sm tracking-widest text-black/40 mb-1"
         >
-          PROFILE
+          YOUR COLLECTION
         </motion.p>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
@@ -94,7 +94,6 @@ function Profile() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-black/40 mt-1"
           style={{ color: teamColor }}
         >
           Team {teamName}

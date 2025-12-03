@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
+import { ART_POINTS } from '../data/pragueMap'
 
-// Random name generator - Czech-friendly
-const ADJECTIVES = ['Super', 'Mega', 'Turbo', 'Ultra', 'Hyper', 'Ninja', 'Pixel', 'Neon', 'Cyber', 'Power']
-const NOUNS = ['Lovec', 'Hrdina', 'Skokan', 'Běžec', 'Střelec', 'Bojovník', 'Závodník', 'Hráč', 'Mazák', 'Šampion']
+// Random name generator
+const ADJECTIVES = ['Swift', 'Bold', 'Neon', 'Urban', 'Wild', 'Cosmic', 'Pixel', 'Mystic', 'Shadow', 'Electric']
+const NOUNS = ['Artist', 'Hunter', 'Rebel', 'Ghost', 'Ninja', 'Pirate', 'Wizard', 'Rogue', 'Phoenix', 'Storm']
 
 function generateRandomName() {
   const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
@@ -125,7 +126,7 @@ export default function Onboarding() {
                 transition={{ delay: 0.2 }}
                 className="text-sm tracking-widest text-black/40 mb-4"
               >
-                VÍTEJ VE HŘE
+                WELCOME TO
               </motion.p>
               
               <h1 className="text-[3.5rem] leading-[0.95] font-bold text-black mb-8 tracking-tight">
@@ -140,7 +141,7 @@ export default function Onboarding() {
                 transition={{ delay: 1.2 }}
                 className="text-lg text-black/50 max-w-[280px] leading-relaxed"
               >
-                Město se stává tvým plátnem. Najdi street art. Obsaď území. Vyhraj hru.
+                The city becomes your canvas. Find street art. Claim territory. Win the game.
               </motion.p>
             </div>
 
@@ -152,16 +153,16 @@ export default function Onboarding() {
             >
               <div className="flex gap-8 text-sm text-black/40">
                 <div>
-                  <div className="text-2xl font-bold text-black">21</div>
-                  <div>míst</div>
+                  <div className="text-2xl font-bold text-black">{ART_POINTS.length}</div>
+                  <div>locations</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-black">2</div>
-                  <div>týmy</div>
+                  <div>teams</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-black">1</div>
-                  <div>vítěz</div>
+                  <div>winner</div>
                 </div>
               </div>
             </motion.div>
@@ -184,11 +185,11 @@ export default function Onboarding() {
               transition={{ delay: 0.2 }}
               className="text-sm tracking-widest text-black/40 mb-4"
             >
-              KROK 1 ZE 3
+              STEP 1 OF 3
             </motion.p>
             
             <h1 className="text-4xl font-bold text-black mb-3 tracking-tight">
-              <AnimatedWords text="Jak se jmenuješ?" delay={0.2} />
+              <AnimatedWords text="Who are you?" delay={0.2} />
             </h1>
             
             <motion.p
@@ -197,7 +198,7 @@ export default function Onboarding() {
               transition={{ delay: 0.6 }}
               className="text-black/40 mb-10"
             >
-              Vyber si přezdívku. Ať je zapamatovatelná.
+              Pick a name. Make it memorable.
             </motion.p>
             
             <motion.div
@@ -209,7 +210,7 @@ export default function Onboarding() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Tvoje jméno"
+                placeholder="Your name"
                 maxLength={20}
                 className="w-full py-4 text-3xl font-bold text-black bg-transparent border-b-2 border-black/20 focus:border-black focus:outline-none placeholder:text-black/20 transition-colors"
               />
@@ -218,7 +219,7 @@ export default function Onboarding() {
                 onClick={handleGenerateName}
                 className="mt-6 text-sm text-black/40 hover:text-black transition-colors underline underline-offset-4"
               >
-                Náhodné jméno
+                Randomize
               </button>
             </motion.div>
           </motion.div>
@@ -246,12 +247,12 @@ export default function Onboarding() {
                 transition={{ delay: 0.5 }}
                 className="text-white/60 text-sm tracking-widest mb-2"
               >
-                {name.toUpperCase()}, JSI V
+                {name.toUpperCase()}, YOU ARE
               </motion.p>
               
               <h1 className="text-[5rem] leading-none font-black text-white tracking-tight">
-                <AnimatedLetters text="TÝMU" delay={0.6} /><br/>
-                <AnimatedLetters text={assignedTeam === 'red' ? 'ČERVENÍ' : 'MODŘÍ'} delay={0.9} />
+                <AnimatedLetters text="TEAM" delay={0.6} /><br/>
+                <AnimatedLetters text={teamName} delay={0.9} />
               </h1>
               
               <motion.p
@@ -260,7 +261,7 @@ export default function Onboarding() {
                 transition={{ delay: 1.4 }}
                 className="mt-6 text-white/50 text-lg"
               >
-                {assignedTeam === 'red' ? 'Hoř jasně. Dobij vše.' : 'Teč silně. Ovládni mapu.'}
+                {assignedTeam === 'red' ? 'Burn bright. Conquer all.' : 'Flow strong. Take over.'}
               </motion.p>
             </motion.div>
           </motion.div>
@@ -281,11 +282,11 @@ export default function Onboarding() {
               animate={{ opacity: 1, y: 0 }}
               className="text-sm tracking-widest text-black/40 mb-4"
             >
-              JAK TO FUNGUJE
+              HOW IT WORKS
             </motion.p>
             
             <h1 className="text-4xl font-bold text-black mb-10 tracking-tight">
-              <AnimatedWords text="Tři jednoduché kroky" delay={0.1} />
+              <AnimatedWords text="Three simple steps" delay={0.1} />
             </h1>
             
             <div className="space-y-8">
@@ -297,9 +298,9 @@ export default function Onboarding() {
               >
                 <div className="text-5xl font-black text-black/10">1</div>
                 <div>
-                  <h3 className="text-xl font-bold text-black mb-1">Najdi</h3>
+                  <h3 className="text-xl font-bold text-black mb-1">Find</h3>
                   <p className="text-black/50 leading-relaxed">
-                    Procházej ulice. Hledej Chumpstry schované na zdech.
+                    Walk the streets. Look for Chumpsters hiding in plain sight.
                   </p>
                 </div>
               </motion.div>
@@ -312,9 +313,9 @@ export default function Onboarding() {
               >
                 <div className="text-5xl font-black text-black/10">2</div>
                 <div>
-                  <h3 className="text-xl font-bold text-black mb-1">Naskenuj</h3>
+                  <h3 className="text-xl font-bold text-black mb-1">Scan</h3>
                   <p className="text-black/50 leading-relaxed">
-                    Namiř kameru. AR skener rozpozná obrázek okamžitě.
+                    Point your camera. The AR scanner recognizes the art instantly.
                   </p>
                 </div>
               </motion.div>
@@ -327,9 +328,9 @@ export default function Onboarding() {
               >
                 <div className="text-5xl font-black text-black/10">3</div>
                 <div>
-                  <h3 className="text-xl font-bold text-black mb-1">Obsaď</h3>
+                  <h3 className="text-xl font-bold text-black mb-1">Capture</h3>
                   <p className="text-black/50 leading-relaxed">
-                    Získej body pro svůj tým. Sbírej série. Ovládni mapu.
+                    Claim it for your team. Build streaks. Dominate the map.
                   </p>
                 </div>
               </motion.div>
@@ -355,7 +356,7 @@ export default function Onboarding() {
                 : 'bg-black/10 text-black/30 cursor-not-allowed'
           }`}
         >
-          {step === 3 ? "JDEME NA TO!" : step === 2 ? 'POKRAČOVAT' : 'DALŠÍ'}
+          {step === 3 ? "LET'S GO" : step === 2 ? 'CONTINUE' : 'NEXT'}
         </motion.button>
       </div>
     </div>
