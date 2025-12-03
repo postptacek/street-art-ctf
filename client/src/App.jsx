@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { GameProvider, useGame } from './context/GameContext'
@@ -13,6 +14,31 @@ import Navigation from './components/Navigation'
 const TEAM_CONFIG = {
   red: { color: '#E53935', name: 'RED' },
   blue: { color: '#1E88E5', name: 'BLUE' }
+}
+
+// Eat animation component - plays when territory is stolen
+function EatAnimation({ variant }) {
+  const [frame, setFrame] = useState(0)
+  const totalFrames = 41
+  const folder = variant === 'a' ? 'eat_a' : 'eat_b'
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFrame(f => (f + 1) % totalFrames)
+    }, 42) // ~24fps
+    return () => clearInterval(interval)
+  }, [])
+  
+  const frameNum = String(frame).padStart(5, '0')
+  const src = `animation/${folder}/eat_${variant}_${frameNum}.png`
+  
+  return (
+    <img 
+      src={src} 
+      alt="Chomp eating"
+      className="w-48 h-48 object-contain"
+    />
+  )
 }
 
 // Full-screen capture notification - White mode redesign
@@ -49,6 +75,11 @@ function CaptureNotification() {
   
   // Only show points to the active player who made the capture
   const showPoints = isActivePlayer
+  
+  // Determine which eat animation to show (only for steals/recaptures)
+  // EAT_A: Red captures blue, EAT_B: Blue captures red
+  const showEatAnimation = captureNotification.isRecapture
+  const eatVariant = captureNotification.team === 'red' ? 'a' : 'b'
   
   return (
     <motion.div
@@ -97,10 +128,22 @@ function CaptureNotification() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.25 }}
-          className="text-lg text-black/50 mb-8"
+          className="text-lg text-black/50 mb-4"
         >
           {captureNotification.artName}
         </motion.p>
+        
+        {/* Eat animation - only for steals */}
+        {showEatAnimation && (
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
+            className="mb-4 flex justify-center"
+          >
+            <EatAnimation variant={eatVariant} />
+          </motion.div>
+        )}
         
         {/* Points - only show to active player */}
         {showPoints && (
