@@ -15,8 +15,8 @@ function Leaderboard() {
   const bluePercent = totalScore > 0 ? 100 - redPercent : 50
   const leading = teamScores.red > teamScores.blue ? 'red' : teamScores.blue > teamScores.red ? 'blue' : null
 
-  // Build players list - merge Firebase players with current player
-  const playersList = [...allPlayers]
+  // Build players list - filter out "Street Artist" entries and merge with current player
+  const playersList = allPlayers.filter(p => p.name && p.name !== 'Street Artist')
   
   // Update current player's data if they exist in list, or add them
   const currentPlayerIndex = playersList.findIndex(p => p.id === player.id || p.name === player.name)

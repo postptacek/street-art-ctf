@@ -312,31 +312,43 @@ export function GameProvider({ children }) {
     blue: Math.max(globalTeamScores.blue, calculatedScores.blue)
   }
 
+  // Sync player to Firebase
+  const syncPlayerToFirebase = useCallback(async (playerData) => {
+    if (!isOnline || !playerData.id) return
+    // Don't sync if name is still the default
+    if (!playerData.name || playerData.name === 'Street Artist') return
+    
+    try {
+      await setDoc(doc(db, PLAYERS_COLLECTION, playerData.id), {
+        name: playerData.name,
+        team: playerData.team,
+        score: playerData.score || 0,
+        captures: playerData.captureCount || 0,
+        joinedAt: new Date()
+      }, { merge: true })
+    } catch (err) {
+      console.warn('Failed to sync player to Firebase:', err)
+    }
+  }, [isOnline])
+
   // Join a team and sync to Firebase
   const joinTeam = useCallback(async (teamColor) => {
     if (!TEAMS.includes(teamColor)) return
-    setPlayer(prev => ({ ...prev, team: teamColor }))
+    const newPlayer = { ...player, team: teamColor }
+    setPlayer(newPlayer)
     
-    // Sync player to Firebase for team count tracking
-    if (isOnline && player.id) {
-      try {
-        await setDoc(doc(db, PLAYERS_COLLECTION, player.id), {
-          name: player.name,
-          team: teamColor,
-          score: player.score || 0,
-          captures: player.captureCount || 0,
-          joinedAt: new Date()
-        }, { merge: true })
-      } catch (err) {
-        console.warn('Failed to sync player to Firebase:', err)
-      }
-    }
-  }, [isOnline, player.id, player.name, player.score, player.captureCount])
+    // Sync player to Firebase (only if name is set)
+    await syncPlayerToFirebase(newPlayer)
+  }, [player, syncPlayerToFirebase])
   
-  // Set player name
-  const setPlayerName = useCallback((name) => {
-    setPlayer(prev => ({ ...prev, name }))
-  }, [])
+  // Set player name and sync to Firebase
+  const setPlayerName = useCallback(async (name) => {
+    const newPlayer = { ...player, name }
+    setPlayer(newPlayer)
+    
+    // Sync to Firebase now that we have a real name
+    await syncPlayerToFirebase(newPlayer)
+  }, [player, syncPlayerToFirebase])
 
   // Find nearest art point to a location
   const findNearestArt = useCallback((lat, lng, maxDistanceMeters = 50) => {
