@@ -422,8 +422,8 @@ export default function PragueMap() {
   
   return (
     <div className="relative w-full h-full">
-      {/* Top bar - White mode */}
-      <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center gap-2 font-nohemi">
+      {/* Top bar - White mode with safe area */}
+      <div className="absolute top-0 left-0 right-0 pt-safe px-3 pb-2 z-[1000] flex items-center gap-2 font-nohemi" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
         {/* View mode toggle */}
         <div className="flex bg-[#FAFAFA] shadow-lg">
           <button
