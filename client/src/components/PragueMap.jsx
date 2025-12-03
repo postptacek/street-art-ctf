@@ -38,27 +38,40 @@ L.Icon.Default.mergeOptions({
 // Create custom chumper icons for different team states
 const CHUMPER_URL = `${import.meta.env.BASE_URL}chumper.png`
 
-const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false) => {
+// Calculate decay level (0-1) based on time since capture
+// 0 = fresh capture, 1 = fully decayed (24+ hours)
+const calculateDecay = (capturedAt) => {
+  if (!capturedAt) return 0
+  const now = Date.now()
+  const captureTime = capturedAt instanceof Date ? capturedAt.getTime() : new Date(capturedAt).getTime()
+  const hoursSinceCapture = (now - captureTime) / (1000 * 60 * 60)
+  // Decay over 24 hours
+  return Math.min(hoursSinceCapture / 24, 1)
+}
+
+const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false, decayLevel = 0) => {
   // Determine the CSS filter based on capture state
   let filter = ''
+  
+  // Apply decay as desaturation (max 50% gray at full decay)
+  const decaySaturation = 1 - (decayLevel * 0.5)
+  const decayOpacity = 1 - (decayLevel * 0.3)
+  
   if (isGhost) {
     filter = 'grayscale(100%) opacity(0.5)'
   } else if (!capturedBy) {
     // Uncaptured - black and white (desaturated)
     filter = 'grayscale(100%)'
   } else if (capturedBy === 'red') {
-    // Red team - shift hue (blue to red)
-    filter = 'hue-rotate(160deg) saturate(1.5)'
+    // Red team - shift hue (blue to red), apply decay
+    filter = `hue-rotate(160deg) saturate(${1.5 * decaySaturation}) opacity(${decayOpacity})`
+  } else {
+    // Blue team - apply decay
+    filter = `saturate(${decaySaturation}) opacity(${decayOpacity})`
   }
-  // Blue team - no filter needed (original image is blue)
-  
-  // Add a discovery indicator (purple ring) if discovered by player
-  const discoveryIndicator = isDiscovered 
-    ? `<div style="position:absolute;inset:-4px;border:2px solid #a855f7;border-radius:50%;"></div>`
-    : ''
   
   return L.divIcon({
-    html: `<div style="position:relative;">${discoveryIndicator}<img src="${CHUMPER_URL}" style="width: 32px; height: 32px; filter: ${filter};" /></div>`,
+    html: `<div style="position:relative;"><img src="${CHUMPER_URL}" style="width: 32px; height: 32px; filter: ${filter};" /></div>`,
     className: 'chumper-marker',
     iconSize: [32, 32],
     iconAnchor: [16, 16],
@@ -295,7 +308,7 @@ const generateTerritoryShapes = (points, mode) => {
           lng + radius * Math.sin(angle) * 1.5 // Adjust for lat/lng ratio
         ])
       }
-      shapes.push({ team, coords, pointId: point.id })
+      shapes.push({ team, coords, pointId: point.id, capturedAt: point.capturedAt })
     } else if (mode === 'squares') {
       const r = radius * 0.8
       shapes.push({
@@ -306,7 +319,8 @@ const generateTerritoryShapes = (points, mode) => {
           [lat + r, lng + r * 1.5],
           [lat + r, lng - r * 1.5],
         ],
-        pointId: point.id
+        pointId: point.id,
+        capturedAt: point.capturedAt
       })
     } else if (mode === 'hexagons') {
       const r = radius * 0.9
@@ -318,7 +332,7 @@ const generateTerritoryShapes = (points, mode) => {
           lng + r * Math.sin(angle) * 1.5
         ])
       }
-      shapes.push({ team, coords, pointId: point.id })
+      shapes.push({ team, coords, pointId: point.id, capturedAt: point.capturedAt })
     }
   })
   
@@ -557,20 +571,27 @@ export default function PragueMap() {
           />
         ))}
         
-        {/* Territory shapes - only in multi view */}
-        {!isSoloView && territoryShapes.map((shape, idx) => (
-          <Polygon
-            key={`territory-${shape.pointId}`}
-            positions={shape.coords}
-            pathOptions={{
-              color: getTeamColor(shape.team),
-              fillColor: getTeamColor(shape.team),
-              fillOpacity: 0.15,
-              weight: 1,
-              opacity: 0.4
-            }}
-          />
-        ))}
+        {/* Territory shapes - only in multi view, with decay */}
+        {!isSoloView && territoryShapes.map((shape, idx) => {
+          const decayLevel = shape.capturedAt ? calculateDecay(shape.capturedAt) : 0
+          // Territory fades as it decays
+          const fillOpacity = 0.15 * (1 - decayLevel * 0.7)
+          const strokeOpacity = 0.4 * (1 - decayLevel * 0.5)
+          
+          return (
+            <Polygon
+              key={`territory-${shape.pointId}`}
+              positions={shape.coords}
+              pathOptions={{
+                color: getTeamColor(shape.team),
+                fillColor: getTeamColor(shape.team),
+                fillOpacity,
+                weight: 1,
+                opacity: strokeOpacity
+              }}
+            />
+          )
+        })}
         
         {/* Team connection lines - only in multi view */}
         {!isSoloView && showLines && Object.entries(teamLines).map(([team, lines]) => 
@@ -595,15 +616,19 @@ export default function PragueMap() {
           const isGhost = point.status === 'ghost'
           const isDiscovered = discoveries[point.id]
           // In solo view: show YOUR team color for discovered, gray for not found
-          // In multi view: show capturing team's color
+          // In multi view: show capturing team's color with decay
           const markerTeam = isSoloView 
             ? (isDiscovered ? player.team : null)
             : point.capturedBy
-          const icon = createChumperIcon(markerTeam, isGhost, isDiscovered && !isSoloView)
+          // Calculate decay only for multi view captured points
+          const decayLevel = (!isSoloView && point.capturedBy && point.capturedAt) 
+            ? calculateDecay(point.capturedAt) 
+            : 0
+          const icon = createChumperIcon(markerTeam, isGhost, false, decayLevel)
           
           return (
             <Marker
-              key={`${point.id}-${markerTeam || 'none'}-${isDiscovered ? 'd' : ''}`}
+              key={`${point.id}-${markerTeam || 'none'}-${Math.floor(decayLevel * 10)}`}
               position={point.location}
               icon={icon}
               eventHandlers={{

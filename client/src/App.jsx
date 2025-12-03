@@ -111,7 +111,6 @@ function CaptureNotification() {
             transition={{ delay: 0.45 }}
             className="inline-flex items-center gap-2 px-4 py-2 bg-black/5 mb-6"
           >
-            <span className="text-xl">🔥</span>
             <span className="font-black text-black">STREAK x{streak}</span>
           </motion.div>
         )}

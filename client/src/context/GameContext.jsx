@@ -381,7 +381,7 @@ export function GameProvider({ children }) {
       const streakBonus = Math.round(basePoints * streakMultiplier)
       if (streakBonus > 0) {
         totalPoints += streakBonus
-        bonuses.push({ type: 'streak', label: `🔥 ${currentStreak}x Streak`, points: streakBonus })
+        bonuses.push({ type: 'streak', label: `${currentStreak}x Streak`, points: streakBonus })
       }
     }
     
@@ -389,21 +389,21 @@ export function GameProvider({ children }) {
     if (isRecapture) {
       const recaptureBonus = Math.round(basePoints * 0.5)
       totalPoints += recaptureBonus
-      bonuses.push({ type: 'recapture', label: '⚔️ Recapture', points: recaptureBonus })
+      bonuses.push({ type: 'recapture', label: 'Recapture', points: recaptureBonus })
     }
     
     // 3. First Capture Bonus: +25% for virgin territory
     if (isFirstCapture) {
       const firstBonus = Math.round(basePoints * 0.25)
       totalPoints += firstBonus
-      bonuses.push({ type: 'first', label: '🏴 First Capture', points: firstBonus })
+      bonuses.push({ type: 'first', label: 'First Capture', points: firstBonus })
     }
     
     // 4. Speed Bonus: +20% if captured within 5 minutes of last capture
     if (timeSinceLastCapture < 5) {
       const speedBonus = Math.round(basePoints * 0.2)
       totalPoints += speedBonus
-      bonuses.push({ type: 'speed', label: '⚡ Speed Bonus', points: speedBonus })
+      bonuses.push({ type: 'speed', label: 'Speed Bonus', points: speedBonus })
     }
     
     // 5. Distance Bonus: +5pts per 100m walked from last capture (max +50)
@@ -416,7 +416,7 @@ export function GameProvider({ children }) {
         const distanceBonus = Math.min(Math.round(distance / 100) * 5, 50)
         if (distanceBonus > 0) {
           totalPoints += distanceBonus
-          bonuses.push({ type: 'distance', label: `🚶 ${Math.round(distance)}m walked`, points: distanceBonus })
+          bonuses.push({ type: 'distance', label: `${Math.round(distance)}m walked`, points: distanceBonus })
         }
       }
     }
