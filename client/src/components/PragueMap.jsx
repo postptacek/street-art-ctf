@@ -20,7 +20,12 @@ import {
   getTeamColor,
   getPointValue
 } from '../data/pragueMap'
-import { X, MapPin, Crosshair, Sparkles, Code, RotateCcw, Ghost, Train, Circle, Settings, Square, Hexagon, Minus } from 'lucide-react'
+import { X, Crosshair, Code, RotateCcw } from 'lucide-react'
+
+const TEAM_CONFIG = {
+  red: { color: '#E53935', name: 'RED' },
+  blue: { color: '#1E88E5', name: 'BLUE' }
+}
 
 // Fix Leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl
@@ -77,11 +82,11 @@ function ZoomDisplay({ devMode }) {
   if (!devMode) return null
   
   return (
-    <div className="absolute bottom-24 left-4 z-[1000] bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1 border border-purple-500/30">
-      <div className="text-[10px] font-mono text-purple-400">
-        <div>zoom: {zoom}</div>
-        <div>lat: {center[0]}</div>
-        <div>lng: {center[1]}</div>
+    <div className="absolute bottom-24 left-4 z-[1000] bg-purple-500 shadow-lg px-3 py-2 font-nohemi">
+      <div className="text-[10px] font-mono text-white">
+        <div>Z {zoom}</div>
+        <div>{center[0]}</div>
+        <div>{center[1]}</div>
       </div>
     </div>
   )
@@ -100,7 +105,7 @@ function FlyToHood({ hood }) {
   return null
 }
 
-// Fly to last capture and show highlight
+// Fly to last capture and show highlight - then clear it
 function LastCaptureHighlight({ onShow }) {
   const map = useMap()
   const [lastCapture, setLastCapture] = useState(null)
@@ -108,40 +113,51 @@ function LastCaptureHighlight({ onShow }) {
   useEffect(() => {
     const stored = localStorage.getItem('streetart-ctf-lastCapture')
     if (stored) {
-      const data = JSON.parse(stored)
-      setLastCapture(data)
-      // Clear after reading
-      localStorage.removeItem('streetart-ctf-lastCapture')
-      // Fly to the location
-      if (data.location) {
-        setTimeout(() => {
-          map.flyTo(data.location, 17, { duration: 1.5 })
-          if (onShow) onShow(data)
-        }, 500)
+      try {
+        const data = JSON.parse(stored)
+        // Only set if location is valid array with 2 numbers
+        if (data.location && Array.isArray(data.location) && data.location.length === 2) {
+          setLastCapture(data)
+          localStorage.removeItem('streetart-ctf-lastCapture')
+          
+          // Fly to location
+          setTimeout(() => {
+            map.flyTo(data.location, 17, { duration: 1.5 })
+            if (onShow) onShow(data)
+          }, 500)
+          
+          // Clear highlight after 5 seconds
+          setTimeout(() => {
+            setLastCapture(null)
+          }, 5000)
+        } else {
+          localStorage.removeItem('streetart-ctf-lastCapture')
+        }
+      } catch (e) {
+        localStorage.removeItem('streetart-ctf-lastCapture')
       }
     }
   }, [map, onShow])
   
-  if (!lastCapture) return null
+  if (!lastCapture || !lastCapture.location) return null
   
-  const color = lastCapture.team === 'red' ? '#ff6b6b' : '#4dabf7'
+  const color = lastCapture.team === 'red' ? '#E53935' : '#1E88E5'
   
   return (
     <CircleMarker
       center={lastCapture.location}
-      radius={30}
+      radius={25}
       pathOptions={{
         color: color,
         fillColor: color,
-        fillOpacity: 0.3,
-        weight: 3,
-        className: 'capture-pulse'
+        fillOpacity: 0.2,
+        weight: 2
       }}
     />
   )
 }
 
-// Location button component
+// Location button component - White mode
 function LocationButton() {
   const map = useMap()
   const [locating, setLocating] = useState(false)
@@ -155,25 +171,22 @@ function LocationButton() {
   return (
     <motion.button
       onClick={handleLocate}
-      className="absolute bottom-24 right-4 z-[1000] w-12 h-12 rounded-xl bg-black/80 backdrop-blur-sm border border-white/10 flex items-center justify-center"
+      className="absolute bottom-24 right-4 z-[1000] w-12 h-12 bg-[#FAFAFA] shadow-lg flex items-center justify-center"
       whileTap={{ scale: 0.95 }}
     >
       <motion.div
         animate={locating ? { rotate: 360 } : {}}
         transition={{ duration: 1, repeat: locating ? Infinity : 0 }}
       >
-        <Crosshair size={20} className="text-white" />
+        <Crosshair size={20} className="text-black" />
       </motion.div>
     </motion.button>
   )
 }
 
-// Point detail panel
+// Point detail panel - White mode
 function PointPanel({ point, onClose, isDiscovered, isSoloView }) {
-  const teamColor = point.capturedBy ? getTeamColor(point.capturedBy) : '#495057'
-  const displayColor = isSoloView 
-    ? (isDiscovered ? '#a855f7' : '#495057')
-    : teamColor
+  const teamColor = point.capturedBy ? (TEAM_CONFIG[point.capturedBy]?.color || '#888') : null
   const pts = getPointValue(point)
   const isGhost = point.status === 'ghost'
   
@@ -183,94 +196,70 @@ function PointPanel({ point, onClose, isDiscovered, isSoloView }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 100 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="absolute bottom-20 left-4 right-4 z-[1000]"
+      className="absolute bottom-20 left-4 right-4 z-[1000] font-nohemi"
     >
-      <div 
-        className="bg-black/90 backdrop-blur-xl rounded-2xl p-4 border"
-        style={{ borderColor: `${displayColor}40` }}
-      >
+      <div className="bg-[#FAFAFA] p-5 shadow-2xl">
         <button 
           onClick={onClose}
-          className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-black/30 hover:text-black transition-colors"
         >
-          <X size={16} className="text-white/50" />
+          <X size={20} />
         </button>
         
-        <div className="flex items-start gap-3">
-          <div 
-            className="w-12 h-12 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: `${displayColor}20`, border: `1px solid ${displayColor}40` }}
-          >
-            {isGhost ? (
-              <Ghost size={20} className="text-white/30" />
-            ) : isSoloView ? (
-              isDiscovered ? <Sparkles size={20} style={{ color: displayColor }} /> : <MapPin size={20} style={{ color: displayColor }} />
-            ) : point.capturedBy ? (
-              <Sparkles size={20} style={{ color: displayColor }} />
+        <div className="pr-8">
+          {/* Status tag */}
+          <div className="flex items-center gap-2 mb-2">
+            {isGhost && (
+              <span className="text-[10px] tracking-widest text-black/30">GHOST</span>
+            )}
+            {isSoloView ? (
+              isDiscovered ? (
+                <span className="text-[10px] tracking-widest text-purple-600">DISCOVERED</span>
+              ) : (
+                <span className="text-[10px] tracking-widest text-black/30">UNDISCOVERED</span>
+              )
             ) : (
-              <MapPin size={20} style={{ color: displayColor }} />
+              point.capturedBy ? (
+                <span className="text-[10px] tracking-widest" style={{ color: teamColor }}>
+                  TEAM {point.capturedBy.toUpperCase()}
+                </span>
+              ) : (
+                <span className="text-[10px] tracking-widest text-black/30">UNCLAIMED</span>
+              )
             )}
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-lg text-white">{point.name}</h3>
-              {isGhost && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/40">GHOST</span>
-              )}
+          
+          {/* Name */}
+          <h3 className="text-2xl font-bold text-black tracking-tight mb-1">{point.name}</h3>
+          <p className="text-black/40 mb-4">{point.area}</p>
+          
+          {/* Stats row */}
+          <div className="flex items-center gap-6">
+            <div>
+              <div className="text-3xl font-black text-black">{pts}</div>
+              <div className="text-xs text-black/40">points</div>
             </div>
-            <p className="text-sm text-white/40">{point.area}</p>
-            
-            {/* Size and MHD badges */}
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/50 capitalize">{point.size}</span>
-              {point.mhd && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                  point.mhd === 'metroB' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'
-                }`}>
-                  {point.mhd === 'metroB' ? '🚇 Metro B' : '🚋 Tram 12'}
-                </span>
-              )}
+            <div>
+              <div className="text-lg font-bold text-black capitalize">{point.size}</div>
+              <div className="text-xs text-black/40">size</div>
             </div>
-            
-            {/* Points and status - changes based on view mode */}
-            <div className="flex items-center gap-3 mt-2">
-              <span className="text-lg font-bold" style={{ color: displayColor }}>{pts} pts</span>
-              {isSoloView ? (
-                // Solo view - show discovery status
-                isDiscovered ? (
-                  <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400">
-                    ✓ Discovered
-                  </span>
-                ) : (
-                  <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
-                    {isGhost ? 'Gone' : 'Not found yet'}
-                  </span>
-                )
-              ) : (
-                // Multi view - show team status
-                point.capturedBy ? (
-                  <span 
-                    className="text-xs px-2 py-1 rounded-full"
-                    style={{ backgroundColor: `${teamColor}20`, color: teamColor }}
-                  >
-                    Team {point.capturedBy}
-                  </span>
-                ) : (
-                  <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
-                    {isGhost ? 'Gone' : 'Unclaimed'}
-                  </span>
-                )
-              )}
-            </div>
-            
-            {/* Last captured by - only in multi view */}
-            {!isSoloView && point.capturedByPlayer && (
-              <div className="mt-3 pt-3 border-t border-white/10">
-                <p className="text-xs text-white/40">Last captured by</p>
-                <p className="text-sm font-medium text-white mt-0.5">{point.capturedByPlayer}</p>
+            {point.mhd && (
+              <div>
+                <div className="text-lg font-bold" style={{ color: point.mhd === 'metroB' ? '#eab308' : '#E53935' }}>
+                  {point.mhd === 'metroB' ? 'Metro B' : 'Tram 12'}
+                </div>
+                <div className="text-xs text-black/40">nearby</div>
               </div>
             )}
           </div>
+          
+          {/* Captured by */}
+          {!isSoloView && point.capturedByPlayer && (
+            <div className="mt-4 pt-4 border-t border-black/10">
+              <span className="text-xs text-black/40">Captured by </span>
+              <span className="text-sm font-bold text-black">{point.capturedByPlayer}</span>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -280,13 +269,8 @@ function PointPanel({ point, onClose, isDiscovered, isSoloView }) {
 // Team cycle for dev mode (null = unclaimed, then cycle through teams)
 const TEAM_CYCLE = [null, ...TEAMS]
 
-// Territory modes
-const TERRITORY_MODES = [
-  { id: 'off', label: 'Off', icon: Minus },
-  { id: 'circles', label: 'Circles', icon: Circle },
-  { id: 'squares', label: 'Squares', icon: Square },
-  { id: 'hexagons', label: 'Hexagons', icon: Hexagon },
-]
+// Territory modes - simplified
+const TERRITORY_MODES = ['off', 'circles', 'squares', 'hexagons']
 
 // Generate territory shapes around captured points
 const generateTerritoryShapes = (points, mode) => {
@@ -352,10 +336,9 @@ export default function PragueMap() {
   // View mode: 'solo' shows only your discoveries, 'multi' shows team captures
   const [viewMode, setViewMode] = useState('solo')
   
-  // Map settings
-  const [showSettings, setShowSettings] = useState(false)
-  const [showLines, setShowLines] = useState(true)
-  const [territoryMode, setTerritoryMode] = useState('off')
+  // Map settings (simplified)
+  const [showLines, setShowLines] = useState(false)
+  const [territoryMode, setTerritoryMode] = useState('circles')
   
   // Sync with context
   useEffect(() => {
@@ -423,96 +406,80 @@ export default function PragueMap() {
   
   return (
     <div className="relative w-full h-full">
-      {/* Top bar - View toggle + Hood selector + Stats */}
-      <div className="absolute top-2 left-2 right-2 z-[1000] flex items-center gap-2">
+      {/* Top bar - White mode */}
+      <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center gap-2 font-nohemi">
         {/* View mode toggle */}
-        <div className="flex bg-black/70 backdrop-blur-sm rounded-lg p-0.5 border border-white/10">
+        <div className="flex bg-[#FAFAFA] shadow-lg">
           <button
             onClick={() => setViewMode('solo')}
-            className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
+            className={`px-3 py-2 text-xs font-bold tracking-wide transition-all ${
               isSoloView 
-                ? (player.team === 'red' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white')
-                : 'text-white/50'
+                ? 'bg-black text-white'
+                : 'text-black/40'
             }`}
           >
-            Collection
+            SOLO
           </button>
           <button
             onClick={() => setViewMode('multi')}
-            className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
+            className={`px-3 py-2 text-xs font-bold tracking-wide transition-all ${
               !isSoloView 
-                ? 'bg-gradient-to-r from-red-500 to-blue-500 text-white' 
-                : 'text-white/50'
+                ? 'bg-black text-white'
+                : 'text-black/40'
             }`}
           >
-            Battle
+            BATTLE
           </button>
         </div>
 
         {/* Hood Selector */}
-        <div className="flex gap-0.5 bg-black/70 backdrop-blur-sm rounded-lg p-0.5 border border-white/10">
+        <div className="flex bg-[#FAFAFA] shadow-lg">
           {Object.values(HOODS).map(hood => (
             <button
               key={hood.id}
               onClick={() => setCurrentHood(hood)}
-              className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
+              className={`px-3 py-2 text-xs font-bold transition-all ${
                 currentHood.id === hood.id
-                  ? 'bg-white/20 text-white'
-                  : 'text-white/50'
+                  ? 'text-black'
+                  : 'text-black/30'
               }`}
             >
-              {hood.name}
+              {hood.name.toUpperCase()}
             </button>
           ))}
         </div>
         
         {/* Stats pill */}
-        <div className="ml-auto flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/10">
+        <div className="ml-auto flex items-center gap-3 bg-[#FAFAFA] shadow-lg px-4 py-2">
           {isSoloView ? (
             <>
-              <span className="text-[10px] text-white/70">
-                <span className={player.team === 'red' ? 'text-red-400' : 'text-blue-400'}>{hoodDiscoveryStats.found}</span>
-                <span className="text-white/40">/{hoodDiscoveryStats.total}</span>
+              <span className="text-xs font-bold" style={{ color: TEAM_CONFIG[player.team]?.color }}>
+                {hoodDiscoveryStats.found}
               </span>
-              {hoodDiscoveryStats.found === hoodDiscoveryStats.total && hoodDiscoveryStats.total > 0 && (
-                <span className="text-[10px]">✓</span>
-              )}
+              <span className="text-xs text-black/30">/ {hoodDiscoveryStats.total}</span>
             </>
           ) : (
             <>
-              <span className="text-[10px] text-red-400">{teamScores.red || 0}</span>
-              <span className="text-[10px] text-white/30">vs</span>
-              <span className="text-[10px] text-blue-400">{teamScores.blue || 0}</span>
+              <span className="text-sm font-black" style={{ color: TEAM_CONFIG.red.color }}>{teamScores.red || 0}</span>
+              <span className="text-xs text-black/20">vs</span>
+              <span className="text-sm font-black" style={{ color: TEAM_CONFIG.blue.color }}>{teamScores.blue || 0}</span>
             </>
           )}
         </div>
-        
-        {/* Settings */}
-        <motion.button
-          onClick={() => setShowSettings(!showSettings)}
-          className={`w-7 h-7 rounded-lg backdrop-blur-sm border flex items-center justify-center transition-colors ${
-            showSettings 
-              ? 'bg-white/20 border-white/30 text-white' 
-              : 'bg-black/70 border-white/10 text-white/50'
-          }`}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Settings size={14} />
-        </motion.button>
       </div>
 
       {/* Dev Mode (bottom right, hidden by default) */}
       <div className="absolute bottom-24 right-4 z-[1000] flex flex-col gap-2">
         <motion.button
           onClick={() => setDevMode(!devMode)}
-          className={`w-8 h-8 rounded-lg backdrop-blur-sm border flex items-center justify-center transition-colors ${
+          className={`w-10 h-10 shadow-lg flex items-center justify-center transition-colors ${
             devMode 
-              ? 'bg-purple-500/30 border-purple-500/50 text-purple-400' 
-              : 'bg-black/50 border-white/10 text-white/30'
+              ? 'bg-purple-500 text-white' 
+              : 'bg-[#FAFAFA] text-black/30'
           }`}
           whileTap={{ scale: 0.95 }}
         >
-          <Code size={14} />
+          <Code size={16} />
         </motion.button>
         
         {devMode && (
@@ -520,70 +487,13 @@ export default function PragueMap() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={handleReset}
-            className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/30"
+            className="w-10 h-10 bg-[#FAFAFA] shadow-lg flex items-center justify-center text-black/30"
             whileTap={{ scale: 0.95 }}
           >
-            <RotateCcw size={14} />
+            <RotateCcw size={16} />
           </motion.button>
         )}
       </div>
-      
-      {/* Settings Panel */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="absolute top-24 right-4 z-[1000] w-48 bg-black/90 backdrop-blur-xl rounded-xl border border-white/10 overflow-hidden"
-          >
-            <div className="p-3 border-b border-white/10">
-              <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider">Display</h3>
-            </div>
-            
-            {/* Show Lines Toggle */}
-            <div className="p-3 border-b border-white/5">
-              <button
-                onClick={() => setShowLines(!showLines)}
-                className="w-full flex items-center justify-between"
-              >
-                <span className="text-sm text-white/70">Show Lines</span>
-                <div className={`w-10 h-5 rounded-full transition-colors ${showLines ? 'bg-blue-500' : 'bg-white/20'}`}>
-                  <motion.div 
-                    className="w-4 h-4 bg-white rounded-full mt-0.5"
-                    animate={{ x: showLines ? 22 : 2 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  />
-                </div>
-              </button>
-            </div>
-            
-            {/* Territory Mode */}
-            <div className="p-3">
-              <p className="text-xs text-white/40 mb-2">Territory Style</p>
-              <div className="grid grid-cols-2 gap-1">
-                {TERRITORY_MODES.map(mode => {
-                  const Icon = mode.icon
-                  return (
-                    <button
-                      key={mode.id}
-                      onClick={() => setTerritoryMode(mode.id)}
-                      className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs transition-colors ${
-                        territoryMode === mode.id
-                          ? 'bg-white/20 text-white'
-                          : 'bg-white/5 text-white/50 hover:bg-white/10'
-                      }`}
-                    >
-                      <Icon size={12} />
-                      {mode.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Dev Mode Banner */}
       <AnimatePresence>
@@ -592,10 +502,10 @@ export default function PragueMap() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30 backdrop-blur-sm"
+            className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 bg-purple-500 shadow-lg font-nohemi"
           >
-            <span className="text-xs text-purple-400 font-medium">
-              DEV MODE — Click points to cycle teams
+            <span className="text-xs text-white font-bold tracking-widest">
+              DEV MODE
             </span>
           </motion.div>
         )}
@@ -610,7 +520,7 @@ export default function PragueMap() {
         className="w-full h-full"
         zoomControl={false}
         attributionControl={false}
-        style={{ background: '#0a0a0f' }}
+        style={{ background: '#FAFAFA' }}
       >
         <TileLayer
           url={MAP_STYLE.tileUrl}
@@ -628,7 +538,7 @@ export default function PragueMap() {
           pathOptions={{
             color: '#eab308',
             weight: 4,
-            opacity: 0.5
+            opacity: 0.6
           }}
         />
         
@@ -640,7 +550,7 @@ export default function PragueMap() {
             radius={5}
             pathOptions={{
               color: '#eab308',
-              fillColor: '#1a1a2e',
+              fillColor: '#FAFAFA',
               fillOpacity: 1,
               weight: 2
             }}

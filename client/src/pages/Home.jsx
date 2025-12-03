@@ -1,222 +1,165 @@
 import { motion } from 'framer-motion'
-import { useGame, TEAM_COLORS } from '../context/GameContext'
-import { Users, Clock, Cloud, WifiOff } from 'lucide-react'
-import ChumpAnimation from '../components/ChumpAnimation'
+import { useGame } from '../context/GameContext'
 
-const CHUMPER_URL = `${import.meta.env.BASE_URL}chumper.png`
+const TEAM_CONFIG = {
+  red: { color: '#E53935', name: 'RED' },
+  blue: { color: '#1E88E5', name: 'BLUE' }
+}
 
-const teams = [
-  { color: 'red', name: 'Red Team' },
-  { color: 'blue', name: 'Blue Team' },
-]
-
-// Format time ago
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000)
-  if (seconds < 60) return 'just now'
+  if (seconds < 60) return 'now'
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 60) return `${minutes}m`
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  return `${Math.floor(hours / 24)}d ago`
+  if (hours < 24) return `${hours}h`
+  return `${Math.floor(hours / 24)}d`
 }
 
 function Home() {
-  const { player, joinTeam, teamScores, recentCaptures, isOnline } = useGame()
-
-  const handleTeamSelect = (teamColor) => {
-    joinTeam(teamColor)
-  }
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.08, delayChildren: 0.1 }
-    }
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { type: 'spring', stiffness: 100, damping: 15 }
-    }
-  }
-
-  const totalScore = Object.values(teamScores).reduce((a, b) => a + b, 0)
+  const { player, teamScores, recentCaptures, isOnline } = useGame()
+  
+  const totalScore = teamScores.red + teamScores.blue
+  const redPercent = totalScore > 0 ? Math.round((teamScores.red / totalScore) * 100) : 50
+  const bluePercent = 100 - redPercent
+  const leading = teamScores.red > teamScores.blue ? 'red' : teamScores.blue > teamScores.red ? 'blue' : null
 
   return (
-    <motion.div
-      className="flex-1 overflow-y-auto pb-24 px-5 pt-8"
-      initial="hidden"
-      animate="visible"
-      exit={{ opacity: 0, y: 20 }}
-      variants={containerVariants}
-    >
-      {/* Hero Section - Compact */}
+    <div className="flex-1 overflow-y-auto bg-[#FAFAFA] font-nohemi">
+      {/* Header */}
+      <div className="p-6 pt-10">
+        <motion.p
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-sm tracking-widest text-black/40 mb-1"
+        >
+          {isOnline ? 'LIVE' : 'OFFLINE'}
+        </motion.p>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-4xl font-bold text-black tracking-tight"
+        >
+          War Room
+        </motion.h1>
+      </div>
+
+      {/* Score Battle */}
       <motion.div 
-        className="text-center mb-6"
-        variants={itemVariants}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="px-6 mb-8"
       >
+        <div className="flex justify-between items-end mb-4">
+          <div>
+            <div className="text-sm text-black/40 mb-1">RED</div>
+            <div 
+              className="text-5xl font-black"
+              style={{ color: leading === 'red' ? TEAM_CONFIG.red.color : 'rgba(0,0,0,0.2)' }}
+            >
+              {teamScores.red}
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-black/20 pb-2">vs</div>
+          <div className="text-right">
+            <div className="text-sm text-black/40 mb-1">BLUE</div>
+            <div 
+              className="text-5xl font-black"
+              style={{ color: leading === 'blue' ? TEAM_CONFIG.blue.color : 'rgba(0,0,0,0.2)' }}
+            >
+              {teamScores.blue}
+            </div>
+          </div>
+        </div>
+        
+        {/* Progress bar */}
+        <div className="h-2 bg-black/5 flex overflow-hidden">
+          <motion.div 
+            className="h-full"
+            style={{ backgroundColor: TEAM_CONFIG.red.color }}
+            initial={{ width: '50%' }}
+            animate={{ width: `${redPercent}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          />
+          <motion.div 
+            className="h-full"
+            style={{ backgroundColor: TEAM_CONFIG.blue.color }}
+            initial={{ width: '50%' }}
+            animate={{ width: `${bluePercent}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          />
+        </div>
+        <div className="flex justify-between mt-2 text-xs text-black/30">
+          <span>{redPercent}%</span>
+          <span>{bluePercent}%</span>
+        </div>
+      </motion.div>
+
+      {/* Player Card */}
+      {player.team && (
         <motion.div
-          className="relative inline-block mb-3"
-          animate={{ y: [0, -4, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mx-6 mb-8 p-5"
+          style={{ backgroundColor: TEAM_CONFIG[player.team].color }}
         >
-          <ChumpAnimation size={70} />
-        </motion.div>
-        <h1 className="text-2xl font-bold text-white mb-1">
-          Street Art CTF
-        </h1>
-        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] ${
-          isOnline ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-        }`}>
-          {isOnline ? <Cloud size={10} /> : <WifiOff size={10} />}
-          {isOnline ? 'Live' : 'Offline'}
-        </div>
-      </motion.div>
-
-      {/* Team War Status */}
-      <motion.div variants={itemVariants} className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-white/40">Red Team</span>
-          <span className="text-xs text-white/40">Blue Team</span>
-        </div>
-        <div className="flex h-3 rounded-full overflow-hidden bg-white/10">
-          <motion.div 
-            className="h-full"
-            style={{ backgroundColor: TEAM_COLORS.red.hex }}
-            initial={{ width: '50%' }}
-            animate={{ width: totalScore > 0 ? `${(teamScores.red / totalScore) * 100}%` : '50%' }}
-            transition={{ duration: 0.8 }}
-          />
-          <motion.div 
-            className="h-full"
-            style={{ backgroundColor: TEAM_COLORS.blue.hex }}
-            initial={{ width: '50%' }}
-            animate={{ width: totalScore > 0 ? `${(teamScores.blue / totalScore) * 100}%` : '50%' }}
-            transition={{ duration: 0.8 }}
-          />
-        </div>
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-sm font-bold" style={{ color: TEAM_COLORS.red.hex }}>{teamScores.red} pts</span>
-          <span className="text-sm font-bold" style={{ color: TEAM_COLORS.blue.hex }}>{teamScores.blue} pts</span>
-        </div>
-      </motion.div>
-
-      {/* Team Selection or Player Status */}
-      {!player.team ? (
-        <motion.div variants={itemVariants} className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Users size={14} className="text-white/40" />
-            <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">Choose Your Side</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {teams.map(({ color, name }) => (
-              <motion.button
-                key={color}
-                onClick={() => handleTeamSelect(color)}
-                className="p-4 rounded-xl text-center border-2 transition-all"
-                style={{ 
-                  borderColor: TEAM_COLORS[color].hex + '50',
-                  backgroundColor: TEAM_COLORS[color].hex + '10'
-                }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div 
-                  className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center"
-                  style={{ backgroundColor: TEAM_COLORS[color].hex + '30' }}
-                >
-                  <div className="w-6 h-6 rounded-full" style={{ backgroundColor: TEAM_COLORS[color].hex }} />
-                </div>
-                <p className="font-semibold text-white">{name}</p>
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-      ) : (
-        <motion.div 
-          className="mb-6 p-4 rounded-xl border-2"
-          variants={itemVariants}
-          style={{ 
-            borderColor: TEAM_COLORS[player.team].hex + '50',
-            backgroundColor: TEAM_COLORS[player.team].hex + '10'
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: TEAM_COLORS[player.team].hex + '30' }}
-              >
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: TEAM_COLORS[player.team].hex }} />
-              </div>
-              <div>
-                <p className="font-bold text-white">{player.name}</p>
-                <p className="text-xs" style={{ color: TEAM_COLORS[player.team].hex }}>
-                  {player.team === 'red' ? 'Red Team' : 'Blue Team'}
-                </p>
-              </div>
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="text-white/60 text-xs tracking-widest mb-1">YOU</div>
+              <div className="text-2xl font-bold text-white">{player.name}</div>
+              <div className="text-white/60 text-sm mt-1">Team {TEAM_CONFIG[player.team].name}</div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-white">{player.score}</p>
-              <p className="text-[10px] text-white/40">points</p>
+              <div className="text-4xl font-black text-white">{player.score}</div>
+              <div className="text-white/60 text-xs">points</div>
             </div>
           </div>
         </motion.div>
       )}
 
-      {/* Recent Captures - Live Feed */}
-      <motion.div variants={itemVariants}>
-        <div className="flex items-center gap-2 mb-3">
-          <Clock size={14} className="text-white/40" />
-          <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">Live Activity</h2>
-        </div>
+      {/* Live Activity */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="px-6 pb-32"
+      >
+        <p className="text-sm tracking-widest text-black/40 mb-4">ACTIVITY</p>
         
         {recentCaptures.length === 0 ? (
-          <div className="text-center py-8 text-white/30 text-sm">
-            No captures yet. Be the first!
+          <div className="py-12 text-center">
+            <div className="text-6xl font-black text-black/5 mb-2">0</div>
+            <div className="text-black/30">No captures yet</div>
+            <div className="text-black/20 text-sm">Be the first to claim territory</div>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {recentCaptures.map((capture, index) => {
-              const teamColor = TEAM_COLORS[capture.team]?.hex || '#888'
+              const config = TEAM_CONFIG[capture.team] || { color: '#888', name: '?' }
               return (
                 <motion.div
                   key={capture.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ delay: 0.5 + index * 0.05 }}
+                  className="flex items-center gap-4 py-3 border-b border-black/5"
                 >
                   <div 
-                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${teamColor}20` }}
-                  >
-                    <img 
-                      src={CHUMPER_URL} 
-                      alt="" 
-                      className="w-5 h-5"
-                      style={{ 
-                        filter: capture.team === 'red' 
-                          ? 'hue-rotate(160deg) saturate(1.5)' 
-                          : 'none' 
-                      }}
-                    />
-                  </div>
+                    className="w-1 h-10 flex-shrink-0"
+                    style={{ backgroundColor: config.color }}
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{capture.artName}</p>
-                    <p className="text-[10px] text-white/40">
-                      <span style={{ color: teamColor }}>{capture.playerName}</span>
-                      {' · '}{capture.area}
-                    </p>
+                    <div className="font-bold text-black truncate">{capture.artName}</div>
+                    <div className="text-sm text-black/40">
+                      {capture.playerName} · {capture.area}
+                    </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-xs font-semibold" style={{ color: teamColor }}>+{capture.points}</p>
-                    <p className="text-[10px] text-white/30">{timeAgo(capture.capturedAt)}</p>
+                    <div className="font-bold" style={{ color: config.color }}>+{capture.points}</div>
+                    <div className="text-xs text-black/30">{timeAgo(capture.capturedAt)}</div>
                   </div>
                 </motion.div>
               )
@@ -224,7 +167,7 @@ function Home() {
           </div>
         )}
       </motion.div>
-    </motion.div>
+    </div>
   )
 }
 

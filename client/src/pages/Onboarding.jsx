@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import { Users, Map, Camera, ChevronRight, Shuffle, Target, Zap, Star, Trophy } from 'lucide-react'
-import ChumpAnimation from '../components/ChumpAnimation'
 
 // Random name generator
 const ADJECTIVES = ['Swift', 'Bold', 'Neon', 'Urban', 'Wild', 'Cosmic', 'Pixel', 'Mystic', 'Shadow', 'Electric']
@@ -16,22 +14,64 @@ function generateRandomName() {
   return `${adj}${noun}${num}`
 }
 
+// Word animation component
+function AnimatedWords({ text, className = '', delay = 0 }) {
+  const words = text.split(' ')
+  return (
+    <span className={className}>
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: delay + i * 0.08, duration: 0.4 }}
+          className="inline-block mr-[0.3em]"
+        >
+          {word}
+        </motion.span>
+      ))}
+    </span>
+  )
+}
+
+// Letter animation component
+function AnimatedLetters({ text, className = '', delay = 0 }) {
+  return (
+    <span className={className}>
+      {text.split('').map((char, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: 40, rotate: -10 }}
+          animate={{ opacity: 1, y: 0, rotate: 0 }}
+          transition={{ 
+            delay: delay + i * 0.04, 
+            duration: 0.5,
+            type: 'spring',
+            stiffness: 200
+          }}
+          className="inline-block"
+          style={{ display: char === ' ' ? 'inline' : 'inline-block' }}
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </motion.span>
+      ))}
+    </span>
+  )
+}
+
 export default function Onboarding() {
   const navigate = useNavigate()
   const { player, joinTeam, setPlayerName, allPlayers } = useGame()
-  // Steps: 0=intro, 1=name, 2=team reveal, 3=tutorial
   const [step, setStep] = useState(0)
   const [name, setName] = useState(() => player.name && player.name !== 'Street Artist' ? player.name : generateRandomName())
   const [assignedTeam, setAssignedTeam] = useState(null)
   
-  // Skip if already onboarded
   useEffect(() => {
     if (player.team && player.name && player.name !== 'Street Artist') {
       navigate('/map')
     }
   }, [])
   
-  // Auto-assign team based on player count balance
   useEffect(() => {
     const redCount = allPlayers.filter(p => p.team === 'red').length
     const blueCount = allPlayers.filter(p => p.team === 'blue').length
@@ -39,47 +79,32 @@ export default function Onboarding() {
     setAssignedTeam(team)
   }, [allPlayers])
   
-  const handleGenerateName = () => {
-    setName(generateRandomName())
-  }
+  const handleGenerateName = () => setName(generateRandomName())
   
   const handleNext = () => {
     if (step === 1 && name.trim()) {
       setPlayerName(name.trim())
-      // Auto-join the balanced team
-      if (assignedTeam) {
-        joinTeam(assignedTeam)
-      }
+      if (assignedTeam) joinTeam(assignedTeam)
     }
-    
-    if (step === 3) {
-      navigate('/map')
-      return
-    }
-    
+    if (step === 3) { navigate('/map'); return }
     setStep(step + 1)
   }
   
-  const canProceed = () => {
-    if (step === 1) return name.trim().length >= 2 && assignedTeam
-    return true
-  }
+  const canProceed = () => step === 1 ? name.trim().length >= 2 && assignedTeam : true
   
-  const teamColor = assignedTeam === 'red' ? '#ff6b6b' : '#4dabf7'
-  const teamName = assignedTeam === 'red' ? 'Red' : 'Blue'
+  const teamColor = assignedTeam === 'red' ? '#E53935' : '#1E88E5'
+  const teamName = assignedTeam === 'red' ? 'RED' : 'BLUE'
 
   return (
-    <div className="h-screen bg-[#0a0a0f] flex flex-col overflow-hidden">
-      {/* Progress dots */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        {[0, 1, 2, 3].map(i => (
-          <div 
-            key={i}
-            className={`h-1.5 rounded-sm transition-all duration-300 ${
-              i === step ? 'bg-white w-8' : i < step ? 'bg-white/60 w-1.5' : 'bg-white/20 w-1.5'
-            }`}
-          />
-        ))}
+    <div className="h-screen bg-[#FAFAFA] flex flex-col overflow-hidden font-nohemi">
+      {/* Progress bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-black/5 z-10">
+        <motion.div 
+          className="h-full bg-black"
+          initial={{ width: '0%' }}
+          animate={{ width: `${((step + 1) / 4) * 100}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        />
       </div>
 
       <AnimatePresence mode="wait">
@@ -87,56 +112,59 @@ export default function Onboarding() {
         {step === 0 && (
           <motion.div
             key="intro"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, x: -100 }}
+            transition={{ duration: 0.4 }}
+            className="flex-1 flex flex-col justify-between p-6 pt-16"
           >
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: 'spring' }}
-              className="mb-6"
-            >
-              <ChumpAnimation size={140} />
-            </motion.div>
-            
-            <h1 className="text-3xl font-bold mb-3">Street Art CTF</h1>
-            <p className="text-white/40 max-w-xs mb-8">
-              Scan real street art to capture territory for your team. The city is your battlefield.
-            </p>
-            
-            <div className="flex flex-col gap-3 w-full max-w-xs">
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Camera size={20} className="text-white/70" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium text-sm">Scan Art</div>
-                  <div className="text-xs text-white/40">Find and capture street art</div>
-                </div>
-              </div>
+            <div className="flex-1 flex flex-col justify-center">
+              <motion.p
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-sm tracking-widest text-black/40 mb-4"
+              >
+                WELCOME TO
+              </motion.p>
               
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Map size={20} className="text-white/70" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium text-sm">Control Territory</div>
-                  <div className="text-xs text-white/40">Expand your team's area</div>
-                </div>
-              </div>
+              <h1 className="text-[3.5rem] leading-[0.95] font-bold text-black mb-8 tracking-tight">
+                <AnimatedLetters text="Street" delay={0.3} /><br/>
+                <AnimatedLetters text="Art" delay={0.5} /><br/>
+                <AnimatedLetters text="CTF" delay={0.7} />
+              </h1>
               
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Users size={20} className="text-white/70" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium text-sm">Win Together</div>
-                  <div className="text-xs text-white/40">Lead your team to victory</div>
-                </div>
-              </div>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+                className="text-lg text-black/50 max-w-[280px] leading-relaxed"
+              >
+                The city becomes your canvas. Find street art. Claim territory. Win the game.
+              </motion.p>
             </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.4 }}
+              className="space-y-6"
+            >
+              <div className="flex gap-8 text-sm text-black/40">
+                <div>
+                  <div className="text-2xl font-bold text-black">45+</div>
+                  <div>locations</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-black">2</div>
+                  <div>teams</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-black">1</div>
+                  <div>winner</div>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
 
@@ -144,170 +172,164 @@ export default function Onboarding() {
         {step === 1 && (
           <motion.div
             key="name"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -100 }}
+            transition={{ duration: 0.4 }}
+            className="flex-1 flex flex-col justify-center p-6"
           >
-            <h1 className="text-2xl font-bold mb-2">What's your name?</h1>
-            <p className="text-white/40 mb-8">This is how others will see you</p>
+            <motion.p
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-sm tracking-widest text-black/40 mb-4"
+            >
+              STEP 1 OF 3
+            </motion.p>
             
-            <div className="w-full max-w-xs mb-4">
+            <h1 className="text-4xl font-bold text-black mb-3 tracking-tight">
+              <AnimatedWords text="Who are you?" delay={0.2} />
+            </h1>
+            
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="text-black/40 mb-10"
+            >
+              Pick a name. Make it memorable.
+            </motion.p>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+            >
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your name..."
+                placeholder="Your name"
                 maxLength={20}
-                className="w-full px-4 py-4 rounded-lg bg-white/5 border border-white/10 text-center text-xl font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                className="w-full py-4 text-3xl font-bold text-black bg-transparent border-b-2 border-black/20 focus:border-black focus:outline-none placeholder:text-black/20 transition-colors"
               />
-            </div>
-            
-            <button
-              onClick={handleGenerateName}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 hover:bg-white/10 transition-colors"
-            >
-              <Shuffle size={16} />
-              Generate random name
-            </button>
+              
+              <button
+                onClick={handleGenerateName}
+                className="mt-6 text-sm text-black/40 hover:text-black transition-colors underline underline-offset-4"
+              >
+                Randomize
+              </button>
+            </motion.div>
           </motion.div>
         )}
 
-        {/* Step 2: Team Reveal - Full Screen */}
+        {/* Step 2: Team Reveal */}
         {step === 2 && (
           <motion.div
-            key="team-reveal"
+            key="team"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden"
+            exit={{ opacity: 0, x: -100 }}
+            transition={{ duration: 0.4 }}
+            className="flex-1 flex flex-col justify-center items-center p-6 text-center relative overflow-hidden"
+            style={{ backgroundColor: teamColor }}
           >
-            {/* Background glow */}
-            <motion.div 
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 0.15 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            >
-              <div 
-                className="w-[600px] h-[600px] rounded-full blur-3xl"
-                style={{ backgroundColor: teamColor }}
-              />
-            </motion.div>
-            
-            {/* Content */}
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="relative z-10"
+              transition={{ delay: 0.3, type: 'spring', stiffness: 150 }}
             >
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-white/50 text-lg mb-2"
+                transition={{ delay: 0.5 }}
+                className="text-white/60 text-sm tracking-widest mb-2"
               >
-                Welcome, {name}!
+                {name.toUpperCase()}, YOU ARE
               </motion.p>
               
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="text-white/40 text-sm mb-6"
-              >
-                You've been assigned to
-              </motion.p>
-              
-              <motion.div
-                initial={{ scale: 0, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.8, type: 'spring', stiffness: 200 }}
-              >
-                <h1 
-                  className="text-6xl font-bold mb-4"
-                  style={{ color: teamColor }}
-                >
-                  Team {teamName}
-                </h1>
-              </motion.div>
+              <h1 className="text-[5rem] leading-none font-black text-white tracking-tight">
+                <AnimatedLetters text="TEAM" delay={0.6} /><br/>
+                <AnimatedLetters text={teamName} delay={0.9} />
+              </h1>
               
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 1.2 }}
-                className="text-white/30 text-sm"
+                transition={{ delay: 1.4 }}
+                className="mt-6 text-white/50 text-lg"
               >
-                {assignedTeam === 'red' ? 'The Flames 🔥' : 'The Waves 🌊'}
+                {assignedTeam === 'red' ? 'Burn bright. Conquer all.' : 'Flow strong. Take over.'}
               </motion.p>
             </motion.div>
           </motion.div>
         )}
 
-        {/* Step 3: Tutorial */}
+        {/* Step 3: How it works */}
         {step === 3 && (
           <motion.div
-            key="tutorial"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto"
+            key="how"
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex-1 flex flex-col justify-center p-6"
           >
-            <h1 className="text-2xl font-bold mb-2">How to Play</h1>
-            <p className="text-white/40 mb-8 text-sm">Explore, discover, and compete!</p>
+            <motion.p
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-sm tracking-widest text-black/40 mb-4"
+            >
+              HOW IT WORKS
+            </motion.p>
             
-            <div className="w-full max-w-sm space-y-4">
-              {/* Find & Scan */}
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="flex items-start gap-4 p-5 rounded-2xl bg-white/5 border border-white/10"
-              >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 flex items-center justify-center flex-shrink-0">
-                  <Camera size={24} className="text-white" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-base mb-1">Find & Scan</h3>
-                  <p className="text-sm text-white/50 leading-relaxed">
-                    Explore Prague to find street art. Point your camera at it to capture.
-                  </p>
-                </div>
-              </motion.div>
-              
-              {/* Build Collection */}
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex items-start gap-4 p-5 rounded-2xl bg-white/5 border border-white/10"
-              >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/30 to-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                  <Star size={24} className="text-white" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-base mb-1">Build Your Collection</h3>
-                  <p className="text-sm text-white/50 leading-relaxed">
-                    Every discovery is <strong className="text-white/70">yours forever</strong>. Build a personal portfolio.
-                  </p>
-                </div>
-              </motion.div>
-              
-              {/* Compete for Territory */}
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
+            <h1 className="text-4xl font-bold text-black mb-10 tracking-tight">
+              <AnimatedWords text="Three simple steps" delay={0.1} />
+            </h1>
+            
+            <div className="space-y-8">
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="flex items-start gap-4 p-5 rounded-2xl bg-white/5 border border-white/10"
+                className="flex gap-5"
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/30 to-orange-500/30 flex items-center justify-center flex-shrink-0">
-                  <Zap size={24} className="text-white" />
+                <div className="text-5xl font-black text-black/10">1</div>
+                <div>
+                  <h3 className="text-xl font-bold text-black mb-1">Find</h3>
+                  <p className="text-black/50 leading-relaxed">
+                    Walk the streets. Look for Chumpsters hiding in plain sight.
+                  </p>
                 </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-base mb-1">Compete for Territory</h3>
-                  <p className="text-sm text-white/50 leading-relaxed">
-                    Capture points for your team. Territory can change hands - keep exploring!
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+                className="flex gap-5"
+              >
+                <div className="text-5xl font-black text-black/10">2</div>
+                <div>
+                  <h3 className="text-xl font-bold text-black mb-1">Scan</h3>
+                  <p className="text-black/50 leading-relaxed">
+                    Point your camera. The AR scanner recognizes the art instantly.
+                  </p>
+                </div>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 }}
+                className="flex gap-5"
+              >
+                <div className="text-5xl font-black text-black/10">3</div>
+                <div>
+                  <h3 className="text-xl font-bold text-black mb-1">Capture</h3>
+                  <p className="text-black/50 leading-relaxed">
+                    Claim it for your team. Build streaks. Dominate the map.
                   </p>
                 </div>
               </motion.div>
@@ -317,19 +339,23 @@ export default function Onboarding() {
       </AnimatePresence>
 
       {/* Bottom button */}
-      <div className="p-4 pb-6 flex-shrink-0" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+      <div className="p-6 flex-shrink-0" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={handleNext}
           disabled={!canProceed()}
-          className={`w-full py-4 rounded-lg font-bold text-lg flex items-center justify-center gap-2 transition-all ${
-            canProceed()
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className={`w-full py-5 font-bold text-lg tracking-wide transition-all ${
+            step === 2 
               ? 'bg-white text-black'
-              : 'bg-white/10 text-white/30 cursor-not-allowed'
+              : canProceed()
+                ? 'bg-black text-white'
+                : 'bg-black/10 text-black/30 cursor-not-allowed'
           }`}
         >
-          {step === 3 ? "Let's Go!" : 'Continue'}
-          <ChevronRight size={20} />
+          {step === 3 ? "LET'S GO" : step === 2 ? 'CONTINUE' : 'NEXT'}
         </motion.button>
       </div>
     </div>

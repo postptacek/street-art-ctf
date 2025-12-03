@@ -1,24 +1,23 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Map, Scan, Trophy, User, Home } from 'lucide-react'
 
 const navItems = [
-  { path: '/', icon: Home, label: 'Home' },
-  { path: '/map', icon: Map, label: 'Map' },
-  { path: '/scanner', icon: Scan, label: 'Scan' },
-  { path: '/leaderboard', icon: Trophy, label: 'Ranks' },
-  { path: '/profile', icon: User, label: 'You' },
+  { path: '/', label: 'HOME' },
+  { path: '/map', label: 'MAP' },
+  { path: '/scanner', label: 'SCAN' },
+  { path: '/leaderboard', label: 'RANKS' },
+  { path: '/profile', label: 'YOU' },
 ]
 
 function Navigation() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[2000]">
-      {/* Blur background */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-xl border-t border-white/[0.06]" />
+    <nav className="fixed bottom-0 left-0 right-0 z-[2000] font-nohemi">
+      {/* White background */}
+      <div className="absolute inset-0 bg-[#FAFAFA] shadow-[0_-4px_20px_rgba(0,0,0,0.1)]" />
       
       {/* Safe area padding for iOS */}
-      <div className="relative flex justify-around items-center h-16 px-4 pb-safe">
-        {navItems.map(({ path, icon: Icon, label }) => (
+      <div className="relative flex justify-around items-center h-14 px-2" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        {navItems.map(({ path, label }) => (
           <NavLink
             key={path}
             to={path}
@@ -26,37 +25,23 @@ function Navigation() {
           >
             {({ isActive }) => (
               <motion.div
-                className="relative flex flex-col items-center justify-center py-2 px-4"
-                whileTap={{ scale: 0.9 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                className="relative py-2 px-3"
+                whileTap={{ scale: 0.95 }}
               >
                 {isActive && (
                   <motion.div
-                    layoutId="nav-pill"
-                    className="absolute inset-0 rounded-xl bg-white/[0.08]"
+                    layoutId="nav-indicator"
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-black"
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
-                <motion.div
-                  className="relative z-10"
-                  animate={{ 
-                    scale: isActive ? 1 : 0.9,
-                    opacity: isActive ? 1 : 0.5 
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                >
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                </motion.div>
-                <motion.span 
-                  className="relative z-10 text-[10px] mt-1 font-medium"
-                  animate={{ 
-                    opacity: isActive ? 1 : 0.4,
-                    y: isActive ? 0 : 2
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                <span 
+                  className={`text-xs font-bold tracking-wider transition-colors ${
+                    isActive ? 'text-black' : 'text-black/30'
+                  }`}
                 >
                   {label}
-                </motion.span>
+                </span>
               </motion.div>
             )}
           </NavLink>

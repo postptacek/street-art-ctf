@@ -1,5 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* Nohemi font */
+@font-face {
+  font-family: 'Nohemi';
+  src: url('https://cdn.jsdelivr.net/gh/nickshanks/Nohemi@main/fonts/variable/Nohemi-VF.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+.font-nohemi {
+  font-family: 'Nohemi', sans-serif;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

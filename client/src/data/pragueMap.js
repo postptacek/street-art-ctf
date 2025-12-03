@@ -33,9 +33,9 @@ export const DEFAULT_ZOOM = 15
 export const MIN_ZOOM = 13
 export const MAX_ZOOM = 18
 
-// Map style for dark theme
+// Map style for light theme
 export const MAP_STYLE = {
-  tileUrl: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  tileUrl: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   attribution: '&copy; OpenStreetMap &copy; CARTO'
 }
 
