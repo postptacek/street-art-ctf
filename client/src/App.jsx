@@ -17,7 +17,7 @@ const TEAM_CONFIG = {
 
 // Full-screen capture notification - White mode redesign
 function CaptureNotification() {
-  const { captureNotification } = useGame()
+  const { captureNotification, player } = useGame()
   
   if (!captureNotification) return null
   
@@ -25,7 +25,30 @@ function CaptureNotification() {
   const teamName = TEAM_CONFIG[captureNotification.team]?.name || '?'
   const points = captureNotification.points || 100
   const streak = captureNotification.streak || 0
-  const isRecapture = captureNotification.isRecapture
+  
+  // Check if current player is the one who made the capture
+  const isActivePlayer = captureNotification.playerId === player.id
+  // Check if current player lost their territory
+  const isVictim = captureNotification.prevOwner === player.team && captureNotification.team !== player.team
+  
+  // Determine what to show
+  let label, title
+  if (isActivePlayer) {
+    // You captured or stole
+    label = captureNotification.isRecapture ? 'TERRITORY STOLEN' : 'TERRITORY CAPTURED'
+    title = captureNotification.isRecapture ? 'STOLEN' : 'CAPTURED'
+  } else if (isVictim) {
+    // Someone stole from your team
+    label = 'TERRITORY LOST'
+    title = 'LOST'
+  } else {
+    // Someone else captured (neutral notification)
+    label = captureNotification.isRecapture ? 'TERRITORY CHANGED' : 'NEW CAPTURE'
+    title = 'CLAIMED'
+  }
+  
+  // Only show points to the active player who made the capture
+  const showPoints = isActivePlayer
   
   return (
     <motion.div
@@ -37,7 +60,7 @@ function CaptureNotification() {
       {/* Top accent bar */}
       <motion.div 
         className="absolute top-0 left-0 right-0 h-2"
-        style={{ backgroundColor: teamColor }}
+        style={{ backgroundColor: isVictim ? '#888' : teamColor }}
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ duration: 0.3 }}
@@ -56,7 +79,7 @@ function CaptureNotification() {
           transition={{ delay: 0.2 }}
           className="text-sm tracking-widest text-black/30 mb-2"
         >
-          {isRecapture ? 'TERRITORY STOLEN' : 'TERRITORY CAPTURED'}
+          {label}
         </motion.p>
         
         {/* Main title */}
@@ -66,7 +89,7 @@ function CaptureNotification() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
-          {isRecapture ? 'STOLEN' : 'CAPTURED'}
+          {title}
         </motion.h1>
         
         {/* Art name */}
@@ -79,8 +102,8 @@ function CaptureNotification() {
           {captureNotification.artName}
         </motion.p>
         
-        {/* Points - big number (hide for recaptures) */}
-        {!isRecapture && (
+        {/* Points - only show to active player */}
+        {showPoints && (
           <>
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
@@ -107,11 +130,11 @@ function CaptureNotification() {
           </>
         )}
         
-        {/* Spacer for recaptures */}
-        {isRecapture && <div className="mb-6" />}
+        {/* Spacer when no points */}
+        {!showPoints && <div className="mb-6" />}
         
-        {/* Streak badge */}
-        {streak > 1 && (
+        {/* Streak badge - only for active player */}
+        {isActivePlayer && streak > 1 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

@@ -175,12 +175,16 @@ export function GameProvider({ children }) {
               const artPoint = ART_POINTS.find(p => p.id === change.doc.id)
               if (artPoint) {
                 setCaptureNotification({
+                  artId: artPoint.id,
                   artName: artPoint.name,
+                  location: artPoint.location,
                   team: data.capturedBy,
+                  playerId: data.playerId,
                   playerName: data.playerName || 'Someone',
                   points: data.points || getPointValue(artPoint),
                   streak: data.streak || 0,
                   isRecapture: data.isRecapture || !!prevOwner,
+                  prevOwner: prevOwner || null,
                   timestamp: Date.now()
                 })
                 // Auto-hide after 4 seconds

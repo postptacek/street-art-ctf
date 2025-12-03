@@ -120,15 +120,26 @@ function FlyToHood({ hood }) {
   return null
 }
 
-// Fly to last capture (no highlight ring - was buggy)
+// Fly to last capture location when returning to map
 function LastCaptureHandler() {
   const map = useMap()
   
   useEffect(() => {
     const stored = localStorage.getItem('streetart-ctf-lastCapture')
     if (stored) {
-      localStorage.removeItem('streetart-ctf-lastCapture')
-      // Just clear it, don't show highlight (was showing in wrong locations)
+      try {
+        const data = JSON.parse(stored)
+        localStorage.removeItem('streetart-ctf-lastCapture')
+        
+        // Fly to the capture location if valid
+        if (data.location && Array.isArray(data.location) && data.location.length === 2) {
+          setTimeout(() => {
+            map.flyTo(data.location, 17, { duration: 1.5 })
+          }, 500)
+        }
+      } catch (e) {
+        localStorage.removeItem('streetart-ctf-lastCapture')
+      }
     }
   }, [map])
   
