@@ -9,24 +9,37 @@ const TEAM_CONFIG = {
 function Leaderboard() {
   const { teamScores, player, allPlayers } = useGame()
   
-  const totalScore = teamScores.red + teamScores.blue || 1
-  const redPercent = Math.round((teamScores.red / totalScore) * 100)
-  const bluePercent = 100 - redPercent
+  // Calculate percentages safely
+  const totalScore = teamScores.red + teamScores.blue
+  const redPercent = totalScore > 0 ? Math.round((teamScores.red / totalScore) * 100) : 50
+  const bluePercent = totalScore > 0 ? 100 - redPercent : 50
   const leading = teamScores.red > teamScores.blue ? 'red' : teamScores.blue > teamScores.red ? 'blue' : null
 
-  // Build players list
+  // Build players list - merge Firebase players with current player
   const playersList = [...allPlayers]
-  const currentPlayerInList = playersList.find(p => p.name === player.name)
-  if (!currentPlayerInList && player.team && player.name) {
+  
+  // Update current player's data if they exist in list, or add them
+  const currentPlayerIndex = playersList.findIndex(p => p.id === player.id || p.name === player.name)
+  if (currentPlayerIndex >= 0) {
+    // Update existing entry with latest local data
+    playersList[currentPlayerIndex] = {
+      ...playersList[currentPlayerIndex],
+      score: Math.max(playersList[currentPlayerIndex].score, player.score || 0),
+      captures: Math.max(playersList[currentPlayerIndex].captures || 0, player.captureCount || player.capturedArt?.length || 0)
+    }
+  } else if (player.team && player.name && player.name !== 'Street Artist') {
+    // Add current player if not in list
     playersList.push({
-      id: 'current',
+      id: player.id || 'current',
       name: player.name,
       team: player.team,
       score: player.score || 0,
-      captures: player.capturedArt?.length || 0
+      captures: player.captureCount || player.capturedArt?.length || 0
     })
   }
-  const sortedPlayers = playersList.sort((a, b) => b.score - a.score)
+  
+  // Sort by score descending
+  const sortedPlayers = playersList.sort((a, b) => (b.score || 0) - (a.score || 0))
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#FAFAFA] font-nohemi pb-20">

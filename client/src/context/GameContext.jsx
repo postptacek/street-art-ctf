@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import { doc, setDoc, onSnapshot, collection, getDocs } from 'firebase/firestore'
+import { doc, setDoc, onSnapshot, collection, getDocs, deleteDoc } from 'firebase/firestore'
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth'
 import { db, auth } from '../config/firebase'
 import { ART_POINTS, TEAMS, getPointValue, calculateTeamScores } from '../data/pragueMap'
@@ -588,30 +588,72 @@ export function GameProvider({ children }) {
     }
   }, [artPoints, discoveries, player, isOnline])
 
-  // Reset all data (for testing)
+  // Reset all data (for testing) - clears ALL Firebase data
   const resetAll = useCallback(async () => {
+    console.log('Resetting all data...')
+    
+    // Clear all localStorage
     localStorage.removeItem(STORAGE_KEYS.player)
     localStorage.removeItem(STORAGE_KEYS.captures)
+    localStorage.removeItem(STORAGE_KEYS.discoveries)
+    localStorage.removeItem(STORAGE_KEYS.gameMode)
+    // Clear cooldowns
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('streetart-')) {
+        localStorage.removeItem(key)
+      }
+    })
     
-    // Reset Firebase captures
-    if (firebaseUser && isOnline) {
+    // Reset Firebase data
+    if (isOnline) {
       try {
-        await setDoc(doc(db, CAPTURES_COLLECTION, 'global'), {})
+        // Delete all captures
+        const capturesSnapshot = await getDocs(collection(db, CAPTURES_COLLECTION))
+        const captureDeletes = capturesSnapshot.docs.map(d => deleteDoc(doc(db, CAPTURES_COLLECTION, d.id)))
+        await Promise.all(captureDeletes)
+        console.log('Deleted', capturesSnapshot.size, 'captures')
+        
+        // Delete all players
+        const playersSnapshot = await getDocs(collection(db, PLAYERS_COLLECTION))
+        const playerDeletes = playersSnapshot.docs.map(d => deleteDoc(doc(db, PLAYERS_COLLECTION, d.id)))
+        await Promise.all(playerDeletes)
+        console.log('Deleted', playersSnapshot.size, 'players')
+        
+        // Reset team scores to 0
+        await setDoc(doc(db, TEAMS_COLLECTION, 'red'), { score: 0 })
+        await setDoc(doc(db, TEAMS_COLLECTION, 'blue'), { score: 0 })
+        console.log('Reset team scores')
       } catch (err) {
         console.warn('Failed to reset Firebase:', err)
       }
     }
     
+    // Reset local state
     setPlayer({
       id: firebaseUser?.uid || `player-${Date.now()}`,
       name: 'Street Artist',
       team: null,
       score: 0,
-      capturedArt: []
+      capturedArt: [],
+      streak: 0,
+      maxStreak: 0,
+      captureCount: 0,
+      recaptureCount: 0,
+      firstCaptureCount: 0,
+      totalDistance: 0,
+      discoveryCount: 0,
+      uniqueAreasVisited: []
     })
     setArtPoints(ART_POINTS.map(p => ({ ...p, capturedBy: null })))
+    setDiscoveries({})
     setScanResult(null)
     setPendingCapture(null)
+    setRecentCaptures([])
+    
+    console.log('Reset complete!')
+    
+    // Reload the page to ensure clean state
+    window.location.reload()
   }, [firebaseUser, isOnline])
 
   const value = {

@@ -243,7 +243,7 @@ function Profile() {
         </div>
       </motion.div>
 
-      <p className="text-center text-xs text-black/20 pb-4">v2.2.0</p>
+      <p className="text-center text-xs text-black/20 pb-4">v3.0.3</p>
     </div>
   )
 }
