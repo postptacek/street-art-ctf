@@ -84,13 +84,14 @@ export default function Onboarding() {
   
   const handleGenerateName = () => setName(generateRandomName())
   
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1 && name.trim()) {
-      setPlayerName(name.trim())
       // Assign team NOW and save it
       const team = assignTeamOnce()
       setAssignedTeam(team)
-      joinTeam(team)
+      // Wait for both async operations to complete
+      await setPlayerName(name.trim())
+      await joinTeam(team)
     }
     if (step === 3) { navigate('/map'); return }
     setStep(step + 1)
