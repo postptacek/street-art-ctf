@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useGame } from '../context/GameContext'
-import { ART_POINTS } from '../data/pragueMap'
+import { ART_POINTS, getPointValue } from '../data/pragueMap'
 
 const TEAM_CONFIG = {
   red: { color: '#E53935', name: 'RED' },
@@ -9,6 +9,9 @@ const TEAM_CONFIG = {
 }
 
 const DISTRICTS = ['Vysočany', 'Hloubětín', 'Poděbrady', 'Palmovka', 'Karlín', 'Libeň', 'Prosek']
+
+// 24 hour decay
+const DECAY_DURATION = 24 * 60 * 60 * 1000
 
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000)
@@ -20,27 +23,48 @@ function timeAgo(date) {
   return `${Math.floor(hours / 24)}d`
 }
 
+// Check if capture is still active (not fully decayed)
+function isActiveCapture(capturedAt) {
+  if (!capturedAt) return false
+  const captureTime = capturedAt.toDate ? capturedAt.toDate() : new Date(capturedAt)
+  const elapsed = Date.now() - captureTime.getTime()
+  return elapsed < DECAY_DURATION
+}
+
 function Home() {
   const { player, teamScores, recentCaptures, isOnline, artPoints } = useGame()
   
-  const totalScore = teamScores.red + teamScores.blue
-  const redPercent = totalScore > 0 ? Math.round((teamScores.red / totalScore) * 100) : 50
-  const bluePercent = 100 - redPercent
-  const leading = teamScores.red > teamScores.blue ? 'red' : teamScores.blue > teamScores.red ? 'blue' : null
+  // Calculate effective scores - only count active (non-decayed) captures
+  const effectiveScores = useMemo(() => {
+    let red = 0, blue = 0
+    artPoints?.forEach(p => {
+      if (p.capturedBy && p.status !== 'ghost' && isActiveCapture(p.capturedAt)) {
+        const points = getPointValue(p)
+        if (p.capturedBy === 'red') red += points
+        if (p.capturedBy === 'blue') blue += points
+      }
+    })
+    return { red, blue }
+  }, [artPoints])
   
-  // Count current chomps held by each team
-  const redChomps = artPoints?.filter(p => p.capturedBy === 'red' && p.status !== 'ghost').length || 0
-  const blueChomps = artPoints?.filter(p => p.capturedBy === 'blue' && p.status !== 'ghost').length || 0
+  const totalScore = effectiveScores.red + effectiveScores.blue
+  const redPercent = totalScore > 0 ? Math.round((effectiveScores.red / totalScore) * 100) : 50
+  const bluePercent = 100 - redPercent
+  const leading = effectiveScores.red > effectiveScores.blue ? 'red' : effectiveScores.blue > effectiveScores.red ? 'blue' : null
+  
+  // Count current chomps held by each team (only active, non-decayed)
+  const redChomps = artPoints?.filter(p => p.capturedBy === 'red' && p.status !== 'ghost' && isActiveCapture(p.capturedAt)).length || 0
+  const blueChomps = artPoints?.filter(p => p.capturedBy === 'blue' && p.status !== 'ghost' && isActiveCapture(p.capturedAt)).length || 0
   const totalChomps = artPoints?.filter(p => p.status !== 'ghost').length || 0
   const unclaimed = totalChomps - redChomps - blueChomps
   
-  // Calculate district progress for each team
+  // Calculate district progress for each team (only active captures)
   const districtStats = useMemo(() => {
     return DISTRICTS.map(district => {
       const districtArt = ART_POINTS.filter(art => art.area === district && art.status !== 'ghost')
       const total = districtArt.length
-      const redCount = artPoints?.filter(p => p.area === district && p.capturedBy === 'red' && p.status !== 'ghost').length || 0
-      const blueCount = artPoints?.filter(p => p.area === district && p.capturedBy === 'blue' && p.status !== 'ghost').length || 0
+      const redCount = artPoints?.filter(p => p.area === district && p.capturedBy === 'red' && p.status !== 'ghost' && isActiveCapture(p.capturedAt)).length || 0
+      const blueCount = artPoints?.filter(p => p.area === district && p.capturedBy === 'blue' && p.status !== 'ghost' && isActiveCapture(p.capturedAt)).length || 0
       return { district, total, red: redCount, blue: blueCount }
     }).filter(d => d.total > 0) // Only show districts with chomps
   }, [artPoints])
@@ -80,7 +104,7 @@ function Home() {
               className="text-5xl font-black"
               style={{ color: leading === 'red' ? TEAM_CONFIG.red.color : 'rgba(0,0,0,0.2)' }}
             >
-              {teamScores.red}
+              {effectiveScores.red}
             </div>
           </div>
           <div className="text-2xl font-bold text-black/20 pb-2">vs</div>
@@ -90,7 +114,7 @@ function Home() {
               className="text-5xl font-black"
               style={{ color: leading === 'blue' ? TEAM_CONFIG.blue.color : 'rgba(0,0,0,0.2)' }}
             >
-              {teamScores.blue}
+              {effectiveScores.blue}
             </div>
           </div>
         </div>

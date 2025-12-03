@@ -120,56 +120,19 @@ function FlyToHood({ hood }) {
   return null
 }
 
-// Fly to last capture and show highlight - then clear it
-function LastCaptureHighlight({ onShow }) {
+// Fly to last capture (no highlight ring - was buggy)
+function LastCaptureHandler() {
   const map = useMap()
-  const [lastCapture, setLastCapture] = useState(null)
   
   useEffect(() => {
     const stored = localStorage.getItem('streetart-ctf-lastCapture')
     if (stored) {
-      try {
-        const data = JSON.parse(stored)
-        // Only set if location is valid array with 2 numbers
-        if (data.location && Array.isArray(data.location) && data.location.length === 2) {
-          setLastCapture(data)
-          localStorage.removeItem('streetart-ctf-lastCapture')
-          
-          // Fly to location
-          setTimeout(() => {
-            map.flyTo(data.location, 17, { duration: 1.5 })
-            if (onShow) onShow(data)
-          }, 500)
-          
-          // Clear highlight after 5 seconds
-          setTimeout(() => {
-            setLastCapture(null)
-          }, 5000)
-        } else {
-          localStorage.removeItem('streetart-ctf-lastCapture')
-        }
-      } catch (e) {
-        localStorage.removeItem('streetart-ctf-lastCapture')
-      }
+      localStorage.removeItem('streetart-ctf-lastCapture')
+      // Just clear it, don't show highlight (was showing in wrong locations)
     }
-  }, [map, onShow])
+  }, [map])
   
-  if (!lastCapture || !lastCapture.location) return null
-  
-  const color = lastCapture.team === 'red' ? '#E53935' : '#1E88E5'
-  
-  return (
-    <CircleMarker
-      center={lastCapture.location}
-      radius={25}
-      pathOptions={{
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.2,
-        weight: 2
-      }}
-    />
-  )
+  return null
 }
 
 // Location button component - White mode
@@ -546,7 +509,7 @@ export default function PragueMap() {
         <LocationButton />
         <ZoomDisplay devMode={devMode} />
         <FlyToHood hood={currentHood} />
-        <LastCaptureHighlight />
+        <LastCaptureHandler />
         
         {/* Metro B line */}
         <Polyline

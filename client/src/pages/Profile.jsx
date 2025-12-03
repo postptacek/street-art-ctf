@@ -250,7 +250,7 @@ function Profile() {
       {/* Social links */}
       <div className="flex justify-center gap-6 py-6">
         <a 
-          href="https://www.instagram.com/martintomek.vfx/" 
+          href="https://www.instagram.com/postptacek/" 
           target="_blank" 
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-black/40 hover:text-black transition-colors"
