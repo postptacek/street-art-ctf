@@ -1,10 +1,14 @@
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useGame } from '../context/GameContext'
+import { ART_POINTS } from '../data/pragueMap'
 
 const TEAM_CONFIG = {
   red: { color: '#E53935', name: 'RED' },
   blue: { color: '#1E88E5', name: 'BLUE' }
 }
+
+const DISTRICTS = ['Vysočany', 'Hloubětín', 'Poděbrady', 'Palmovka', 'Karlín', 'Libeň', 'Prosek']
 
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000)
@@ -24,10 +28,22 @@ function Home() {
   const bluePercent = 100 - redPercent
   const leading = teamScores.red > teamScores.blue ? 'red' : teamScores.blue > teamScores.red ? 'blue' : null
   
-  // Count current territories held by each team
-  const redTerritories = artPoints?.filter(p => p.capturedBy === 'red' && p.status !== 'ghost').length || 0
-  const blueTerritories = artPoints?.filter(p => p.capturedBy === 'blue' && p.status !== 'ghost').length || 0
-  const totalTerritories = artPoints?.filter(p => p.status !== 'ghost').length || 0
+  // Count current chomps held by each team
+  const redChomps = artPoints?.filter(p => p.capturedBy === 'red' && p.status !== 'ghost').length || 0
+  const blueChomps = artPoints?.filter(p => p.capturedBy === 'blue' && p.status !== 'ghost').length || 0
+  const totalChomps = artPoints?.filter(p => p.status !== 'ghost').length || 0
+  const unclaimed = totalChomps - redChomps - blueChomps
+  
+  // Calculate district progress for each team
+  const districtStats = useMemo(() => {
+    return DISTRICTS.map(district => {
+      const districtArt = ART_POINTS.filter(art => art.area === district && art.status !== 'ghost')
+      const total = districtArt.length
+      const redCount = artPoints?.filter(p => p.area === district && p.capturedBy === 'red' && p.status !== 'ghost').length || 0
+      const blueCount = artPoints?.filter(p => p.area === district && p.capturedBy === 'blue' && p.status !== 'ghost').length || 0
+      return { district, total, red: redCount, blue: blueCount }
+    }).filter(d => d.total > 0) // Only show districts with chomps
+  }, [artPoints])
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#FAFAFA] font-nohemi">
@@ -101,20 +117,57 @@ function Home() {
           <span>{bluePercent}%</span>
         </div>
         
-        {/* Territory counts */}
+        {/* Chomp counts */}
         <div className="flex justify-between mt-4 pt-4 border-t border-black/5">
           <div className="text-center">
-            <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.red.color }}>{redTerritories}</div>
-            <div className="text-xs text-black/30">territories</div>
+            <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.red.color }}>{redChomps}</div>
+            <div className="text-xs text-black/30">{redChomps === 1 ? 'chomp' : 'chomps'}</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-black/20">{totalTerritories - redTerritories - blueTerritories}</div>
+            <div className="text-lg font-bold text-black/20">{unclaimed}</div>
             <div className="text-xs text-black/30">unclaimed</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.blue.color }}>{blueTerritories}</div>
-            <div className="text-xs text-black/30">territories</div>
+            <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.blue.color }}>{blueChomps}</div>
+            <div className="text-xs text-black/30">{blueChomps === 1 ? 'chomp' : 'chomps'}</div>
           </div>
+        </div>
+      </motion.div>
+      
+      {/* Territory Breakdown */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="px-6 mb-6"
+      >
+        <p className="text-sm tracking-widest text-black/40 mb-3">TERRITORIES</p>
+        <div className="space-y-2">
+          {districtStats.map((stat, i) => {
+            const redPct = stat.total > 0 ? (stat.red / stat.total) * 100 : 0
+            const bluePct = stat.total > 0 ? (stat.blue / stat.total) * 100 : 0
+            return (
+              <div key={stat.district} className="flex items-center gap-3">
+                <div className="w-20 text-sm text-black/60 truncate">{stat.district}</div>
+                <div className="flex-1 h-2 bg-black/5 flex overflow-hidden">
+                  <div 
+                    className="h-full transition-all duration-500"
+                    style={{ width: `${redPct}%`, backgroundColor: TEAM_CONFIG.red.color }}
+                  />
+                  <div 
+                    className="h-full transition-all duration-500"
+                    style={{ width: `${bluePct}%`, backgroundColor: TEAM_CONFIG.blue.color }}
+                  />
+                </div>
+                <div className="w-16 text-xs text-black/40 text-right">
+                  <span style={{ color: TEAM_CONFIG.red.color }}>{stat.red}</span>
+                  <span className="mx-1">·</span>
+                  <span style={{ color: TEAM_CONFIG.blue.color }}>{stat.blue}</span>
+                  <span className="text-black/20">/{stat.total}</span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </motion.div>
 
