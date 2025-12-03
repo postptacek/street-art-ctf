@@ -49,7 +49,7 @@ const calculateDecay = (capturedAt) => {
   return Math.min(hoursSinceCapture / 24, 1)
 }
 
-const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false, decayLevel = 0) => {
+const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false, decayLevel = 0, isBattleMode = false) => {
   // Determine the CSS filter based on capture state
   let filter = ''
   
@@ -58,10 +58,12 @@ const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false, de
   const decayOpacity = 1 - (decayLevel * 0.3)
   
   if (isGhost) {
-    filter = 'grayscale(100%) opacity(0.5)'
+    // Ghost markers - very faint (only shown in solo mode)
+    filter = 'grayscale(100%) opacity(0.3)'
   } else if (!capturedBy) {
-    // Uncaptured - black and white (desaturated)
-    filter = 'grayscale(100%)'
+    // Uncaptured - grayscale, 10% opacity in battle mode
+    const uncapturedOpacity = isBattleMode ? 0.1 : 1
+    filter = `grayscale(100%) opacity(${uncapturedOpacity})`
   } else if (capturedBy === 'red') {
     // Red team - shift hue (blue to red), apply decay
     filter = `hue-rotate(160deg) saturate(${1.5 * decaySaturation}) opacity(${decayOpacity})`
@@ -612,7 +614,10 @@ export default function PragueMap() {
         )}
         
         {/* Art point markers - rendered last (above territories) */}
-        {displayPoints.map(point => {
+        {displayPoints
+          // In battle mode, hide ghost markers completely
+          .filter(point => isSoloView || point.status !== 'ghost')
+          .map(point => {
           const isGhost = point.status === 'ghost'
           const isDiscovered = discoveries[point.id]
           // In solo view: show YOUR team color for discovered, gray for not found
@@ -624,7 +629,7 @@ export default function PragueMap() {
           const decayLevel = (!isSoloView && point.capturedBy && point.capturedAt) 
             ? calculateDecay(point.capturedAt) 
             : 0
-          const icon = createChumperIcon(markerTeam, isGhost, false, decayLevel)
+          const icon = createChumperIcon(markerTeam, isGhost, false, decayLevel, !isSoloView)
           
           return (
             <Marker
