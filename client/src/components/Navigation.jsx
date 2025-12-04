@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
 const navItems = [
-  { path: '/', label: 'WAR' },
+  { path: '/', label: 'BATTLE' },
   { path: '/map', label: 'MAP' },
   { path: '/scanner', label: 'SCAN' },
   { path: '/leaderboard', label: 'RANKS' },

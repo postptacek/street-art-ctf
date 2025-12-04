@@ -52,6 +52,18 @@ function Profile() {
 
   const teamColor = player.team ? TEAM_CONFIG[player.team].color : '#888'
   const teamName = player.team ? TEAM_CONFIG[player.team].name : '?'
+  
+  // Count unique areas where player has discovered art
+  const areasExplored = useMemo(() => {
+    const discoveredIds = Object.keys(discoveries || {})
+    const areas = new Set()
+    ART_POINTS.forEach(art => {
+      if (discoveredIds.includes(art.id)) {
+        areas.add(art.area)
+      }
+    })
+    return areas.size
+  }, [discoveries])
 
   const randomizeTeams = async () => {
     if (isRandomizing) return
@@ -214,8 +226,8 @@ function Profile() {
             <span className="font-bold text-black">{player.streak || 0}</span>
           </div>
           <div className="flex justify-between border-b border-black/5 pb-2">
-            <span className="text-black/50">Distance</span>
-            <span className="font-bold text-black">{player.totalDistance ? (player.totalDistance / 1000).toFixed(1) : '0'} km</span>
+            <span className="text-black/50">Areas</span>
+            <span className="font-bold text-black">{areasExplored} / {Object.keys(DISTRICTS).length}</span>
           </div>
         </div>
       </motion.div>

@@ -86,7 +86,7 @@ function Home() {
           transition={{ delay: 0.1 }}
           className="text-4xl font-bold text-black tracking-tight"
         >
-          War Room
+          Battle Room
         </motion.h1>
       </div>
 
@@ -237,7 +237,6 @@ function Home() {
           <div className="space-y-1">
             {recentCaptures.map((capture, index) => {
               const config = TEAM_CONFIG[capture.team] || { color: '#888', name: '?' }
-              const isRecapture = capture.isRecapture
               return (
                 <motion.div
                   key={capture.id}
@@ -257,11 +256,7 @@ function Home() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    {isRecapture ? (
-                      <div className="font-bold text-black/60">STOLEN</div>
-                    ) : (
-                      <div className="font-bold" style={{ color: config.color }}>+{capture.points}</div>
-                    )}
+                    <div className="font-bold" style={{ color: config.color }}>+{capture.points}</div>
                     <div className="text-xs text-black/30">{timeAgo(capture.capturedAt)}</div>
                   </div>
                 </motion.div>
