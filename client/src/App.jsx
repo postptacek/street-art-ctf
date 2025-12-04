@@ -16,26 +16,35 @@ const TEAM_CONFIG = {
   blue: { color: '#1E88E5', name: 'BLUE' }
 }
 
-// Eat animation component - plays when territory is stolen
-function EatAnimation({ variant }) {
+// Eat animation component - loops between A and B variants
+function EatAnimation() {
   const [frame, setFrame] = useState(0)
+  const [currentVariant, setCurrentVariant] = useState('a')
   const totalFrames = 41
-  const folder = variant === 'a' ? 'eat_a' : 'eat_b'
   
   useEffect(() => {
     const interval = setInterval(() => {
-      setFrame(f => (f + 1) % totalFrames)
+      setFrame(f => {
+        const nextFrame = f + 1
+        // When animation completes, switch variant
+        if (nextFrame >= totalFrames) {
+          setCurrentVariant(v => v === 'a' ? 'b' : 'a')
+          return 0
+        }
+        return nextFrame
+      })
     }, 42) // ~24fps
     return () => clearInterval(interval)
   }, [])
   
+  const folder = currentVariant === 'a' ? 'eat_a' : 'eat_b'
   const frameNum = String(frame).padStart(5, '0')
-  const src = `animation/${folder}/eat_${variant}_${frameNum}.png`
+  const src = `animation/${folder}/eat_${currentVariant}_${frameNum}.png`
   
   return (
     <img 
       src={src} 
-      alt="Chomp eating"
+      alt="Chomp animation"
       className="w-48 h-48 object-contain"
     />
   )
@@ -54,8 +63,13 @@ function CaptureNotification() {
   
   // Check if current player is the one who made the capture
   const isActivePlayer = captureNotification.playerId === player.id
-  // Check if current player lost their territory
-  const isVictim = captureNotification.prevOwner === player.team && captureNotification.team !== player.team
+  // Check if current player lost their territory (steal)
+  const isVictim = captureNotification.isRecapture && captureNotification.prevOwner === player.team && captureNotification.team !== player.team
+  
+  // For non-active users: only show notification when it's a steal that affects them
+  if (!isActivePlayer && !isVictim) {
+    return null
+  }
   
   // Determine what to show
   let label, title
@@ -76,10 +90,8 @@ function CaptureNotification() {
   // Only show points to the active player who made the capture
   const showPoints = isActivePlayer
   
-  // Determine which eat animation to show (only for steals/recaptures)
-  // EAT_A: Red captures blue, EAT_B: Blue captures red
-  const showEatAnimation = captureNotification.isRecapture
-  const eatVariant = captureNotification.team === 'red' ? 'a' : 'b'
+  // Always show eat animation (loops between A and B)
+  const showEatAnimation = true
   
   return (
     <motion.div
@@ -133,7 +145,7 @@ function CaptureNotification() {
           {captureNotification.artName}
         </motion.p>
         
-        {/* Eat animation - only for steals */}
+        {/* Eat animation - always show, loops A → B → A... */}
         {showEatAnimation && (
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
@@ -141,7 +153,7 @@ function CaptureNotification() {
             transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
             className="mb-4 flex justify-center"
           >
-            <EatAnimation variant={eatVariant} />
+            <EatAnimation />
           </motion.div>
         )}
         
