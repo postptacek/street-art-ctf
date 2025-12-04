@@ -187,8 +187,8 @@ export function GameProvider({ children }) {
                   prevOwner: prevOwner || null,
                   timestamp: Date.now()
                 })
-                // Auto-hide after 4 seconds
-                setTimeout(() => setCaptureNotification(null), 4000)
+                // Auto-hide notification (tweak this value: 41 frames × 42ms = ~1720ms per loop)
+                setTimeout(() => setCaptureNotification(null), 3900)
               }
             }
           }

@@ -382,13 +382,9 @@ export default function PragueMap() {
   const discoveryCount = Object.keys(discoveries).length
   const totalArtCount = ART_POINTS.length
   
-  // Current hood discovery stats
+  // Current hood discovery stats - filter by hood field, not area
   const hoodDiscoveryStats = useMemo(() => {
-    const hoodArt = ART_POINTS.filter(art => {
-      // Map hood names to area names
-      const areaMap = { 'palmovka': 'Palmovka', 'vysocany': 'Vysocany', 'podebrady': 'Podebrady' }
-      return art.area === areaMap[currentHood.id] || art.area === currentHood.name
-    })
+    const hoodArt = ART_POINTS.filter(art => art.hood === currentHood.id)
     const discovered = hoodArt.filter(art => discoveries[art.id])
     return { found: discovered.length, total: hoodArt.length }
   }, [discoveries, currentHood])
