@@ -1,9 +1,20 @@
-import { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useMemo, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../context/GameContext'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { ART_POINTS, getPointValue } from '../data/pragueMap'
+
+// Check if running as PWA (standalone mode)
+const isStandalone = () => {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         window.navigator.standalone === true
+}
+
+// Check if iOS
+const isIOS = () => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+}
 
 const TEAM_CONFIG = {
   red: { color: '#E53935', name: 'RED' },
@@ -23,6 +34,12 @@ const DISTRICTS = {
 function Profile() {
   const { player, artPoints, resetAll, discoveries } = useGame()
   const [isRandomizing, setIsRandomizing] = useState(false)
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
+  const [isPWA, setIsPWA] = useState(false)
+  
+  useEffect(() => {
+    setIsPWA(isStandalone())
+  }, [])
 
   const capturedArt = artPoints?.filter(art => 
     player.capturedArt.includes(art.id)
@@ -258,6 +275,84 @@ function Profile() {
           </button>
         </div>
       </motion.div>
+
+      {/* Install & Tips */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="px-6 mb-6"
+      >
+        {!isPWA && (
+          <button
+            onClick={() => setShowInstallPrompt(true)}
+            className="w-full py-3 bg-black text-white font-bold text-sm tracking-wide mb-3"
+          >
+            ADD TO HOME SCREEN
+          </button>
+        )}
+        <p className="text-center text-xs text-black/40">
+          Best experience on Chrome browser
+        </p>
+      </motion.div>
+
+      {/* iOS Install Instructions Modal */}
+      <AnimatePresence>
+        {showInstallPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-6"
+            onClick={() => setShowInstallPrompt(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white p-6 max-w-sm w-full"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-xl font-bold text-black mb-4">Add to Home Screen</h3>
+              {isIOS() ? (
+                <div className="space-y-4 text-black/70">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">1.</span>
+                    <p>Tap the <strong>Share</strong> button <span className="inline-block w-5 h-5 align-middle">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5l-1.42 1.42-1.59-1.59V16h-2V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z"/></svg>
+                    </span> at the bottom of Safari</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">2.</span>
+                    <p>Scroll down and tap <strong>"Add to Home Screen"</strong></p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">3.</span>
+                    <p>Tap <strong>"Add"</strong> in the top right</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4 text-black/70">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">1.</span>
+                    <p>Tap the <strong>menu</strong> (⋮) in Chrome</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">2.</span>
+                    <p>Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></p>
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => setShowInstallPrompt(false)}
+                className="w-full mt-6 py-3 bg-black text-white font-bold text-sm"
+              >
+                GOT IT
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Social links */}
       <div className="flex justify-center gap-6 py-6">
