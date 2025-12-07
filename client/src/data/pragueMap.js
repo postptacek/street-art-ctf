@@ -23,6 +23,13 @@ export const HOODS = {
     center: [50.1465, 15.1215],
     zoom: 16,
     description: 'Spa town east of Prague'
+  },
+  centrum: {
+    id: 'centrum',
+    name: 'Centrum',
+    center: [50.085, 14.425],
+    zoom: 15,
+    description: 'Prague city center'
   }
 }
 
@@ -140,6 +147,20 @@ export const ART_POINTS = [
   { id: 'art-43', name: 'Poděbrady 10', location: [50.145967, 15.124406], size: 'large', status: 'active', mhd: null, capturedBy: null, area: 'Poděbrady', hood: 'podebrady' },
   { id: 'art-44', name: 'Poděbrady 11', location: [50.143106, 15.121906], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Poděbrady', hood: 'podebrady' },
   { id: 'art-45', name: 'Poděbrady 12', location: [50.143394, 15.116619], size: 'small', status: 'active', mhd: null, capturedBy: null, area: 'Poděbrady', hood: 'podebrady' },
+  
+  // Centrum - real photos from IMG_6186-6223 (251207)
+  { id: 'art-46', name: 'Centrum 1', location: [50.091525, 14.440142], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Florenc', hood: 'centrum' },
+  { id: 'art-47', name: 'Centrum 2', location: [50.089364, 14.437222], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Florenc', hood: 'centrum' },
+  { id: 'art-48', name: 'Centrum 3', location: [50.087811, 14.432578], size: 'large', status: 'active', mhd: null, capturedBy: null, area: 'Karlín', hood: 'centrum' },
+  { id: 'art-49', name: 'Centrum 4', location: [50.084514, 14.429217], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Karlín', hood: 'centrum' },
+  { id: 'art-50', name: 'Centrum 5', location: [50.083103, 14.426833], size: 'small', status: 'active', mhd: null, capturedBy: null, area: 'Karlín', hood: 'centrum' },
+  { id: 'art-51', name: 'Centrum 6', location: [50.080575, 14.423917], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
+  { id: 'art-52', name: 'Centrum 7', location: [50.079044, 14.422033], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
+  { id: 'art-53', name: 'Centrum 8', location: [50.082172, 14.418336], size: 'large', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
+  { id: 'art-54', name: 'Centrum 9', location: [50.081775, 14.416789], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
+  { id: 'art-55', name: 'Centrum 10', location: [50.081547, 14.413769], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
+  { id: 'art-56', name: 'Centrum 11', location: [50.092544, 14.444431], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Florenc', hood: 'centrum' },
+  { id: 'art-57', name: 'Vysočany 11', location: [50.110867, 14.516553], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
 ]
 
 // Get points based on size

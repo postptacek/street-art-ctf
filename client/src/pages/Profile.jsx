@@ -28,7 +28,9 @@ const DISTRICTS = {
   'Palmovka': { name: 'Palmovka' },
   'Karlín': { name: 'Karlín' },
   'Libeň': { name: 'Libeň' },
-  'Prosek': { name: 'Prosek' }
+  'Prosek': { name: 'Prosek' },
+  'Florenc': { name: 'Florenc' },
+  'Centrum': { name: 'Centrum' }
 }
 
 function Profile() {
