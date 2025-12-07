@@ -171,32 +171,53 @@
 
     firebase.initializeApp({apiKey:"AIzaSyCES_Zfi78paxI--dycL2LmBK0-g4fvvEM",authDomain:"famu-nodes.firebaseapp.com",projectId:"famu-nodes",storageBucket:"famu-nodes.firebasestorage.app",messagingSenderId:"67316044555",appId:"1:67316044555:web:72a88c28871236912f480e"});
     const db = firebase.firestore();
-    // All 21 chumpster targets
+    // All art targets with GPS-matched locations
     const ART = {
-      'art-01':{name:'Chump 1',area:'Vysocany',points:100,loc:[50.110192,14.503811]},
-      'art-02':{name:'Chump 2',area:'Vysocany',points:100,loc:[50.110203,14.503764]},
-      'art-03':{name:'Chump 3',area:'Vysocany',points:100,loc:[50.109847,14.504250]},
-      'art-04':{name:'Chump 4',area:'Vysocany',points:100,loc:[50.109981,14.504933]},
-      'art-05':{name:'Chump 5',area:'Vysocany',points:150,loc:[50.109764,14.505742]},
-      'art-06':{name:'Chump 6',area:'Vysocany',points:100,loc:[50.109672,14.505847]},
-      'art-07':{name:'Chump 7',area:'Hloubetin',points:100,loc:[50.110383,14.508192]},
-      'art-08':{name:'Chump 8',area:'Hloubetin',points:150,loc:[50.110508,14.509567]},
-      'art-09':{name:'Chump 9',area:'Vysocany',points:100,loc:[50.110817,14.505475]},
-      'art-10':{name:'Chump 10',area:'Vysocany',points:100,loc:[50.110986,14.504672]},
-      'art-11':{name:'Chump 11',area:'Hloubetin',points:100,loc:[50.1105,14.5100]},
-      'art-12':{name:'Chump 12',area:'Hloubetin',points:150,loc:[50.1108,14.5105]},
-      'art-13':{name:'Chump 13',area:'Podebrady',points:100,loc:[50.1110,14.5110]},
-      'art-14':{name:'Chump 14',area:'Podebrady',points:100,loc:[50.1112,14.5115]},
-      'art-15':{name:'Chump 15',area:'Podebrady',points:150,loc:[50.1115,14.5120]},
-      'art-16':{name:'Chump 16',area:'Podebrady',points:100,loc:[50.1118,14.5125]},
-      'art-17':{name:'Chump 17',area:'Vysocany',points:100,loc:[50.1120,14.5130]},
-      'art-18':{name:'Chump 18',area:'Vysocany',points:150,loc:[50.1122,14.5135]},
-      'art-19':{name:'Chump 19',area:'Hloubetin',points:100,loc:[50.1125,14.5140]},
-      'art-20':{name:'Chump 20',area:'Hloubetin',points:200,loc:[50.1128,14.5145]},
-      'art-21':{name:'Chump 21',area:'Podebrady',points:200,loc:[50.1130,14.5150]}
+      // Centrum (new photos from 251207)
+      'art-46':{name:'Centrum 1',area:'Florenc',points:100,loc:[50.091525,14.440142]},
+      'art-47':{name:'Centrum 2',area:'Florenc',points:100,loc:[50.089364,14.437222]},
+      'art-48':{name:'Centrum 3',area:'Karlin',points:200,loc:[50.087811,14.432578]},
+      'art-49':{name:'Centrum 4',area:'Karlin',points:100,loc:[50.084514,14.429217]},
+      'art-50':{name:'Centrum 5',area:'Karlin',points:50,loc:[50.083103,14.426833]},
+      'art-51':{name:'Centrum 6',area:'Centrum',points:100,loc:[50.080575,14.423917]},
+      'art-52':{name:'Centrum 7',area:'Centrum',points:100,loc:[50.079044,14.422033]},
+      'art-53':{name:'Centrum 8',area:'Centrum',points:200,loc:[50.082172,14.418336]},
+      'art-54':{name:'Centrum 9',area:'Centrum',points:100,loc:[50.081775,14.416789]},
+      'art-55':{name:'Centrum 10',area:'Centrum',points:100,loc:[50.081547,14.413769]},
+      'art-56':{name:'Centrum 11',area:'Florenc',points:50,loc:[50.092544,14.444431]},
+      'art-57':{name:'Vysocany 11',area:'Vysocany',points:100,loc:[50.110867,14.516553]},
+      // Vysocany/Hloubetin (existing)
+      'art-01':{name:'Kolbenova 1',area:'Vysocany',points:100,loc:[50.110192,14.503811]},
+      'art-02':{name:'Kolbenova 2',area:'Vysocany',points:50,loc:[50.110203,14.503764]},
+      'art-03':{name:'Kolbenova 3',area:'Vysocany',points:100,loc:[50.109847,14.504250]},
+      'art-04':{name:'Kolbenova 4',area:'Vysocany',points:25,loc:[50.109981,14.504933]},
+      'art-05':{name:'Kolbenova 5',area:'Vysocany',points:200,loc:[50.109764,14.505742]},
+      'art-06':{name:'Vysocany 1',area:'Vysocany',points:100,loc:[50.109672,14.505847]},
+      'art-07':{name:'Hloubetin 1',area:'Hloubetin',points:100,loc:[50.110383,14.508192]},
+      'art-08':{name:'Hloubetin 2',area:'Hloubetin',points:200,loc:[50.110508,14.509567]},
+      'art-09':{name:'Vysocany 2',area:'Vysocany',points:50,loc:[50.110817,14.505475]},
+      'art-10':{name:'Vysocany 3',area:'Vysocany',points:25,loc:[50.110986,14.504672]},
+      'art-11':{name:'Hloubetin 3',area:'Hloubetin',points:100,loc:[50.106944,14.513203]},
+      'art-12':{name:'Hloubetin 4',area:'Hloubetin',points:200,loc:[50.106483,14.517261]},
+      'art-13':{name:'Vysocany 4',area:'Vysocany',points:100,loc:[50.109847,14.502203]},
+      'art-14':{name:'Vysocany 5',area:'Vysocany',points:50,loc:[50.109486,14.500917]},
+      'art-15':{name:'Vysocany 6',area:'Vysocany',points:200,loc:[50.108933,14.500356]},
+      'art-16':{name:'Vysocany 7',area:'Vysocany',points:100,loc:[50.108475,14.499317]},
+      'art-17':{name:'Vysocany 8',area:'Vysocany',points:100,loc:[50.107900,14.497956]},
+      'art-18':{name:'Vysocany 9',area:'Vysocany',points:200,loc:[50.107758,14.497244]},
+      'art-19':{name:'Hloubetin 5',area:'Hloubetin',points:50,loc:[50.107333,14.511369]},
+      'art-20':{name:'Hloubetin 6',area:'Hloubetin',points:100,loc:[50.107889,14.510306]}
     };
-    const MAP = {0:'art-01',1:'art-02',2:'art-03',3:'art-04',4:'art-05',5:'art-06',6:'art-07',7:'art-08',8:'art-09',9:'art-10',10:'art-11',11:'art-12',12:'art-13',13:'art-14',14:'art-15',15:'art-16',16:'art-17',17:'art-18',18:'art-19',19:'art-20',20:'art-21'};
-    const TARGET_COUNT = 21;
+    // Target index to art ID mapping (0-11 = new Centrum photos, 12-31 = existing)
+    const MAP = {
+      0:'art-46',1:'art-47',2:'art-48',3:'art-49',4:'art-50',5:'art-51',
+      6:'art-52',7:'art-53',8:'art-54',9:'art-55',10:'art-56',11:'art-57',
+      12:'art-01',13:'art-02',14:'art-03',15:'art-04',16:'art-05',17:'art-06',
+      18:'art-07',19:'art-08',20:'art-09',21:'art-10',22:'art-11',23:'art-12',
+      24:'art-13',25:'art-14',26:'art-15',27:'art-16',28:'art-17',29:'art-18',
+      30:'art-19',31:'art-20'
+    };
+    const TARGET_COUNT = 32;
     const COOLDOWN = 10*60*1000;
     let currentId = null, canCap = false;
     const player = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
