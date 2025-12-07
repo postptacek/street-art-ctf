@@ -1,27 +1,6 @@
-// Add to ART_POINTS in pragueMap.js
-// Generated: 2025-12-07T20:33:43.782Z
+// Targets with GPS - add to ART_POINTS in pragueMap.js
+// Generated: 2025-12-07T20:37:06.588Z
 
-  { id: 'art-01', name: 'art-01', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-02', name: 'art-02', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-03', name: 'art-03', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-04', name: 'art-04', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-05', name: 'art-05', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-06', name: 'art-06', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-07', name: 'art-07', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-08', name: 'art-08', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-09', name: 'art-09', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-10', name: 'art-10', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-11', name: 'art-11', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-12', name: 'art-12', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-13', name: 'art-13', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-14', name: 'art-14', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-15', name: 'art-15', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-16', name: 'art-16', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-17', name: 'art-17', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-18', name: 'art-18', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-19', name: 'art-19', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-20', name: 'art-20', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
-  { id: 'art-21', name: 'art-21', location: [0, 0], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'vysocany' },
   { id: 'art-46', name: 'Centrum 1', location: [50.091525, 14.4401416666667], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'centrum' },
   { id: 'art-47', name: 'Centrum 2', location: [50.0893638888889, 14.4372222222222], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'centrum' },
   { id: 'art-48', name: 'Centrum 3', location: [50.0878111111111, 14.4325777777778], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'centrum' },
