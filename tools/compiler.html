@@ -3,438 +3,479 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chump AR Target Compiler</title>
+  <title>Chump AR Target Manager</title>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0a0a0a; 
-      color: #fff;
-      min-height: 100vh;
-      padding: 24px;
-    }
-    h1 { 
-      font-size: 24px; 
-      font-weight: 900;
-      margin-bottom: 8px;
-      letter-spacing: -0.5px;
-    }
-    .subtitle { color: #666; margin-bottom: 24px; }
-    
-    .controls {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-    button {
-      padding: 12px 24px;
-      font-size: 14px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+    .header { background: #111; border-bottom: 1px solid #222; padding: 16px 24px; position: sticky; top: 0; z-index: 100; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    h1 { font-size: 20px; font-weight: 900; }
+    .version { color: #666; font-size: 12px; }
+    .tabs { display: flex; gap: 4px; }
+    .tab { padding: 8px 16px; background: transparent; border: none; color: #666; font-size: 12px; font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab.active { color: #fff; border-color: #4CAF50; }
+    .tab:hover { color: #fff; }
+    .main { padding: 24px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stat { background: #111; border: 1px solid #222; padding: 16px; }
+    .stat-value { font-size: 28px; font-weight: 900; }
+    .stat-label { font-size: 10px; color: #666; margin-top: 4px; }
+    .controls { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    button { padding: 10px 20px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; }
     button:disabled { opacity: 0.3; cursor: not-allowed; }
-    .btn-primary { background: #fff; color: #000; }
-    .btn-primary:hover:not(:disabled) { background: #eee; }
+    .btn-primary { background: #4CAF50; color: #fff; }
     .btn-secondary { background: #222; color: #fff; border: 1px solid #333; }
-    .btn-secondary:hover:not(:disabled) { background: #333; }
     .btn-danger { background: #E53935; color: #fff; }
-    .btn-danger:hover:not(:disabled) { background: #c62828; }
-    
-    #dropzone {
-      border: 2px dashed #333;
-      padding: 48px;
-      text-align: center;
-      margin-bottom: 24px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    #dropzone:hover, #dropzone.dragover { 
-      border-color: #666; 
-      background: #111;
-    }
-    #dropzone p { color: #666; }
-    
-    #progress {
-      background: #111;
-      padding: 16px;
-      margin-bottom: 24px;
-      display: none;
-    }
-    #progress.show { display: block; }
-    .progress-bar {
-      height: 4px;
-      background: #333;
-      margin-top: 8px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: #4CAF50;
-      width: 0%;
-      transition: width 0.3s;
-    }
-    
-    #images-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    
-    .image-card {
-      background: #111;
-      border: 1px solid #222;
-      overflow: hidden;
-      cursor: grab;
-      position: relative;
-    }
-    .image-card:active { cursor: grabbing; }
-    .image-card.sortable-ghost { opacity: 0.4; }
-    .image-card.sortable-chosen { border-color: #4CAF50; }
-    
-    .image-card img {
-      width: 100%;
-      aspect-ratio: 1;
-      object-fit: cover;
-      display: block;
-    }
-    .image-info {
-      padding: 12px;
-    }
-    .image-index {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      background: #000;
-      color: #fff;
-      padding: 4px 10px;
-      font-size: 14px;
-      font-weight: 900;
-    }
-    .image-name {
-      font-size: 12px;
-      color: #888;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .image-artid {
-      margin-top: 8px;
-    }
-    .image-artid input {
-      width: 100%;
-      padding: 8px;
-      background: #222;
-      border: 1px solid #333;
-      color: #fff;
-      font-size: 12px;
-      font-family: monospace;
-    }
-    .image-artid input:focus {
-      outline: none;
-      border-color: #4CAF50;
-    }
-    .remove-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: rgba(0,0,0,0.7);
-      color: #fff;
-      border: none;
-      width: 24px;
-      height: 24px;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 0;
-    }
-    .remove-btn:hover { background: #E53935; }
-    
-    #output {
-      background: #111;
-      padding: 16px;
-      margin-top: 24px;
-      display: none;
-    }
-    #output.show { display: block; }
-    #output h3 { margin-bottom: 12px; }
-    #output pre {
-      background: #000;
-      padding: 16px;
-      overflow-x: auto;
-      font-size: 12px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    
-    .stats {
-      display: flex;
-      gap: 24px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-    .stat {
-      background: #111;
-      padding: 16px 24px;
-    }
-    .stat-value { font-size: 32px; font-weight: 900; }
-    .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
+    .btn-warning { background: #FF9800; color: #000; }
+    input[type="file"] { display: none; }
+    .dropzone { border: 2px dashed #333; padding: 32px; text-align: center; margin-bottom: 24px; cursor: pointer; }
+    .dropzone:hover, .dropzone.dragover { border-color: #4CAF50; background: #111; }
+    .dropzone p { color: #666; }
+    .progress { background: #111; border: 1px solid #222; padding: 16px; margin-bottom: 24px; display: none; }
+    .progress.show { display: block; }
+    .progress-bar { height: 4px; background: #333; margin-top: 8px; }
+    .progress-fill { height: 100%; background: #4CAF50; width: 0%; transition: width 0.3s; }
+    .targets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .target-card { background: #111; border: 1px solid #222; overflow: hidden; cursor: grab; position: relative; }
+    .target-card.sortable-ghost { opacity: 0.4; }
+    .target-card.new { border-color: #FF9800; }
+    .target-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #0a0a0a; }
+    .target-index { background: #4CAF50; color: #fff; padding: 2px 8px; font-size: 12px; font-weight: 900; }
+    .target-card.new .target-index { background: #FF9800; }
+    .target-image { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #000; }
+    .target-info { padding: 12px; }
+    .target-filename { font-size: 11px; color: #666; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 9px; color: #666; }
+    .form-group input, .form-group select { padding: 6px 8px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-size: 11px; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #4CAF50; }
+    .target-actions { display: flex; gap: 4px; margin-top: 8px; }
+    .target-actions button { flex: 1; padding: 6px; font-size: 10px; }
+    .export-section { background: #111; border: 1px solid #222; padding: 20px; margin-bottom: 16px; }
+    .export-section h3 { font-size: 14px; margin-bottom: 12px; }
+    .export-section pre { background: #0a0a0a; padding: 12px; font-size: 10px; overflow-x: auto; max-height: 250px; overflow-y: auto; border: 1px solid #222; white-space: pre-wrap; word-break: break-all; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #4CAF50; color: #fff; padding: 12px 20px; font-size: 14px; transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 1000; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { background: #E53935; }
   </style>
 </head>
 <body>
-  <h1>🎯 Chump AR Target Compiler</h1>
-  <p class="subtitle">Drag to reorder • Set art IDs • Export .mind file</p>
-  
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-value" id="image-count">0</div>
-      <div class="stat-label">IMAGES</div>
+  <div class="header">
+    <div class="header-top">
+      <h1>🎯 Chump Target Manager</h1>
+      <span class="version" id="db-version">v0 • 0 targets</span>
     </div>
-    <div class="stat">
-      <div class="stat-value" id="mapped-count">0</div>
-      <div class="stat-label">MAPPED</div>
+    <div class="tabs">
+      <button class="tab active" data-panel="targets">Targets</button>
+      <button class="tab" data-panel="export">Export</button>
+      <button class="tab" data-panel="settings">Settings</button>
     </div>
   </div>
   
-  <div class="controls">
-    <button class="btn-primary" id="add-btn">+ Add Images</button>
-    <button class="btn-secondary" id="compile-btn" disabled>Compile Targets</button>
-    <button class="btn-secondary" id="download-mind-btn" disabled>Download .mind</button>
-    <button class="btn-secondary" id="download-map-btn" disabled>Download Mapping</button>
-    <button class="btn-danger" id="clear-btn">Clear All</button>
-  </div>
-  
-  <input type="file" id="file-input" accept="image/*" multiple style="display:none">
-  
-  <div id="dropzone">
-    <p>Drop images here or click "Add Images"</p>
-    <p style="margin-top:8px; font-size:12px">Drag cards below to reorder target indices</p>
-  </div>
-  
-  <div id="progress">
-    <span id="progress-text">Compiling...</span>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progress-fill"></div>
+  <div class="main">
+    <div class="panel active" id="panel-targets">
+      <div class="stats">
+        <div class="stat"><div class="stat-value" id="total-count">0</div><div class="stat-label">TOTAL</div></div>
+        <div class="stat"><div class="stat-value" id="mapped-count">0</div><div class="stat-label">MAPPED</div></div>
+        <div class="stat"><div class="stat-value" id="new-count">0</div><div class="stat-label">NEW</div></div>
+        <div class="stat"><div class="stat-value" id="hoods-count">0</div><div class="stat-label">HOODS</div></div>
+      </div>
+      <div class="controls">
+        <button class="btn-primary" id="add-btn">+ Add Images</button>
+        <button class="btn-warning" id="compile-btn" disabled>⚙️ Compile</button>
+        <button class="btn-secondary" id="auto-id-btn">Auto-assign IDs</button>
+        <button class="btn-danger" id="clear-new-btn">Clear New</button>
+      </div>
+      <input type="file" id="file-input" accept="image/*" multiple>
+      <div class="dropzone" id="dropzone">
+        <p>Drop images here to add new targets</p>
+        <p style="font-size:11px;color:#444;margin-top:8px">Existing targets preserved with their IDs</p>
+      </div>
+      <div class="progress" id="progress">
+        <span id="progress-text">Compiling...</span>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+      <div class="targets-grid" id="targets-grid"></div>
     </div>
-  </div>
-  
-  <div id="images-container"></div>
-  
-  <div id="output">
-    <h3>Generated Mapping Code</h3>
-    <pre id="mapping-code"></pre>
-  </div>
-
-  <script type="module">
-    import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/+esm';
     
-    let images = []; // { file, img, artId }
-    let compiler = null;
-    let compiledBuffer = null;
+    <div class="panel" id="panel-export">
+      <div class="export-section">
+        <h3>📦 MindAR Target File</h3>
+        <div class="controls"><button class="btn-primary" id="download-mind-btn" disabled>Download targets.mind</button></div>
+      </div>
+      <div class="export-section">
+        <h3>🔧 AR Scanner Code</h3>
+        <pre id="export-scanner"></pre>
+        <div class="controls"><button class="btn-secondary" onclick="copyCode('export-scanner')">Copy</button></div>
+      </div>
+      <div class="export-section">
+        <h3>🗺️ Map Data (pragueMap.js)</h3>
+        <pre id="export-map"></pre>
+        <div class="controls"><button class="btn-secondary" onclick="copyCode('export-map')">Copy</button></div>
+      </div>
+      <div class="export-section">
+        <h3>📋 Database Backup</h3>
+        <div class="controls">
+          <button class="btn-secondary" id="export-db-btn">Export JSON</button>
+          <button class="btn-secondary" id="import-db-btn">Import JSON</button>
+          <input type="file" id="import-db-input" accept=".json">
+        </div>
+      </div>
+      <div class="export-section">
+        <h3>📊 Build Report</h3>
+        <pre id="export-report"></pre>
+      </div>
+    </div>
     
-    const container = document.getElementById('images-container');
-    const fileInput = document.getElementById('file-input');
-    const dropzone = document.getElementById('dropzone');
-    const compileBtn = document.getElementById('compile-btn');
-    const downloadMindBtn = document.getElementById('download-mind-btn');
-    const downloadMapBtn = document.getElementById('download-map-btn');
-    const progressEl = document.getElementById('progress');
-    const progressFill = document.getElementById('progress-fill');
-    const progressText = document.getElementById('progress-text');
-    
-    // Sortable
-    const sortable = new Sortable(container, {
-      animation: 150,
-      ghostClass: 'sortable-ghost',
-      chosenClass: 'sortable-chosen',
-      onEnd: (evt) => {
-        // Reorder images array
-        const item = images.splice(evt.oldIndex, 1)[0];
-        images.splice(evt.newIndex, 0, item);
-        updateIndices();
-        updateStats();
-      }
-    });
-    
-    function updateStats() {
-      document.getElementById('image-count').textContent = images.length;
-      const mapped = images.filter(i => i.artId && i.artId.trim()).length;
-      document.getElementById('mapped-count').textContent = mapped;
-      compileBtn.disabled = images.length === 0;
-    }
-    
-    function updateIndices() {
-      const cards = container.querySelectorAll('.image-card');
-      cards.forEach((card, idx) => {
-        card.querySelector('.image-index').textContent = idx;
-      });
-    }
-    
-    function createImageCard(imageData, index) {
-      const card = document.createElement('div');
-      card.className = 'image-card';
-      card.innerHTML = `
-        <div class="image-index">${index}</div>
-        <button class="remove-btn">×</button>
-        <img src="${URL.createObjectURL(imageData.file)}" alt="${imageData.file.name}">
-        <div class="image-info">
-          <div class="image-name">${imageData.file.name}</div>
-          <div class="image-artid">
-            <input type="text" placeholder="art-XX" value="${imageData.artId || ''}" data-index="${index}">
+    <div class="panel" id="panel-settings">
+      <div class="export-section">
+        <h3>⚙️ Defaults</h3>
+        <div class="form-row" style="max-width:400px">
+          <div class="form-group">
+            <label>Default Hood</label>
+            <select id="setting-hood"><option value="centrum">Centrum</option><option value="vysocany">Vysočany</option><option value="palmovka">Palmovka</option><option value="podebrady">Poděbrady</option></select>
+          </div>
+          <div class="form-group">
+            <label>Default Size</label>
+            <select id="setting-size"><option value="medium">Medium</option><option value="small">Small</option><option value="large">Large</option><option value="sticker">Sticker</option></select>
           </div>
         </div>
-      `;
-      
-      card.querySelector('.remove-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        const idx = Array.from(container.children).indexOf(card);
-        images.splice(idx, 1);
-        card.remove();
-        updateIndices();
-        updateStats();
+      </div>
+      <div class="export-section">
+        <h3>🗑️ Danger Zone</h3>
+        <div class="controls"><button class="btn-danger" id="clear-all-btn">Clear All Data</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script type="module">
+import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/+esm';
+
+const DB_KEY = 'chump-targets-v2';
+let db = { version: 0, targets: [], settings: { hood: 'centrum', size: 'medium' } };
+let compiledBuffer = null;
+
+const SIZES = { sticker: 25, small: 50, medium: 100, large: 200 };
+const HOODS = ['centrum', 'vysocany', 'palmovka', 'podebrady'];
+
+function saveDB() {
+  db.version++;
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+  updateUI();
+}
+
+function loadDB() {
+  const saved = localStorage.getItem(DB_KEY);
+  if (saved) {
+    try { db = JSON.parse(saved); } catch(e) { console.error(e); }
+  }
+  updateUI();
+  renderTargets();
+}
+
+function toast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function updateUI() {
+  document.getElementById('db-version').textContent = 'v' + db.version + ' • ' + db.targets.length + ' targets';
+  document.getElementById('total-count').textContent = db.targets.length;
+  document.getElementById('mapped-count').textContent = db.targets.filter(t => t.artId).length;
+  document.getElementById('new-count').textContent = db.targets.filter(t => t.isNew).length;
+  document.getElementById('hoods-count').textContent = [...new Set(db.targets.map(t => t.hood).filter(Boolean))].length;
+  document.getElementById('compile-btn').disabled = db.targets.length === 0;
+  document.getElementById('setting-hood').value = db.settings.hood || 'centrum';
+  document.getElementById('setting-size').value = db.settings.size || 'medium';
+  generateExports();
+}
+
+function renderTargets() {
+  const grid = document.getElementById('targets-grid');
+  grid.innerHTML = '';
+  db.targets.forEach((t, idx) => {
+    const card = document.createElement('div');
+    card.className = 'target-card' + (t.isNew ? ' new' : '');
+    card.dataset.idx = idx;
+    card.innerHTML = \`
+      <div class="target-header">
+        <span class="target-index">\${idx}</span>
+        <span style="font-size:10px;color:#666">\${t.artId || 'unmapped'}</span>
+      </div>
+      <img class="target-image" src="\${t.imageData}" alt="">
+      <div class="target-info">
+        <div class="target-filename">\${t.fileName}</div>
+        <div class="form-row">
+          <div class="form-group"><label>Art ID</label><input type="text" data-field="artId" value="\${t.artId || ''}"></div>
+          <div class="form-group"><label>Name</label><input type="text" data-field="name" value="\${t.name || ''}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Hood</label>
+            <select data-field="hood">\${HOODS.map(h => '<option value="'+h+'"'+(t.hood===h?' selected':'')+'>'+h+'</option>').join('')}</select>
+          </div>
+          <div class="form-group"><label>Size</label>
+            <select data-field="size">\${Object.keys(SIZES).map(s => '<option value="'+s+'"'+(t.size===s?' selected':'')+'>'+s+'</option>').join('')}</select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Lat</label><input type="text" data-field="lat" value="\${t.lat || ''}"></div>
+          <div class="form-group"><label>Lng</label><input type="text" data-field="lng" value="\${t.lng || ''}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group full"><label>Area</label><input type="text" data-field="area" value="\${t.area || ''}"></div>
+        </div>
+        <div class="target-actions">
+          <button class="btn-danger" data-action="delete">Delete</button>
+        </div>
+      </div>
+    \`;
+    card.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('change', () => {
+        const field = el.dataset.field;
+        db.targets[idx][field] = el.value;
+        if (field === 'artId' && el.value) db.targets[idx].isNew = false;
+        saveDB();
+        renderTargets();
       });
-      
-      card.querySelector('input').addEventListener('input', (e) => {
-        const idx = Array.from(container.children).indexOf(card);
-        images[idx].artId = e.target.value;
-        updateStats();
-        generateMappingCode();
-      });
-      
-      return card;
+    });
+    card.querySelector('[data-action="delete"]').addEventListener('click', () => {
+      db.targets.splice(idx, 1);
+      saveDB();
+      renderTargets();
+    });
+    grid.appendChild(card);
+  });
+  
+  new Sortable(grid, {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    onEnd: (evt) => {
+      const item = db.targets.splice(evt.oldIndex, 1)[0];
+      db.targets.splice(evt.newIndex, 0, item);
+      saveDB();
+      renderTargets();
     }
-    
-    async function loadImage(file) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = URL.createObjectURL(file);
-      });
-    }
-    
-    async function addImages(files) {
-      for (const file of files) {
-        if (!file.type.startsWith('image/')) continue;
-        const img = await loadImage(file);
-        const imageData = { file, img, artId: '' };
-        images.push(imageData);
-        const card = createImageCard(imageData, images.length - 1);
-        container.appendChild(card);
-      }
-      updateStats();
-    }
-    
-    async function compile() {
-      if (images.length === 0) return;
-      
-      compiler = new Compiler();
-      progressEl.classList.add('show');
-      compileBtn.disabled = true;
-      
-      const imgElements = images.map(i => i.img);
-      
-      try {
-        await compiler.compileImageTargets(imgElements, (progress) => {
-          progressFill.style.width = progress + '%';
-          progressText.textContent = `Compiling... ${progress.toFixed(0)}%`;
-        });
-        
-        compiledBuffer = await compiler.exportData();
-        
-        progressText.textContent = 'Done! Ready to download.';
-        downloadMindBtn.disabled = false;
-        downloadMapBtn.disabled = false;
-        
-        generateMappingCode();
-        document.getElementById('output').classList.add('show');
-        
-      } catch (err) {
-        console.error(err);
-        progressText.textContent = 'Error: ' + err.message;
-      }
-      
-      compileBtn.disabled = false;
-    }
-    
-    function generateMappingCode() {
-      const mapEntries = images.map((img, idx) => {
-        const artId = img.artId || `art-${String(idx + 1).padStart(2, '0')}`;
-        return `      ${idx}:'${artId}'`;
-      }).join(',\n');
-      
-      const code = `// Target index to art ID mapping
-    const MAP = {
-${mapEntries}
+  });
+}
+
+async function loadImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => resolve({ img, dataUrl: e.target.result });
+      img.src = e.target.result;
     };
-    const TARGET_COUNT = ${images.length};`;
-      
-      document.getElementById('mapping-code').textContent = code;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function addImages(files) {
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    const { img, dataUrl } = await loadImage(file);
+    const nextId = db.targets.length + 1;
+    db.targets.push({
+      artId: '',
+      fileName: file.name,
+      imageData: dataUrl,
+      imgObj: img,
+      hood: db.settings.hood,
+      size: db.settings.size,
+      area: '',
+      name: '',
+      lat: '',
+      lng: '',
+      isNew: true,
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveDB();
+  renderTargets();
+  toast('Added ' + files.length + ' image(s)');
+}
+
+async function compile() {
+  if (db.targets.length === 0) return;
+  
+  const progress = document.getElementById('progress');
+  const fill = document.getElementById('progress-fill');
+  const text = document.getElementById('progress-text');
+  progress.classList.add('show');
+  
+  // Reload images for compilation
+  const images = [];
+  for (const t of db.targets) {
+    if (t.imgObj) {
+      images.push(t.imgObj);
+    } else {
+      const img = new Image();
+      await new Promise(r => { img.onload = r; img.src = t.imageData; });
+      t.imgObj = img;
+      images.push(img);
     }
+  }
+  
+  try {
+    const compiler = new Compiler();
+    await compiler.compileImageTargets(images, (p) => {
+      fill.style.width = p + '%';
+      text.textContent = 'Compiling... ' + p.toFixed(0) + '%';
+    });
+    compiledBuffer = await compiler.exportData();
+    text.textContent = 'Done! Ready to download.';
+    document.getElementById('download-mind-btn').disabled = false;
     
-    function downloadMind() {
-      if (!compiledBuffer) return;
-      const blob = new Blob([compiledBuffer]);
-      const a = document.createElement('a');
-      a.download = 'targets.mind';
-      a.href = URL.createObjectURL(blob);
-      a.click();
-      URL.revokeObjectURL(a.href);
+    // Mark all as not new after successful compile
+    db.targets.forEach(t => t.isNew = false);
+    saveDB();
+    renderTargets();
+    toast('Compilation successful!');
+  } catch (err) {
+    text.textContent = 'Error: ' + err.message;
+    toast('Compilation failed', true);
+  }
+}
+
+function generateExports() {
+  // Scanner code
+  const artEntries = db.targets.map((t, idx) => {
+    const artId = t.artId || 'art-' + String(idx + 1).padStart(2, '0');
+    const pts = SIZES[t.size] || 100;
+    const loc = (t.lat && t.lng) ? '[' + t.lat + ',' + t.lng + ']' : '[0,0]';
+    return "      '" + artId + "':{name:'" + (t.name || artId) + "',area:'" + (t.area || t.hood || '') + "',points:" + pts + ",loc:" + loc + "}";
+  }).join(',\n');
+  
+  const mapEntries = db.targets.map((t, idx) => {
+    const artId = t.artId || 'art-' + String(idx + 1).padStart(2, '0');
+    return idx + ":'" + artId + "'";
+  }).join(',');
+  
+  document.getElementById('export-scanner').textContent = 
+    "const ART = {\n" + artEntries + "\n    };\n    const MAP = {" + mapEntries + "};\n    const TARGET_COUNT = " + db.targets.length + ";";
+  
+  // Map code
+  const mapCode = db.targets.filter(t => t.artId && t.lat && t.lng).map(t => {
+    const pts = SIZES[t.size] || 100;
+    return "  { id: '" + t.artId + "', name: '" + (t.name || t.artId) + "', location: [" + t.lat + ", " + t.lng + "], size: '" + t.size + "', status: 'active', mhd: null, capturedBy: null, area: '" + (t.area || '') + "', hood: '" + (t.hood || '') + "' },";
+  }).join('\n');
+  document.getElementById('export-map').textContent = "// Add to ART_POINTS in pragueMap.js\n" + mapCode;
+  
+  // Report
+  const report = "# Chump Target Build Report\n\nGenerated: " + new Date().toISOString() + "\nVersion: " + db.version + "\n\n## Summary\n- Total targets: " + db.targets.length + "\n- Mapped: " + db.targets.filter(t => t.artId).length + "\n- With GPS: " + db.targets.filter(t => t.lat && t.lng).length + "\n\n## Hoods\n" + HOODS.map(h => "- " + h + ": " + db.targets.filter(t => t.hood === h).length).join('\n') + "\n\n## Targets\n" + db.targets.map((t, i) => "| " + i + " | " + (t.artId || '-') + " | " + (t.name || '-') + " | " + (t.hood || '-') + " |").join('\n');
+  document.getElementById('export-report').textContent = report;
+}
+
+function autoAssignIds() {
+  const prefix = 'art-';
+  const existingIds = db.targets.filter(t => t.artId).map(t => parseInt(t.artId.replace(prefix, '')) || 0);
+  let nextId = Math.max(0, ...existingIds) + 1;
+  
+  db.targets.forEach(t => {
+    if (!t.artId) {
+      t.artId = prefix + String(nextId).padStart(2, '0');
+      t.isNew = false;
+      nextId++;
     }
-    
-    function downloadMapping() {
-      const mapping = {};
-      images.forEach((img, idx) => {
-        mapping[idx] = {
-          artId: img.artId || null,
-          fileName: img.file.name
-        };
-      });
-      
-      const json = JSON.stringify(mapping, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.download = 'target-mapping.json';
-      a.href = URL.createObjectURL(blob);
-      a.click();
-      URL.revokeObjectURL(a.href);
+  });
+  saveDB();
+  renderTargets();
+  toast('Auto-assigned IDs');
+}
+
+function downloadMind() {
+  if (!compiledBuffer) return;
+  const blob = new Blob([compiledBuffer]);
+  const a = document.createElement('a');
+  a.download = 'targets.mind';
+  a.href = URL.createObjectURL(blob);
+  a.click();
+}
+
+function exportDB() {
+  const data = JSON.stringify(db, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.download = 'chump-targets-backup.json';
+  a.href = URL.createObjectURL(blob);
+  a.click();
+  toast('Database exported');
+}
+
+function importDB(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      db = imported;
+      saveDB();
+      renderTargets();
+      toast('Database imported');
+    } catch (err) {
+      toast('Invalid JSON file', true);
     }
-    
-    // Event listeners
-    document.getElementById('add-btn').addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => addImages(e.target.files));
-    compileBtn.addEventListener('click', compile);
-    downloadMindBtn.addEventListener('click', downloadMind);
-    downloadMapBtn.addEventListener('click', downloadMapping);
-    document.getElementById('clear-btn').addEventListener('click', () => {
-      images = [];
-      container.innerHTML = '';
-      compiledBuffer = null;
-      downloadMindBtn.disabled = true;
-      downloadMapBtn.disabled = true;
-      progressEl.classList.remove('show');
-      document.getElementById('output').classList.remove('show');
-      updateStats();
-    });
-    
-    // Drag and drop
-    dropzone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropzone.classList.add('dragover');
-    });
-    dropzone.addEventListener('dragleave', () => {
-      dropzone.classList.remove('dragover');
-    });
-    dropzone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('dragover');
-      addImages(e.dataTransfer.files);
-    });
-    dropzone.addEventListener('click', () => fileInput.click());
-  </script>
+  };
+  reader.readAsText(file);
+}
+
+window.copyCode = function(id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text);
+  toast('Copied to clipboard');
+};
+
+// Event listeners
+document.getElementById('add-btn').addEventListener('click', () => document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change', (e) => addImages(e.target.files));
+document.getElementById('compile-btn').addEventListener('click', compile);
+document.getElementById('download-mind-btn').addEventListener('click', downloadMind);
+document.getElementById('auto-id-btn').addEventListener('click', autoAssignIds);
+document.getElementById('clear-new-btn').addEventListener('click', () => {
+  db.targets = db.targets.filter(t => !t.isNew);
+  saveDB();
+  renderTargets();
+  toast('Cleared new targets');
+});
+document.getElementById('clear-all-btn').addEventListener('click', () => {
+  if (confirm('Delete ALL targets? This cannot be undone!')) {
+    db = { version: 0, targets: [], settings: db.settings };
+    compiledBuffer = null;
+    saveDB();
+    renderTargets();
+    toast('All data cleared');
+  }
+});
+document.getElementById('export-db-btn').addEventListener('click', exportDB);
+document.getElementById('import-db-btn').addEventListener('click', () => document.getElementById('import-db-input').click());
+document.getElementById('import-db-input').addEventListener('change', (e) => { if (e.target.files[0]) importDB(e.target.files[0]); });
+document.getElementById('setting-hood').addEventListener('change', (e) => { db.settings.hood = e.target.value; saveDB(); });
+document.getElementById('setting-size').addEventListener('change', (e) => { db.settings.size = e.target.value; saveDB(); });
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+const dropzone = document.getElementById('dropzone');
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); addImages(e.dataTransfer.files); });
+dropzone.addEventListener('click', () => document.getElementById('file-input').click());
+
+loadDB();
+</script>
 </body>
 </html>
