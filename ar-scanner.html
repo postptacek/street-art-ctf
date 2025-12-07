@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,108 +12,437 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { 
-      width: 100%; height: 100%; overflow: hidden; 
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-      background: #000; 
-      position: fixed;
-      top: 0; left: 0;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #000;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
     /* Loading - White mode */
-    #loading { position: fixed; inset: 0; background: #FAFAFA; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-    #loading.hidden { display: none; }
-    #chump-anim { width: 100px; height: 100px; image-rendering: pixelated; margin-bottom: 24px; }
-    #loading-text { font-size: 12px; letter-spacing: 0.2em; color: rgba(0,0,0,0.3); font-weight: 700; }
-    
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: #FAFAFA;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    #loading.hidden {
+      display: none;
+    }
+
+    #chump-anim {
+      width: 100px;
+      height: 100px;
+      image-rendering: pixelated;
+      margin-bottom: 24px;
+    }
+
+    #loading-text {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: rgba(0, 0, 0, 0.3);
+      font-weight: 700;
+    }
+
     /* Header - White floating */
-    #header { position: fixed; top: 12px; left: 12px; right: 12px; padding-top: env(safe-area-inset-top); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
-    .back-btn { width: 44px; height: 44px; background: #FAFAFA; border: none; color: black; font-size: 20px; cursor: pointer; font-weight: 700; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-    .team-badge { padding: 12px 16px; background: #FAFAFA; box-shadow: 0 4px 20px rgba(0,0,0,0.15); font-size: 11px; font-weight: 900; letter-spacing: 0.1em; }
-    
+    #header {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      padding-top: env(safe-area-inset-top);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .back-btn {
+      width: 44px;
+      height: 44px;
+      background: #FAFAFA;
+      border: none;
+      color: black;
+      font-size: 20px;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .team-badge {
+      padding: 12px 16px;
+      background: #FAFAFA;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+    }
+
     /* Target info - White card */
-    #target-info { position: fixed; top: 80px; left: 12px; right: 12px; background: #FAFAFA; padding: 20px; display: flex; align-items: center; justify-content: space-between; z-index: 100; opacity: 0; transform: translateY(-10px); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; box-shadow: 0 4px 30px rgba(0,0,0,0.2); }
-    #target-info.found { opacity: 1; transform: translateY(0); }
-    .art-title { color: black; font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
-    .art-sub { color: rgba(0,0,0,0.4); font-size: 12px; margin-top: 4px; letter-spacing: 0.05em; }
-    .points { color: white; padding: 10px 20px; font-size: 20px; font-weight: 900; }
-    .points.cooldown { background: rgba(0,0,0,0.3) !important; color: rgba(255,255,255,0.5); }
-    
+    #target-info {
+      position: fixed;
+      top: 80px;
+      left: 12px;
+      right: 12px;
+      background: #FAFAFA;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    #target-info.found {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .art-title {
+      color: black;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+
+    .art-sub {
+      color: rgba(0, 0, 0, 0.4);
+      font-size: 12px;
+      margin-top: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .points {
+      color: white;
+      padding: 10px 20px;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .points.cooldown {
+      background: rgba(0, 0, 0, 0.3) !important;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
     /* Hint */
-    #hint { position: fixed; bottom: 160px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 700; letter-spacing: 0.15em; z-index: 100; pointer-events: none; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    
+    #hint {
+      position: fixed;
+      bottom: 160px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      z-index: 100;
+      pointer-events: none;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
     /* Capture area - White mode */
-    #capture-area { position: fixed; bottom: 0; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; padding: 24px; padding-bottom: max(32px, env(safe-area-inset-bottom)); z-index: 200; pointer-events: none; }
-    #status { margin-bottom: 16px; font-size: 11px; font-weight: 900; letter-spacing: 0.15em; color: rgba(255,255,255,0.5); text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    #status.ready { color: white; }
-    #status.cooldown { color: rgba(255,255,255,0.4); }
-    
-    #capture-btn { 
-      width: 80px; height: 80px;
+    #capture-area {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      padding-bottom: max(32px, env(safe-area-inset-bottom));
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    #status {
+      margin-bottom: 16px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      color: rgba(255, 255, 255, 0.5);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    #status.ready {
+      color: white;
+    }
+
+    #status.cooldown {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    #capture-btn {
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.15);
-      border: 4px solid rgba(255,255,255,0.3); 
-      cursor: pointer; 
-      opacity: 0.5; 
+      background: rgba(255, 255, 255, 0.15);
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      opacity: 0.5;
       transition: all 0.2s;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
-    #capture-btn.ready { 
-      border-color: white; 
+
+    #capture-btn.ready {
+      border-color: white;
       background: white;
-      opacity: 1; 
-      box-shadow: 0 0 30px rgba(255,255,255,0.4);
+      opacity: 1;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
     }
-    #capture-btn.ready:active { 
-      transform: scale(0.9); 
+
+    #capture-btn.ready:active {
+      transform: scale(0.9);
     }
-    #capture-btn:disabled { opacity: 0.15; pointer-events: none; }
-    
+
+    #capture-btn:disabled {
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
     /* Success screen - White mode with team color accent */
-    #success { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 2000; overflow: hidden; background: #FAFAFA; }
-    #success.show { display: flex; }
-    
-    .success-accent { position: absolute; top: 0; left: 0; right: 0; height: 8px; }
-    
-    .success-content { position: relative; text-align: center; padding: 32px; animation: contentSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform: translateY(30px); opacity: 0; }
-    @keyframes contentSlide { 0% { transform: translateY(30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-    
-    .success-label { font-size: 11px; font-weight: 900; letter-spacing: 0.2em; color: rgba(0,0,0,0.3); margin-bottom: 8px; animation: fadeSlide 0.4s ease-out 0.1s both; }
-    .success-title { color: black; font-size: 48px; font-weight: 900; letter-spacing: -2px; margin-bottom: 4px; animation: fadeSlide 0.4s ease-out 0.15s both; }
-    .success-sub { color: rgba(0,0,0,0.4); font-size: 16px; font-weight: 500; margin-bottom: 32px; animation: fadeSlide 0.4s ease-out 0.2s both; }
-    @keyframes fadeSlide { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
-    
-    .success-points { margin-bottom: 8px; animation: pointsPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both; }
-    .success-pts { font-size: 72px; font-weight: 900; letter-spacing: -3px; }
-    @keyframes pointsPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-    
-    .success-pts-label { font-size: 12px; font-weight: 700; letter-spacing: 0.15em; color: rgba(0,0,0,0.3); margin-bottom: 24px; animation: fadeSlide 0.4s ease-out 0.4s both; }
-    
-    .success-streak { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(0,0,0,0.05); margin-bottom: 32px; animation: fadeSlide 0.4s ease-out 0.45s both; }
-    .streak-fire { font-size: 20px; }
-    .streak-text { font-size: 14px; font-weight: 900; color: black; }
-    
-    .success-player { animation: fadeSlide 0.4s ease-out 0.5s both; }
-    .success-player-name { font-size: 14px; font-weight: 900; color: black; }
-    .success-team-badge { display: inline-block; margin-left: 8px; padding: 4px 12px; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; color: white; }
-    
-    .success-nav { position: absolute; bottom: 32px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; color: rgba(0,0,0,0.2); animation: fadeSlide 0.4s ease-out 0.6s both; }
+    #success {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      overflow: hidden;
+      background: #FAFAFA;
+    }
+
+    #success.show {
+      display: flex;
+    }
+
+    .success-accent {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+    }
+
+    .success-content {
+      position: relative;
+      text-align: center;
+      padding: 32px;
+      animation: contentSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      transform: translateY(30px);
+      opacity: 0;
+    }
+
+    @keyframes contentSlide {
+      0% {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .success-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      color: rgba(0, 0, 0, 0.3);
+      margin-bottom: 8px;
+      animation: fadeSlide 0.4s ease-out 0.1s both;
+    }
+
+    .success-title {
+      color: black;
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -2px;
+      margin-bottom: 4px;
+      animation: fadeSlide 0.4s ease-out 0.15s both;
+    }
+
+    .success-sub {
+      color: rgba(0, 0, 0, 0.4);
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 32px;
+      animation: fadeSlide 0.4s ease-out 0.2s both;
+    }
+
+    @keyframes fadeSlide {
+      0% {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .success-points {
+      margin-bottom: 8px;
+      animation: pointsPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+    }
+
+    .success-pts {
+      font-size: 72px;
+      font-weight: 900;
+      letter-spacing: -3px;
+    }
+
+    @keyframes pointsPop {
+      0% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .success-pts-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: rgba(0, 0, 0, 0.3);
+      margin-bottom: 24px;
+      animation: fadeSlide 0.4s ease-out 0.4s both;
+    }
+
+    /* Badge display */
+    .success-badge {
+      margin-bottom: 24px;
+      animation: badgePop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+    }
+
+    .success-badge-img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .success-badge-label {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      margin-top: 8px;
+      padding: 4px 12px;
+      display: inline-block;
+    }
+
+    @keyframes badgePop {
+      0% {
+        transform: scale(0) rotate(-20deg);
+        opacity: 0;
+      }
+
+      70% {
+        transform: scale(1.1) rotate(5deg);
+      }
+
+      100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+      }
+    }
+
+    .success-streak {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: rgba(0, 0, 0, 0.05);
+      margin-bottom: 32px;
+      animation: fadeSlide 0.4s ease-out 0.45s both;
+    }
+
+    .streak-fire {
+      font-size: 20px;
+    }
+
+    .streak-text {
+      font-size: 14px;
+      font-weight: 900;
+      color: black;
+    }
+
+    .success-player {
+      animation: fadeSlide 0.4s ease-out 0.5s both;
+    }
+
+    .success-player-name {
+      font-size: 14px;
+      font-weight: 900;
+      color: black;
+    }
+
+    .success-team-badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 4px 12px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      color: white;
+    }
+
+    .success-nav {
+      position: absolute;
+      bottom: 32px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: rgba(0, 0, 0, 0.2);
+      animation: fadeSlide 0.4s ease-out 0.6s both;
+    }
   </style>
 </head>
+
 <body>
   <div id="loading">
     <img id="chump-anim" src="animation/frame_00000.png" alt="Loading">
     <div id="loading-text">LOADING AR</div>
   </div>
-  
+
   <div id="header">
     <button class="back-btn" onclick="goBack()">&larr;</button>
     <div class="team-badge" id="team-badge">TEAM RED</div>
   </div>
-  
+
   <div id="target-info">
     <div>
       <div class="art-title" id="art-name">-</div>
@@ -120,17 +450,21 @@
     </div>
     <div class="points" id="art-points">+0</div>
   </div>
-  
+
   <div id="hint">POINT CAMERA AT STREET ART</div>
-  
+
   <div id="capture-area">
     <div id="status">SEARCHING</div>
     <button id="capture-btn" disabled></button>
   </div>
-  
+
   <div id="success">
     <div class="success-accent" id="s-accent"></div>
     <div class="success-content">
+      <div class="success-badge" id="s-badge" style="display:none">
+        <img class="success-badge-img" id="s-badge-img" src="" alt="Chomp Badge">
+        <div class="success-badge-label" id="s-badge-label">NEW CHOMP!</div>
+      </div>
       <div class="success-label" id="s-label">SUCCESS</div>
       <div class="success-title" id="s-title">CAPTURED</div>
       <div class="success-sub" id="s-name">Chump 1 · Vysocany</div>
@@ -148,78 +482,88 @@
     </div>
     <div class="success-nav">OPENING MAP...</div>
   </div>
-  
-  <a-scene 
-    mindar-image="imageTargetSrc: targets.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 100; uiLoading: no; uiScanning: no; uiError: no" 
-    color-space="sRGB" 
-    renderer="colorManagement: true" 
-    vr-mode-ui="enabled: false" 
-    device-orientation-permission-ui="enabled: false"
-    loading-screen="enabled: false"
+
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 100; uiLoading: no; uiScanning: no; uiError: no"
+    color-space="sRGB" renderer="colorManagement: true" vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false" loading-screen="enabled: false"
     style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;">
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
   </a-scene>
-  
+
   <script>
     // Chump animation
     var chumpFrame = 0;
     var chumpImg = document.getElementById('chump-anim');
-    setInterval(function() {
+    setInterval(function () {
       chumpFrame = (chumpFrame + 1) % 51;
       chumpImg.src = 'animation/frame_' + String(chumpFrame).padStart(5, '0') + '.png';
     }, 42);
 
-    firebase.initializeApp({apiKey:"AIzaSyCES_Zfi78paxI--dycL2LmBK0-g4fvvEM",authDomain:"famu-nodes.firebaseapp.com",projectId:"famu-nodes",storageBucket:"famu-nodes.firebasestorage.app",messagingSenderId:"67316044555",appId:"1:67316044555:web:72a88c28871236912f480e"});
+    firebase.initializeApp({ apiKey: "AIzaSyCES_Zfi78paxI--dycL2LmBK0-g4fvvEM", authDomain: "famu-nodes.firebaseapp.com", projectId: "famu-nodes", storageBucket: "famu-nodes.firebasestorage.app", messagingSenderId: "67316044555", appId: "1:67316044555:web:72a88c28871236912f480e" });
     const db = firebase.firestore();
-                // Generated by Chump Target Manager
+    // Generated by Chump Target Manager
     // 2025-12-07T20:51:20.357Z
     // Database v116 - 11 targets
     const ART = {
-      'art-46':{name:'Centrum 1',area:'centrum',points:100,loc:[50.091525,14.4401416666667]},
-      'art-47':{name:'Centrum 2',area:'centrum',points:100,loc:[50.0893638888889,14.4372222222222]},
-      'art-48':{name:'Centrum 3',area:'centrum',points:100,loc:[50.0878111111111,14.4325777777778]},
-      'art-49':{name:'Centrum 4',area:'centrum',points:100,loc:[50.0845138888889,14.4292166666667]},
-      'art-50':{name:'Centrum 5',area:'centrum',points:100,loc:[50.0831027777778,14.4268333333333]},
-      'art-51':{name:'Centrum 6',area:'centrum',points:100,loc:[50.080575,14.4239166666667]},
-      'art-52':{name:'Centrum 7',area:'centrum',points:100,loc:[50.0790444444444,14.4220333333333]},
-      'art-53':{name:'Centrum 8',area:'centrum',points:100,loc:[50.0821722222222,14.4183361111111]},
-      'art-54':{name:'Centrum 9',area:'centrum',points:100,loc:[50.081775,14.4167888888889]},
-      'art-55':{name:'Centrum 10',area:'centrum',points:100,loc:[50.0815472222222,14.4137694444444]},
-      'art-56':{name:'Centrum 11',area:'centrum',points:100,loc:[50.0925444444444,14.4444305555556]}
+      'art-46': { name: 'Centrum 1', area: 'centrum', points: 100, loc: [50.091525, 14.4401416666667] },
+      'art-47': { name: 'Centrum 2', area: 'centrum', points: 100, loc: [50.0893638888889, 14.4372222222222] },
+      'art-48': { name: 'Centrum 3', area: 'centrum', points: 100, loc: [50.0878111111111, 14.4325777777778] },
+      'art-49': { name: 'Centrum 4', area: 'centrum', points: 100, loc: [50.0845138888889, 14.4292166666667] },
+      'art-50': { name: 'Centrum 5', area: 'centrum', points: 100, loc: [50.0831027777778, 14.4268333333333] },
+      'art-51': { name: 'Centrum 6', area: 'centrum', points: 100, loc: [50.080575, 14.4239166666667] },
+      'art-52': { name: 'Centrum 7', area: 'centrum', points: 100, loc: [50.0790444444444, 14.4220333333333] },
+      'art-53': { name: 'Centrum 8', area: 'centrum', points: 100, loc: [50.0821722222222, 14.4183361111111] },
+      'art-54': { name: 'Centrum 9', area: 'centrum', points: 100, loc: [50.081775, 14.4167888888889] },
+      'art-55': { name: 'Centrum 10', area: 'centrum', points: 100, loc: [50.0815472222222, 14.4137694444444] },
+      'art-56': { name: 'Centrum 11', area: 'centrum', points: 100, loc: [50.0925444444444, 14.4444305555556] }
     };
-    const MAP = {0:'art-46',1:'art-47',2:'art-48',3:'art-49',4:'art-50',5:'art-51',6:'art-52',7:'art-53',8:'art-54',9:'art-55',10:'art-56'};
+    const MAP = { 0: 'art-46', 1: 'art-47', 2: 'art-48', 3: 'art-49', 4: 'art-50', 5: 'art-51', 6: 'art-52', 7: 'art-53', 8: 'art-54', 9: 'art-55', 10: 'art-56' };
+    const BADGES = {
+      'art-46': 'badges/badge-1.png',
+      'art-47': 'badges/badge-2.png',
+      'art-48': 'badges/badge-3.png',
+      'art-49': 'badges/badge-4.png',
+      'art-50': 'badges/badge-5.png',
+      'art-51': 'badges/badge-6.png',
+      'art-52': 'badges/badge-7.png',
+      'art-53': 'badges/badge-8.png',
+      'art-54': 'badges/badge-9.png',
+      'art-55': 'badges/badge-10.png',
+      'art-56': 'badges/badge-11.png'
+    };
     const TARGET_COUNT = 11;
-    const COOLDOWN = 10*60*1000;
+    const COOLDOWN = 10 * 60 * 1000;
     let currentId = null, canCap = false;
-    const player = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
-    const team = player.team||'red';
-    const pname = player.name||'Player';
+    const player = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
+    const team = player.team || 'red';
+    const pname = player.name || 'Player';
     // Generate stable player ID from name if not set
     let pid = localStorage.getItem('streetart-ctf-pid');
     if (!pid) {
       pid = 'p_' + Math.random().toString(36).substr(2, 9);
       localStorage.setItem('streetart-ctf-pid', pid);
     }
-    const colors = {red:'#E53935',blue:'#1E88E5'};
+    const colors = { red: '#E53935', blue: '#1E88E5' };
     console.log('Player:', pname, 'Team:', team, 'ID:', pid);
     document.getElementById('team-badge').textContent = 'TEAM ' + team.toUpperCase();
     document.getElementById('team-badge').style.color = colors[team];
-    
-    function goBack() { 
-      window.location.href = window.location.pathname.replace('/ar-scanner.html','')+'/#/'; 
+
+    function goBack() {
+      window.location.href = window.location.pathname.replace('/ar-scanner.html', '') + '/#/';
     }
-    
+
     let isRecapture = false;
     let isFirstCapture = false;
-    
+
     async function checkScan(id) {
       // Check cooldown for THIS PLAYER only (not shared)
-      const myCooldowns = JSON.parse(localStorage.getItem('streetart-ctf-mycooldowns-'+pid)||'{}');
+      const myCooldowns = JSON.parse(localStorage.getItem('streetart-ctf-mycooldowns-' + pid) || '{}');
       if (myCooldowns[id]) {
         const t = Date.now() - myCooldowns[id];
-        if (t < COOLDOWN) return {ok:false,msg:'Wait '+Math.ceil((COOLDOWN-t)/60000)+'m'};
+        if (t < COOLDOWN) return { ok: false, msg: 'Wait ' + Math.ceil((COOLDOWN - t) / 60000) + 'm' };
       }
-      
+
       // Check Firebase for current owner
       try {
         const cap = await db.collection('streetart-captures').doc(id).get();
@@ -227,35 +571,35 @@
           if (cap.data().capturedBy !== team) {
             isRecapture = true;
             isFirstCapture = false;
-            return {ok:true,msg:'recapture'};
+            return { ok: true, msg: 'recapture' };
           }
           // Same team owns it
           isFirstCapture = false;
           isRecapture = false;
-          return {ok:true,msg:null};
+          return { ok: true, msg: null };
         }
-      } catch(e) { console.log('Firebase check failed, using local'); }
-      
+      } catch (e) { console.log('Firebase check failed, using local'); }
+
       // Check local captures as fallback
-      const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures')||'{}');
+      const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures') || '{}');
       if (localCaptures[id] && localCaptures[id] !== team) {
         isRecapture = true;
         isFirstCapture = false;
-        return {ok:true,msg:'recapture'};
+        return { ok: true, msg: 'recapture' };
       }
-      
+
       // First capture ever
       if (!localCaptures[id]) {
         isFirstCapture = true;
         isRecapture = false;
-        return {ok:true,msg:'first'};
+        return { ok: true, msg: 'first' };
       }
-      
+
       isFirstCapture = false;
       isRecapture = false;
-      return {ok:true,msg:null};
+      return { ok: true, msg: null };
     }
-    
+
     async function capture() {
       console.log('Capture clicked! currentId:', currentId, 'canCap:', canCap);
       if (!currentId || !canCap) {
@@ -267,14 +611,14 @@
         console.log('No art data for:', currentId);
         return;
       }
-      
+
       // Calculate streak
-      const localPlayer = JSON.parse(localStorage.getItem('streetart-ctf-player')||'{}');
+      const localPlayer = JSON.parse(localStorage.getItem('streetart-ctf-player') || '{}');
       const now = new Date();
       const today = now.toDateString();
       const lastCapture = localPlayer.lastCaptureTime ? new Date(localPlayer.lastCaptureTime) : null;
       const lastCaptureDay = lastCapture ? lastCapture.toDateString() : null;
-      
+
       let currentStreak = localPlayer.streak || 0;
       if (lastCaptureDay === today) {
         // Same day - increment streak
@@ -283,16 +627,16 @@
         // New day or first capture - start streak at 1
         currentStreak = 1;
       }
-      
+
       // Streak bonus: each capture after first gives +10% (max +50% at 6+ captures)
       const streakBonus = Math.min((currentStreak - 1) * 0.1, 0.5);
       const streakMultiplier = 1 + streakBonus;
-      
+
       // Calculate points: first capture = 1.5x, recapture = 1.25x, normal = 1x
       let basePoints = art.points;
       let finalPoints = basePoints;
       let bonusText = '';
-      
+
       if (isFirstCapture) {
         finalPoints = Math.round(basePoints * 1.5 * streakMultiplier);
         bonusText = 'FIRST CAPTURE +50%';
@@ -302,26 +646,26 @@
       } else {
         finalPoints = Math.round(basePoints * streakMultiplier);
       }
-      
+
       // Add streak info to bonus text
       if (currentStreak > 1) {
         const streakPct = Math.round(streakBonus * 100);
         bonusText = bonusText ? bonusText + ' • ' : '';
         bonusText += 'STREAK x' + currentStreak + ' (+' + streakPct + '%)';
       }
-      
+
       console.log('Capturing:', art.name, 'for', finalPoints, 'pts', bonusText);
       document.getElementById('capture-btn').disabled = true;
-      
+
       // Save cooldown for THIS PLAYER only
-      const myCooldowns = JSON.parse(localStorage.getItem('streetart-ctf-mycooldowns-'+pid)||'{}');
+      const myCooldowns = JSON.parse(localStorage.getItem('streetart-ctf-mycooldowns-' + pid) || '{}');
       myCooldowns[currentId] = Date.now();
-      localStorage.setItem('streetart-ctf-mycooldowns-'+pid, JSON.stringify(myCooldowns));
-      
-      const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures')||'{}');
+      localStorage.setItem('streetart-ctf-mycooldowns-' + pid, JSON.stringify(myCooldowns));
+
+      const localCaptures = JSON.parse(localStorage.getItem('streetart-ctf-captures') || '{}');
       localCaptures[currentId] = team;
       localStorage.setItem('streetart-ctf-captures', JSON.stringify(localCaptures));
-      
+
       // Update player stats (reuse localPlayer from streak calculation)
       localPlayer.score = (localPlayer.score || 0) + finalPoints;
       localPlayer.capturedArt = [...new Set([...(localPlayer.capturedArt || []), currentId])];
@@ -339,11 +683,11 @@
         localPlayer.uniqueAreasVisited.push(art.area);
       }
       localStorage.setItem('streetart-ctf-player', JSON.stringify(localPlayer));
-      
+
       // Check if this is a new discovery (before saving)
-      const discoveries = JSON.parse(localStorage.getItem('streetart-discoveries')||'{}');
+      const discoveries = JSON.parse(localStorage.getItem('streetart-discoveries') || '{}');
       const isNewDiscovery = !discoveries[currentId];
-      
+
       // Save to personal discoveries (permanent collection)
       if (isNewDiscovery) {
         discoveries[currentId] = {
@@ -356,9 +700,9 @@
         };
         localStorage.setItem('streetart-discoveries', JSON.stringify(discoveries));
       }
-      
-      localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({artId: currentId, location: art.loc, team: team}));
-      
+
+      localStorage.setItem('streetart-ctf-lastCapture', JSON.stringify({ artId: currentId, location: art.loc, team: team }));
+
       // Try Firebase in background (don't wait)
       try {
         db.collection('streetart-captures').doc(currentId).set({
@@ -367,26 +711,39 @@
         });
         db.collection('streetart-teams').doc(team).set({
           score: firebase.firestore.FieldValue.increment(finalPoints)
-        }, {merge: true});
+        }, { merge: true });
         db.collection('streetart-players').doc(pid).set({
-          name: pname, team: team, 
+          name: pname, team: team,
           score: firebase.firestore.FieldValue.increment(finalPoints),
           captures: firebase.firestore.FieldValue.increment(1)
-        }, {merge: true});
+        }, { merge: true });
         console.log('Firebase sync attempted');
-      } catch(e) { console.log('Firebase sync failed (offline mode):', e.message); }
-      
+      } catch (e) { console.log('Firebase sync failed (offline mode):', e.message); }
+
       // Show success screen - white mode
       var teamColor = colors[team];
-      
+
       // Set accent bar color
       document.getElementById('s-accent').style.backgroundColor = teamColor;
-      
+
+      // Show badge if this art has one
+      var badgeEl = document.getElementById('s-badge');
+      var badgeImg = BADGES[currentId];
+      if (badgeImg && isNewDiscovery) {
+        document.getElementById('s-badge-img').src = badgeImg;
+        document.getElementById('s-badge-img').style.borderColor = teamColor;
+        document.getElementById('s-badge-label').style.backgroundColor = teamColor;
+        document.getElementById('s-badge-label').style.color = 'white';
+        badgeEl.style.display = 'block';
+      } else {
+        badgeEl.style.display = 'none';
+      }
+
       // Set text
       document.getElementById('s-label').textContent = isNewDiscovery ? 'NEW DISCOVERY' : (isRecapture ? 'TERRITORY STOLEN' : 'SUCCESS');
       document.getElementById('s-title').textContent = isNewDiscovery ? 'DISCOVERED' : (isRecapture ? 'STOLEN' : 'CAPTURED');
       document.getElementById('s-name').textContent = art.name + ' · ' + art.area;
-      
+
       // Hide points for recaptures (stolen)
       if (isRecapture) {
         document.querySelector('.success-points').style.display = 'none';
@@ -397,12 +754,12 @@
         document.getElementById('s-pts').textContent = '+' + finalPoints;
         document.getElementById('s-pts').style.color = teamColor;
       }
-      
+
       // Player info
       document.getElementById('s-player').textContent = pname;
       document.getElementById('s-team-badge').textContent = team.toUpperCase();
       document.getElementById('s-team-badge').style.backgroundColor = teamColor;
-      
+
       // Show streak if > 1
       var streakEl = document.getElementById('s-streak');
       if (currentStreak > 1) {
@@ -411,29 +768,29 @@
       } else {
         streakEl.style.display = 'none';
       }
-      
+
       document.getElementById('success').classList.add('show');
-      
-      setTimeout(function() { 
-        window.location.href = window.location.pathname.replace('/ar-scanner.html', '') + '/#/map'; 
+
+      setTimeout(function () {
+        window.location.href = window.location.pathname.replace('/ar-scanner.html', '') + '/#/map';
       }, 2500);
     }
-    
+
     var scene = document.querySelector('a-scene');
-    
-    scene.addEventListener('loaded', function() {
+
+    scene.addEventListener('loaded', function () {
       console.log('Scene loaded, creating target entities...');
       var arSystem = scene.systems['mindar-image-system'];
       console.log('AR System:', arSystem);
-      
+
       for (var i = 0; i < TARGET_COUNT; i++) {
-        (function(idx) {
+        (function (idx) {
           var e = document.createElement('a-entity');
-          e.setAttribute('mindar-image-target', 'targetIndex: '+idx);
+          e.setAttribute('mindar-image-target', 'targetIndex: ' + idx);
           scene.appendChild(e);
           console.log('Created target entity:', idx);
-          
-          e.addEventListener('targetFound', async function() {
+
+          e.addEventListener('targetFound', async function () {
             console.log('TARGET FOUND:', idx);
             var id = MAP[idx]; if (!id || !ART[id]) return;
             currentId = id; var art = ART[id];
@@ -444,18 +801,18 @@
             var pts = document.getElementById('art-points');
             var btn = document.getElementById('capture-btn');
             var st = document.getElementById('status');
-            if (chk.ok) { 
+            if (chk.ok) {
               // Calculate preview points
               var previewPts = art.points;
               if (chk.msg === 'first') previewPts = Math.round(art.points * 1.5);
               else if (chk.msg === 'recapture') previewPts = Math.round(art.points * 1.25);
-              
+
               pts.textContent = '+' + previewPts;
               pts.style.backgroundColor = colors[team];
-              pts.classList.remove('cooldown'); 
-              btn.classList.add('ready'); 
+              pts.classList.remove('cooldown');
+              btn.classList.add('ready');
               btn.disabled = false;
-              
+
               if (chk.msg === 'first') {
                 st.textContent = 'FIRST CAPTURE +50%';
               } else if (chk.msg === 'recapture') {
@@ -463,21 +820,21 @@
               } else {
                 st.textContent = 'TAP TO CAPTURE';
               }
-              st.className = 'ready'; 
-            } else { 
-              pts.textContent = 'WAIT'; 
-              pts.classList.add('cooldown'); 
-              btn.classList.remove('ready'); 
-              btn.disabled = true; 
-              st.textContent = chk.msg.toUpperCase(); 
-              st.className = 'cooldown'; 
+              st.className = 'ready';
+            } else {
+              pts.textContent = 'WAIT';
+              pts.classList.add('cooldown');
+              btn.classList.remove('ready');
+              btn.disabled = true;
+              st.textContent = chk.msg.toUpperCase();
+              st.className = 'cooldown';
             }
             document.getElementById('target-info').classList.add('found');
             document.getElementById('hint').style.display = 'none';
           });
-          
-          e.addEventListener('targetLost', function() {
-            console.log('Target lost:',idx);
+
+          e.addEventListener('targetLost', function () {
+            console.log('Target lost:', idx);
             currentId = null; canCap = false;
             document.getElementById('target-info').classList.remove('found');
             document.getElementById('hint').style.display = 'block';
@@ -489,23 +846,24 @@
         })(i);
       }
     });
-    
-    scene.addEventListener('arReady', function() { 
+
+    scene.addEventListener('arReady', function () {
       console.log('AR Ready');
-      document.getElementById('loading').classList.add('hidden'); 
+      document.getElementById('loading').classList.add('hidden');
     });
-    
-    scene.addEventListener('arError', function(e) { 
+
+    scene.addEventListener('arError', function (e) {
       console.error('AR Error', e);
-      document.getElementById('loading').innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:20px"><div style="font-size:48px;margin-bottom:16px">!</div><div>Camera access required</div><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer">Retry</button></div>'; 
+      document.getElementById('loading').innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:20px"><div style="font-size:48px;margin-bottom:16px">!</div><div>Camera access required</div><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer">Retry</button></div>';
     });
-    
+
     // Button click handler
     document.getElementById('capture-btn').addEventListener('click', capture);
-    document.getElementById('capture-btn').addEventListener('touchend', function(e) {
+    document.getElementById('capture-btn').addEventListener('touchend', function (e) {
       e.preventDefault();
       capture();
     });
   </script>
 </body>
+
 </html>
