@@ -322,7 +322,7 @@ export default function PragueMap() {
   const [selectedPoint, setSelectedPoint] = useState(null)
   const [devMode, setDevMode] = useState(false)
   const [localArtPoints, setLocalArtPoints] = useState(artPoints)
-  const [currentHood, setCurrentHood] = useState(HOODS.vysocany)
+  const [currentHood, setCurrentHood] = useState(HOODS.centrum)
   
   // View mode: 'solo' shows only your discoveries, 'multi' shows team captures
   const [viewMode, setViewMode] = useState('solo')

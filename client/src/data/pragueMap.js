@@ -1,8 +1,15 @@
 // Street Art CTF Map Data
 // Dynamic territory system - each captured point expands team territory
 
-// Neighborhoods (hoods)
+// Neighborhoods (hoods) - ordered left to right geographically
 export const HOODS = {
+  centrum: {
+    id: 'centrum',
+    name: 'Centrum',
+    center: [50.085, 14.425],
+    zoom: 15,
+    description: 'Prague city center'
+  },
   palmovka: {
     id: 'palmovka',
     name: 'Palmovka',
@@ -23,13 +30,6 @@ export const HOODS = {
     center: [50.1465, 15.1215],
     zoom: 16,
     description: 'Spa town east of Prague'
-  },
-  centrum: {
-    id: 'centrum',
-    name: 'Centrum',
-    center: [50.085, 14.425],
-    zoom: 15,
-    description: 'Prague city center'
   }
 }
 
