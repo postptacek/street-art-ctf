@@ -1,5 +1,5 @@
 // Targets with GPS - add to ART_POINTS in pragueMap.js
-// Generated: 2025-12-07T20:43:38.489Z
+// Generated: 2025-12-07T20:51:20.359Z
 
   { id: 'art-46', name: 'Centrum 1', location: [50.091525, 14.4401416666667], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'centrum' },
   { id: 'art-47', name: 'Centrum 2', location: [50.0893638888889, 14.4372222222222], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: '', hood: 'centrum' },

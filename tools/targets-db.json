@@ -1,5 +1,5 @@
 {
-  "version": 92,
+  "version": 116,
   "lastCompiled": null,
   "targets": [
     {
@@ -12,7 +12,7 @@
       "size": "medium",
       "lat": 50.091525,
       "lng": 14.4401416666667,
-      "addedAt": "2025-12-07T20:42:54.204Z",
+      "addedAt": "2025-12-07T20:51:01.226Z",
       "sourceIndex": 1
     },
     {
@@ -25,7 +25,7 @@
       "size": "medium",
       "lat": 50.0893638888889,
       "lng": 14.4372222222222,
-      "addedAt": "2025-12-07T20:42:54.874Z",
+      "addedAt": "2025-12-07T20:51:02.140Z",
       "sourceIndex": 2
     },
     {
@@ -38,7 +38,7 @@
       "size": "medium",
       "lat": 50.0878111111111,
       "lng": 14.4325777777778,
-      "addedAt": "2025-12-07T20:42:55.732Z",
+      "addedAt": "2025-12-07T20:51:03.149Z",
       "sourceIndex": 3
     },
     {
@@ -51,7 +51,7 @@
       "size": "medium",
       "lat": 50.0845138888889,
       "lng": 14.4292166666667,
-      "addedAt": "2025-12-07T20:42:57.205Z",
+      "addedAt": "2025-12-07T20:51:04.036Z",
       "sourceIndex": 4
     },
     {
@@ -64,7 +64,7 @@
       "size": "medium",
       "lat": 50.0831027777778,
       "lng": 14.4268333333333,
-      "addedAt": "2025-12-07T20:42:58.057Z",
+      "addedAt": "2025-12-07T20:51:04.750Z",
       "sourceIndex": 5
     },
     {
@@ -77,7 +77,7 @@
       "size": "medium",
       "lat": 50.080575,
       "lng": 14.4239166666667,
-      "addedAt": "2025-12-07T20:42:58.931Z",
+      "addedAt": "2025-12-07T20:51:05.530Z",
       "sourceIndex": 6
     },
     {
@@ -90,7 +90,7 @@
       "size": "medium",
       "lat": 50.0790444444444,
       "lng": 14.4220333333333,
-      "addedAt": "2025-12-07T20:42:59.866Z",
+      "addedAt": "2025-12-07T20:51:06.245Z",
       "sourceIndex": 7
     },
     {
@@ -103,7 +103,7 @@
       "size": "medium",
       "lat": 50.0821722222222,
       "lng": 14.4183361111111,
-      "addedAt": "2025-12-07T20:43:00.940Z",
+      "addedAt": "2025-12-07T20:51:07.266Z",
       "sourceIndex": 8
     },
     {
@@ -116,7 +116,7 @@
       "size": "medium",
       "lat": 50.081775,
       "lng": 14.4167888888889,
-      "addedAt": "2025-12-07T20:43:01.747Z",
+      "addedAt": "2025-12-07T20:51:08.064Z",
       "sourceIndex": 9
     },
     {
@@ -129,7 +129,7 @@
       "size": "medium",
       "lat": 50.0815472222222,
       "lng": 14.4137694444444,
-      "addedAt": "2025-12-07T20:43:03.668Z",
+      "addedAt": "2025-12-07T20:51:08.785Z",
       "sourceIndex": 10
     },
     {
@@ -142,286 +142,13 @@
       "size": "medium",
       "lat": 50.0925444444444,
       "lng": 14.4444305555556,
-      "addedAt": "2025-12-07T20:43:04.586Z",
+      "addedAt": "2025-12-07T20:51:09.528Z",
       "sourceIndex": 11
-    },
-    {
-      "fileName": "1.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/1.png",
-      "artId": "art-01",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.603Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "2.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/2.png",
-      "artId": "art-02",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "3.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/3.png",
-      "artId": "art-03",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "4.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/4.png",
-      "artId": "art-04",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "5.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/5.png",
-      "artId": "art-05",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "6.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/6.png",
-      "artId": "art-06",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "7.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/7.png",
-      "artId": "art-07",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "8.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/8.png",
-      "artId": "art-08",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "9.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/9.png",
-      "artId": "art-09",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "10.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/10.png",
-      "artId": "art-10",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "11.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/11.png",
-      "artId": "art-11",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "12.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/12.png",
-      "artId": "art-12",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "13.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/13.png",
-      "artId": "art-13",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "14.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/14.png",
-      "artId": "art-14",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "15.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/15.png",
-      "artId": "art-15",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "16.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/16.png",
-      "artId": "art-16",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "17.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/17.png",
-      "artId": "art-17",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "18.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/18.png",
-      "artId": "art-18",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "19.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/19.png",
-      "artId": "art-19",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "20.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/20.png",
-      "artId": "art-20",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
-    },
-    {
-      "fileName": "21.png",
-      "sourcePath": "/Users/martintomek/Library/Mobile Documents/com~apple~CloudDocs/Osobni_projekty/Chump/photo/chumpsters/21.png",
-      "artId": "art-21",
-      "name": "",
-      "hood": "vysocany",
-      "area": "",
-      "size": "medium",
-      "lat": null,
-      "lng": null,
-      "addedAt": "2025-12-07T20:43:11.604Z",
-      "sourceIndex": null
     }
   ],
   "settings": {
     "defaultHood": "centrum",
     "defaultSize": "medium"
   },
-  "lastModified": "2025-12-07T20:43:32.801Z"
+  "lastModified": "2025-12-07T20:51:16.582Z"
 }
