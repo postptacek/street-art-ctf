@@ -160,6 +160,21 @@
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
+    #zoom-hint {
+      position: fixed;
+      bottom: 130px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      z-index: 100;
+      pointer-events: none;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
     /* Capture area - White mode */
     #capture-area {
       position: fixed;
@@ -452,6 +467,7 @@
   </div>
 
   <div id="hint">POINT CAMERA AT STREET ART</div>
+  <div id="zoom-hint">Pinch to zoom for small chomps</div>
 
   <div id="capture-area">
     <div id="status">SEARCHING</div>
@@ -484,7 +500,7 @@
   </div>
 
   <a-scene
-    mindar-image="imageTargetSrc: targets.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 100; uiLoading: no; uiScanning: no; uiError: no"
+    mindar-image="imageTargetSrc: targets.mind; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 1000; missTolerance: 5; warmupTolerance: 5; uiLoading: no; uiScanning: no; uiError: no"
     color-space="sRGB" renderer="colorManagement: true" vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false" loading-screen="enabled: false"
     style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;">
@@ -850,6 +866,55 @@
     scene.addEventListener('arReady', function () {
       console.log('AR Ready');
       document.getElementById('loading').classList.add('hidden');
+
+      // Pinch to zoom functionality
+      var video = document.querySelector('video');
+      if (video) {
+        var currentZoom = 1;
+        var initialDistance = 0;
+        var videoTrack = null;
+
+        // Get the video track for zoom capability
+        if (video.srcObject) {
+          var tracks = video.srcObject.getVideoTracks();
+          if (tracks.length > 0) {
+            videoTrack = tracks[0];
+          }
+        }
+
+        document.addEventListener('touchstart', function (e) {
+          if (e.touches.length === 2) {
+            initialDistance = Math.hypot(
+              e.touches[0].pageX - e.touches[1].pageX,
+              e.touches[0].pageY - e.touches[1].pageY
+            );
+          }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', function (e) {
+          if (e.touches.length === 2 && videoTrack) {
+            var currentDistance = Math.hypot(
+              e.touches[0].pageX - e.touches[1].pageX,
+              e.touches[0].pageY - e.touches[1].pageY
+            );
+
+            var scale = currentDistance / initialDistance;
+            var newZoom = Math.min(Math.max(currentZoom * scale, 1), 5);
+
+            // Try to apply zoom via MediaStreamTrack constraints
+            var capabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : {};
+            if (capabilities.zoom) {
+              var zoomRange = capabilities.zoom;
+              var actualZoom = zoomRange.min + (newZoom - 1) * (zoomRange.max - zoomRange.min) / 4;
+              actualZoom = Math.min(Math.max(actualZoom, zoomRange.min), zoomRange.max);
+              videoTrack.applyConstraints({ advanced: [{ zoom: actualZoom }] }).catch(function () { });
+            }
+
+            initialDistance = currentDistance;
+            currentZoom = newZoom;
+          }
+        }, { passive: true });
+      }
     });
 
     scene.addEventListener('arError', function (e) {
