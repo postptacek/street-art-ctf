@@ -61,7 +61,7 @@ function AnimatedLetters({ text, className = '', delay = 0 }) {
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const { player, joinTeam, setPlayerName, allPlayers } = useGame()
+  const { player, joinTeam, setPlayerName, allPlayers, teamScores } = useGame()
   const [step, setStep] = useState(0)
   const [name, setName] = useState(() => player.name && player.name !== 'Street Artist' ? player.name : generateRandomName())
   const [assignedTeam, setAssignedTeam] = useState(null)
@@ -72,12 +72,34 @@ export default function Onboarding() {
     }
   }, [])
 
-  // Assign team only once when entering step 2 (team reveal)
+  // Weighted team assignment based on score imbalance + randomness
   const assignTeamOnce = () => {
     if (assignedTeam) return assignedTeam // Already assigned
-    const redCount = allPlayers.filter(p => p.team === 'red').length
-    const blueCount = allPlayers.filter(p => p.team === 'blue').length
-    const team = redCount < blueCount ? 'red' : blueCount < redCount ? 'blue' : (Math.random() < 0.5 ? 'red' : 'blue')
+
+    const IMBALANCE_WEIGHT = 0.6
+    const RANDOM_WEIGHT = 0.4
+
+    const redScore = teamScores?.red || 0
+    const blueScore = teamScores?.blue || 0
+    const totalScore = redScore + blueScore
+
+    let redProbability = 0.5 // Default: equal chance
+
+    if (totalScore > 0) {
+      // Calculate red dominance (0 to 1)
+      const redDominance = redScore / totalScore
+
+      // Invert: if red is dominant, lower chance to join red
+      const imbalanceFactor = 1 - redDominance
+      const randomFactor = 0.5
+
+      redProbability = (imbalanceFactor * IMBALANCE_WEIGHT) + (randomFactor * RANDOM_WEIGHT)
+    }
+
+    const team = Math.random() < redProbability ? 'red' : 'blue'
+
+    console.log(`Team Assignment: Red=${redScore} Blue=${blueScore} → P(Red)=${(redProbability * 100).toFixed(0)}% → Assigned: ${team}`)
+
     return team
   }
 
