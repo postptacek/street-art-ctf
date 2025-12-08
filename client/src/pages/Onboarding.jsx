@@ -276,20 +276,6 @@ export default function Onboarding() {
             transition={{ duration: 0.4 }}
             className="flex-1 flex flex-col p-6 pt-12 overflow-y-auto"
           >
-            {/* Scan animation */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
-              className="flex justify-center mb-6"
-            >
-              <img
-                src={`${import.meta.env.BASE_URL}animations/scan.gif`}
-                alt="Scanning"
-                className="w-32 h-32 object-contain"
-              />
-            </motion.div>
-
             <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -345,6 +331,20 @@ export default function Onboarding() {
                 </div>
               </motion.div>
             </div>
+
+            {/* Scan animation - after text */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.9, type: 'spring', stiffness: 100 }}
+              className="flex justify-center mt-8"
+            >
+              <img
+                src={`${import.meta.env.BASE_URL}animations/scan.gif`}
+                alt="Scanning"
+                className="w-32 h-32 object-contain"
+              />
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
