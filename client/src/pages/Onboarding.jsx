@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import { ART_POINTS } from '../data/pragueMap'
 
 // Random name generator
 const ADJECTIVES = ['Swift', 'Bold', 'Neon', 'Urban', 'Wild', 'Cosmic', 'Pixel', 'Mystic', 'Shadow', 'Electric']
@@ -44,8 +43,8 @@ function AnimatedLetters({ text, className = '', delay = 0 }) {
           key={i}
           initial={{ opacity: 0, y: 40, rotate: -10 }}
           animate={{ opacity: 1, y: 0, rotate: 0 }}
-          transition={{ 
-            delay: delay + i * 0.04, 
+          transition={{
+            delay: delay + i * 0.04,
             duration: 0.5,
             type: 'spring',
             stiffness: 200
@@ -66,13 +65,13 @@ export default function Onboarding() {
   const [step, setStep] = useState(0)
   const [name, setName] = useState(() => player.name && player.name !== 'Street Artist' ? player.name : generateRandomName())
   const [assignedTeam, setAssignedTeam] = useState(null)
-  
+
   useEffect(() => {
     if (player.team && player.name && player.name !== 'Street Artist') {
       navigate('/map')
     }
   }, [])
-  
+
   // Assign team only once when entering step 2 (team reveal)
   const assignTeamOnce = () => {
     if (assignedTeam) return assignedTeam // Already assigned
@@ -81,9 +80,9 @@ export default function Onboarding() {
     const team = redCount < blueCount ? 'red' : blueCount < redCount ? 'blue' : (Math.random() < 0.5 ? 'red' : 'blue')
     return team
   }
-  
+
   const handleGenerateName = () => setName(generateRandomName())
-  
+
   const handleNext = async () => {
     if (step === 1 && name.trim()) {
       // Assign team NOW and save it
@@ -96,9 +95,9 @@ export default function Onboarding() {
     if (step === 3) { navigate('/map'); return }
     setStep(step + 1)
   }
-  
+
   const canProceed = () => step === 1 ? name.trim().length >= 2 : true
-  
+
   const teamColor = assignedTeam === 'red' ? '#E53935' : '#1E88E5'
   const teamName = assignedTeam === 'red' ? 'RED' : 'BLUE'
 
@@ -106,7 +105,7 @@ export default function Onboarding() {
     <div className="h-screen bg-[#FAFAFA] flex flex-col overflow-hidden font-nohemi">
       {/* Progress bar */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-black/5 z-10">
-        <motion.div 
+        <motion.div
           className="h-full bg-black"
           initial={{ width: '0%' }}
           animate={{ width: `${((step + 1) / 4) * 100}%` }}
@@ -123,55 +122,35 @@ export default function Onboarding() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, x: -100 }}
             transition={{ duration: 0.4 }}
-            className="flex-1 flex flex-col justify-between p-6 pt-16"
+            className="flex-1 flex flex-col justify-center items-center p-6 pt-16 text-center"
           >
-            <div className="flex-1 flex flex-col justify-center">
-              <motion.p
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-sm tracking-widest text-black/40 mb-4"
-              >
-                WELCOME TO
-              </motion.p>
-              
-              <h1 className="text-[3.5rem] leading-[0.95] font-bold text-black mb-8 tracking-tight">
-                <AnimatedLetters text="Street" delay={0.3} /><br/>
-                <AnimatedLetters text="Art" delay={0.5} /><br/>
-                <AnimatedLetters text="CTF" delay={0.7} />
-              </h1>
-              
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.2 }}
-                className="text-lg text-black/50 max-w-[280px] leading-relaxed"
-              >
-                The city becomes your canvas. Find street art. Claim territory. Win the game.
-              </motion.p>
-            </div>
-
+            {/* Jumping animation */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.4 }}
-              className="space-y-6"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
+              className="mb-8"
             >
-              <div className="flex gap-8 text-sm text-black/40">
-                <div>
-                  <div className="text-2xl font-bold text-black">{ART_POINTS.length}</div>
-                  <div>locations</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-black">2</div>
-                  <div>teams</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-black">1</div>
-                  <div>winner</div>
-                </div>
-              </div>
+              <img
+                src={`${import.meta.env.BASE_URL}animations/jump.gif`}
+                alt="Chomp jumping"
+                className="w-48 h-48 object-contain"
+              />
             </motion.div>
+
+            <h1 className="text-[4rem] leading-[0.95] font-black text-black mb-4 tracking-tight">
+              <AnimatedLetters text="CHOMP" delay={0.3} /><br />
+              <AnimatedLetters text="GAME" delay={0.6} />
+            </h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.0 }}
+              className="text-lg text-black/40 max-w-[280px] leading-relaxed"
+            >
+              Find. Scan. Collect.
+            </motion.p>
           </motion.div>
         )}
 
@@ -193,11 +172,11 @@ export default function Onboarding() {
             >
               STEP 1 OF 3
             </motion.p>
-            
+
             <h1 className="text-4xl font-bold text-black mb-3 tracking-tight">
               <AnimatedWords text="Who are you?" delay={0.2} />
             </h1>
-            
+
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -206,7 +185,7 @@ export default function Onboarding() {
             >
               Pick a name. Make it memorable.
             </motion.p>
-            
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -220,7 +199,7 @@ export default function Onboarding() {
                 maxLength={20}
                 className="w-full py-4 text-3xl font-bold text-black bg-transparent border-b-2 border-black/20 focus:border-black focus:outline-none placeholder:text-black/20 transition-colors"
               />
-              
+
               <button
                 onClick={handleGenerateName}
                 className="mt-6 text-sm text-black/40 hover:text-black transition-colors underline underline-offset-4"
@@ -242,6 +221,20 @@ export default function Onboarding() {
             className="flex-1 flex flex-col justify-center items-center p-6 text-center relative overflow-hidden"
             style={{ backgroundColor: teamColor }}
           >
+            {/* Eating animation */}
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
+              className="mb-4"
+            >
+              <img
+                src={`${import.meta.env.BASE_URL}animations/eat.gif`}
+                alt="Chomp eating"
+                className="w-40 h-40 object-contain"
+              />
+            </motion.div>
+
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -255,17 +248,17 @@ export default function Onboarding() {
               >
                 {name.toUpperCase()}, YOU ARE
               </motion.p>
-              
-              <h1 className="text-[5rem] leading-none font-black text-white tracking-tight">
-                <AnimatedLetters text="TEAM" delay={0.6} /><br/>
+
+              <h1 className="text-[4rem] leading-none font-black text-white tracking-tight">
+                <AnimatedLetters text="TEAM" delay={0.6} /><br />
                 <AnimatedLetters text={teamName} delay={0.9} />
               </h1>
-              
+
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.4 }}
-                className="mt-6 text-white/50 text-lg"
+                className="mt-4 text-white/50 text-lg"
               >
                 {assignedTeam === 'red' ? 'Burn bright. Conquer all.' : 'Flow strong. Take over.'}
               </motion.p>
@@ -281,62 +274,73 @@ export default function Onboarding() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex-1 flex flex-col justify-center p-6"
+            className="flex-1 flex flex-col p-6 pt-12 overflow-y-auto"
           >
+            {/* Scan animation */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
+              className="flex justify-center mb-6"
+            >
+              <img
+                src={`${import.meta.env.BASE_URL}animations/scan.gif`}
+                alt="Scanning"
+                className="w-32 h-32 object-contain"
+              />
+            </motion.div>
+
             <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-sm tracking-widest text-black/40 mb-4"
+              className="text-sm tracking-widest text-black/40 mb-3 text-center"
             >
-              HOW IT WORKS
+              HOW TO PLAY
             </motion.p>
-            
-            <h1 className="text-4xl font-bold text-black mb-10 tracking-tight">
-              <AnimatedWords text="Three simple steps" delay={0.1} />
-            </h1>
-            
-            <div className="space-y-8">
+
+            <div className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="flex gap-5"
+                className="flex gap-4"
               >
-                <div className="text-5xl font-black text-black/10">1</div>
+                <div className="text-4xl font-black text-black/10">1</div>
                 <div>
-                  <h3 className="text-xl font-bold text-black mb-1">Find</h3>
-                  <p className="text-black/50 leading-relaxed">
-                    Walk the streets. Look for Chumpsters hiding in plain sight.
+                  <h3 className="text-lg font-bold text-black mb-1">Find Chomps</h3>
+                  <p className="text-sm text-black/50 leading-relaxed">
+                    Walk the streets and look for Chomp stickers hiding in the city.
                   </p>
                 </div>
               </motion.div>
-              
+
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5 }}
-                className="flex gap-5"
+                className="flex gap-4"
               >
-                <div className="text-5xl font-black text-black/10">2</div>
+                <div className="text-4xl font-black text-black/10">2</div>
                 <div>
-                  <h3 className="text-xl font-bold text-black mb-1">Scan</h3>
-                  <p className="text-black/50 leading-relaxed">
-                    Point your camera. The AR scanner recognizes the art instantly.
+                  <h3 className="text-lg font-bold text-black mb-1">Scan to Collect</h3>
+                  <p className="text-sm text-black/50 leading-relaxed">
+                    Use the AR scanner to recognize and capture the Chomp.
                   </p>
                 </div>
               </motion.div>
-              
+
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.7 }}
-                className="flex gap-5"
+                className="flex gap-4"
               >
-                <div className="text-5xl font-black text-black/10">3</div>
+                <div className="text-4xl font-black text-black/10">3</div>
                 <div>
-                  <h3 className="text-xl font-bold text-black mb-1">Capture</h3>
-                  <p className="text-black/50 leading-relaxed">
-                    Claim it for your team. Build streaks. Dominate the map.
+                  <h3 className="text-lg font-bold text-black mb-1">Two Ways to Play</h3>
+                  <p className="text-sm text-black/50 leading-relaxed">
+                    <span className="font-bold text-black">Solo:</span> Collect Chomps for your personal collection.<br />
+                    <span className="font-bold text-black">Battle:</span> Claim territory for your team and compete!
                   </p>
                 </div>
               </motion.div>
@@ -354,13 +358,12 @@ export default function Onboarding() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className={`w-full py-5 font-bold text-lg tracking-wide transition-all ${
-            step === 2 
-              ? 'bg-white text-black'
-              : canProceed()
-                ? 'bg-black text-white'
-                : 'bg-black/10 text-black/30 cursor-not-allowed'
-          }`}
+          className={`w-full py-5 font-bold text-lg tracking-wide transition-all ${step === 2
+            ? 'bg-white text-black'
+            : canProceed()
+              ? 'bg-black text-white'
+              : 'bg-black/10 text-black/30 cursor-not-allowed'
+            }`}
         >
           {step === 3 ? "LET'S GO" : step === 2 ? 'CONTINUE' : 'NEXT'}
         </motion.button>
