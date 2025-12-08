@@ -38,10 +38,11 @@ function Navigation() {
                     />
                   )}
                   <span
-                    className={`tracking-wider transition-colors ${isScan
-                      ? `font-black text-base ${isActive ? 'text-black' : 'text-black/70'}`
-                      : `font-bold text-xs ${isActive ? 'text-black' : 'text-black/30'}`
+                    className={`text-xs tracking-wider transition-colors ${isScan
+                      ? `font-black ${isActive ? 'text-black' : 'text-black/60'}`
+                      : `font-bold ${isActive ? 'text-black' : 'text-black/30'}`
                       }`}
+                    style={isScan ? { fontSize: '0.875rem' } : {}}
                   >
                     {label}
                   </span>

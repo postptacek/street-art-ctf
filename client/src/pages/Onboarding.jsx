@@ -274,28 +274,28 @@ export default function Onboarding() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex-1 flex flex-col p-6 pt-12 overflow-y-auto"
+            className="flex-1 flex flex-col justify-center p-6 pt-10"
           >
             <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-sm tracking-widest text-black/40 mb-3 text-center"
+              className="text-xs tracking-widest text-black/40 mb-2 text-center"
             >
               HOW TO PLAY
             </motion.p>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="flex gap-4"
+                className="flex gap-3"
               >
-                <div className="text-4xl font-black text-black/10">1</div>
+                <div className="text-3xl font-black text-black/10">1</div>
                 <div>
-                  <h3 className="text-lg font-bold text-black mb-1">Find Chomps</h3>
-                  <p className="text-sm text-black/50 leading-relaxed">
-                    Walk the streets and look for Chomp stickers hiding in the city.
+                  <h3 className="text-base font-bold text-black mb-0.5">Find Chomps</h3>
+                  <p className="text-xs text-black/50 leading-relaxed">
+                    Look for Chomp stickers hiding in the city.
                   </p>
                 </div>
               </motion.div>
@@ -304,13 +304,13 @@ export default function Onboarding() {
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5 }}
-                className="flex gap-4"
+                className="flex gap-3"
               >
-                <div className="text-4xl font-black text-black/10">2</div>
+                <div className="text-3xl font-black text-black/10">2</div>
                 <div>
-                  <h3 className="text-lg font-bold text-black mb-1">Scan to Collect</h3>
-                  <p className="text-sm text-black/50 leading-relaxed">
-                    Use the AR scanner to recognize and capture the Chomp.
+                  <h3 className="text-base font-bold text-black mb-0.5">Scan to Collect</h3>
+                  <p className="text-xs text-black/50 leading-relaxed">
+                    Use AR scanner to capture the Chomp.
                   </p>
                 </div>
               </motion.div>
@@ -319,14 +319,14 @@ export default function Onboarding() {
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.7 }}
-                className="flex gap-4"
+                className="flex gap-3"
               >
-                <div className="text-4xl font-black text-black/10">3</div>
+                <div className="text-3xl font-black text-black/10">3</div>
                 <div>
-                  <h3 className="text-lg font-bold text-black mb-1">Two Ways to Play</h3>
-                  <p className="text-sm text-black/50 leading-relaxed">
-                    <span className="font-bold text-black">Solo:</span> Collect Chomps for your personal collection.<br />
-                    <span className="font-bold text-black">Battle:</span> Claim territory for your team and compete!
+                  <h3 className="text-base font-bold text-black mb-0.5">Two Ways to Play</h3>
+                  <p className="text-xs text-black/50 leading-relaxed">
+                    <span className="font-bold text-black">Solo:</span> Personal collection.<br />
+                    <span className="font-bold text-black">Battle:</span> Compete for territory!
                   </p>
                 </div>
               </motion.div>
@@ -337,12 +337,12 @@ export default function Onboarding() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.9, type: 'spring', stiffness: 100 }}
-              className="flex justify-center mt-8"
+              className="flex justify-center mt-6"
             >
               <img
                 src={`${import.meta.env.BASE_URL}animations/scan.gif`}
                 alt="Scanning"
-                className="w-32 h-32 object-contain"
+                className="w-28 h-28 object-contain"
               />
             </motion.div>
           </motion.div>
