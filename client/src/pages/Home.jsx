@@ -198,13 +198,7 @@ function Home() {
         transition={{ delay: 0.4 }}
         className="px-6 pb-32"
       >
-        <div className="flex justify-between items-start mb-4">
-          <p className="text-sm tracking-widest text-black/40">ACTIVITY</p>
-          <div className="text-right text-[9px] text-black/20 leading-tight">
-            <div>Size: S25 M50 L100 XL200</div>
-            <div>First +50% · Steal +25%</div>
-          </div>
-        </div>
+        <p className="text-sm tracking-widest text-black/40 mb-4">ACTIVITY</p>
 
         {recentCaptures.length === 0 ? (
           <div className="py-12 text-center">
@@ -216,8 +210,10 @@ function Home() {
           <div className="space-y-1">
             {recentCaptures.map((capture, index) => {
               const config = TEAM_CONFIG[capture.team] || { color: '#888', name: '?' }
-              // Determine bonus type
-              const bonusLabel = capture.isFirstCapture ? 'FIRST' : capture.isRecapture ? 'STEAL' : null
+              // Build score explanation
+              const sizeLabel = capture.size ? capture.size.charAt(0).toUpperCase() : ''
+              const bonusLabel = capture.isFirstCapture ? '+50%' : capture.isRecapture ? '+25%' : ''
+              const bonusType = capture.isFirstCapture ? 'first' : capture.isRecapture ? 'steal' : ''
               return (
                 <motion.div
                   key={capture.id}
@@ -237,13 +233,12 @@ function Home() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span className="font-bold" style={{ color: config.color }}>+{capture.points}</span>
-                      {bonusLabel && (
-                        <span className="text-[9px] text-black/30 bg-black/5 px-1">{bonusLabel}</span>
-                      )}
+                    <div className="font-bold" style={{ color: config.color }}>+{capture.points}</div>
+                    <div className="text-[10px] text-black/30">
+                      {sizeLabel && <span>{sizeLabel}</span>}
+                      {bonusLabel && <span> {bonusLabel} {bonusType}</span>}
+                      {!sizeLabel && !bonusLabel && <span>{timeAgo(capture.capturedAt)}</span>}
                     </div>
-                    <div className="text-xs text-black/30">{timeAgo(capture.capturedAt)}</div>
                   </div>
                 </motion.div>
               )
