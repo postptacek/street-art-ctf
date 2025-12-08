@@ -109,21 +109,22 @@ function Home() {
         transition={{ delay: 0.2 }}
         className="px-6 mb-8"
       >
-        <div className="flex justify-between items-end mb-4">
+        {/* Active scores (current round) */}
+        <div className="flex justify-between items-end mb-3">
           <div>
-            <div className="text-sm text-black/40 mb-1">RED</div>
+            <div className="text-xs text-black/30 mb-1">RED</div>
             <div
-              className="text-5xl font-black"
+              className="text-4xl font-black"
               style={{ color: leading === 'red' ? TEAM_CONFIG.red.color : 'rgba(0,0,0,0.2)' }}
             >
               {effectiveScores.red}
             </div>
           </div>
-          <div className="text-2xl font-bold text-black/20 pb-2">vs</div>
+          <div className="text-xl font-bold text-black/20 pb-1">vs</div>
           <div className="text-right">
-            <div className="text-sm text-black/40 mb-1">BLUE</div>
+            <div className="text-xs text-black/30 mb-1">BLUE</div>
             <div
-              className="text-5xl font-black"
+              className="text-4xl font-black"
               style={{ color: leading === 'blue' ? TEAM_CONFIG.blue.color : 'rgba(0,0,0,0.2)' }}
             >
               {effectiveScores.blue}
@@ -148,24 +149,22 @@ function Home() {
             transition={{ duration: 0.8, ease: 'easeOut' }}
           />
         </div>
-        <div className="flex justify-between mt-2 text-xs text-black/30">
-          <span>{redPercent}%</span>
-          <span>{bluePercent}%</span>
-        </div>
 
-        {/* Chomp counts */}
+        {/* Chomps + Total scores */}
         <div className="flex justify-between mt-4 pt-4 border-t border-black/5">
           <div className="text-center">
             <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.red.color }}>{redChomps}</div>
-            <div className="text-xs text-black/30">{redChomps === 1 ? 'chomp' : 'chomps'}</div>
+            <div className="text-[10px] text-black/30">{redChomps === 1 ? 'chomp' : 'chomps'}</div>
+            <div className="text-xs font-bold text-black/20 mt-1">{teamScores.red} total</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-black/20">{unclaimed}</div>
-            <div className="text-xs text-black/30">unclaimed</div>
+            <div className="text-[10px] text-black/30">unclaimed</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.blue.color }}>{blueChomps}</div>
-            <div className="text-xs text-black/30">{blueChomps === 1 ? 'chomp' : 'chomps'}</div>
+            <div className="text-[10px] text-black/30">{blueChomps === 1 ? 'chomp' : 'chomps'}</div>
+            <div className="text-xs font-bold text-black/20 mt-1">{teamScores.blue} total</div>
           </div>
         </div>
       </motion.div>

@@ -389,6 +389,14 @@ export default function PragueMap() {
     return { found: discovered.length, total: hoodArt.length }
   }, [discoveries, currentHood])
 
+  // Current hood team stats - count red/blue captures in current hood
+  const hoodTeamStats = useMemo(() => {
+    const hoodArt = localArtPoints.filter(art => art.hood === currentHood.id && art.status !== 'ghost')
+    const redCount = hoodArt.filter(art => art.capturedBy === 'red').length
+    const blueCount = hoodArt.filter(art => art.capturedBy === 'blue').length
+    return { red: redCount, blue: blueCount, total: hoodArt.length }
+  }, [localArtPoints, currentHood])
+
   const isSoloView = viewMode === 'solo'
 
   return (
@@ -414,7 +422,7 @@ export default function PragueMap() {
           </div>
 
           {/* Stats pill */}
-          <div className="ml-auto flex items-center gap-2 bg-[#FAFAFA] shadow-lg px-4 py-2">
+          <div className="ml-auto flex items-center gap-2 bg-[#FAFAFA] shadow-lg px-3 py-2">
             {isSoloView ? (
               <>
                 <span className="text-sm font-black" style={{ color: TEAM_CONFIG[player.team]?.color }}>
@@ -423,11 +431,25 @@ export default function PragueMap() {
                 <span className="text-xs text-black/30">/ {hoodDiscoveryStats.total}</span>
               </>
             ) : (
-              <>
-                <span className="text-sm font-black" style={{ color: TEAM_CONFIG.red.color }}>{teamScores.red || 0}</span>
-                <span className="text-xs text-black/20">vs</span>
-                <span className="text-sm font-black" style={{ color: TEAM_CONFIG.blue.color }}>{teamScores.blue || 0}</span>
-              </>
+              /* Battle mode: show progress bar */
+              <div className="flex items-center gap-1 w-24">
+                <div className="flex-1 h-3 bg-black/10 flex overflow-hidden">
+                  <div
+                    className="h-full transition-all duration-500"
+                    style={{
+                      width: `${hoodTeamStats.total > 0 ? (hoodTeamStats.red / hoodTeamStats.total) * 100 : 50}%`,
+                      backgroundColor: TEAM_CONFIG.red.color
+                    }}
+                  />
+                  <div
+                    className="h-full transition-all duration-500"
+                    style={{
+                      width: `${hoodTeamStats.total > 0 ? (hoodTeamStats.blue / hoodTeamStats.total) * 100 : 50}%`,
+                      backgroundColor: TEAM_CONFIG.blue.color
+                    }}
+                  />
+                </div>
+              </div>
             )}
           </div>
         </div>

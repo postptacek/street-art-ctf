@@ -7,17 +7,11 @@ const TEAM_CONFIG = {
 }
 
 function Leaderboard() {
-  const { teamScores, player, allPlayers } = useGame()
-  
-  // Calculate percentages safely
-  const totalScore = teamScores.red + teamScores.blue
-  const redPercent = totalScore > 0 ? Math.round((teamScores.red / totalScore) * 100) : 50
-  const bluePercent = totalScore > 0 ? 100 - redPercent : 50
-  const leading = teamScores.red > teamScores.blue ? 'red' : teamScores.blue > teamScores.red ? 'blue' : null
+  const { player, allPlayers } = useGame()
 
   // Build players list - filter out "Street Artist" entries and merge with current player
   const playersList = allPlayers.filter(p => p.name && p.name !== 'Street Artist')
-  
+
   // Update current player's data if they exist in list, or add them
   const currentPlayerIndex = playersList.findIndex(p => p.id === player.id || p.name === player.name)
   if (currentPlayerIndex >= 0) {
@@ -37,7 +31,7 @@ function Leaderboard() {
       captures: player.captureCount || player.capturedArt?.length || 0
     })
   }
-  
+
   // Sort by score descending
   const sortedPlayers = playersList.sort((a, b) => (b.score || 0) - (a.score || 0))
 
@@ -50,7 +44,7 @@ function Leaderboard() {
           animate={{ opacity: 1, y: 0 }}
           className="text-sm tracking-widest text-black/40 mb-1"
         >
-          LEADERBOARD
+          SOLO RANKINGS
         </motion.p>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
@@ -58,56 +52,10 @@ function Leaderboard() {
           transition={{ delay: 0.1 }}
           className="text-4xl font-bold text-black tracking-tight"
         >
-          Rankings
+          Top Players
         </motion.h1>
       </div>
 
-      {/* Team Battle */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="px-6 mb-8"
-      >
-        <p className="text-sm tracking-widest text-black/40 mb-4">TEAMS</p>
-        
-        <div className="flex justify-between items-end mb-4">
-          <div>
-            <div 
-              className="text-6xl font-black"
-              style={{ color: leading === 'red' ? TEAM_CONFIG.red.color : 'rgba(0,0,0,0.15)' }}
-            >
-              {teamScores.red}
-            </div>
-            <div className="text-sm text-black/40 mt-1">RED · {redPercent}%</div>
-          </div>
-          <div className="text-right">
-            <div 
-              className="text-6xl font-black"
-              style={{ color: leading === 'blue' ? TEAM_CONFIG.blue.color : 'rgba(0,0,0,0.15)' }}
-            >
-              {teamScores.blue}
-            </div>
-            <div className="text-sm text-black/40 mt-1">BLUE · {bluePercent}%</div>
-          </div>
-        </div>
-        
-        {/* Progress bar */}
-        <div className="h-3 bg-black/5 flex overflow-hidden">
-          <motion.div 
-            style={{ backgroundColor: TEAM_CONFIG.red.color }}
-            initial={{ width: '50%' }}
-            animate={{ width: `${redPercent}%` }}
-            transition={{ duration: 0.8 }}
-          />
-          <motion.div 
-            style={{ backgroundColor: TEAM_CONFIG.blue.color }}
-            initial={{ width: '50%' }}
-            animate={{ width: `${bluePercent}%` }}
-            transition={{ duration: 0.8 }}
-          />
-        </div>
-      </motion.div>
 
       {/* Player Rankings */}
       <motion.div
@@ -117,38 +65,36 @@ function Leaderboard() {
         className="px-6"
       >
         <p className="text-sm tracking-widest text-black/40 mb-4">PLAYERS</p>
-        
+
         <div className="space-y-1">
           {sortedPlayers.map((p, index) => {
             const isCurrentPlayer = p.name === player.name
             const teamColor = TEAM_CONFIG[p.team]?.color || '#888'
             const isTop3 = index < 3
-            
+
             return (
               <motion.div
                 key={p.id || p.name}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 + index * 0.03 }}
-                className={`flex items-center gap-4 py-3 border-b border-black/5 ${
-                  isCurrentPlayer ? 'bg-black/5 -mx-2 px-2' : ''
-                }`}
+                className={`flex items-center gap-4 py-3 border-b border-black/5 ${isCurrentPlayer ? 'bg-black/5 -mx-2 px-2' : ''
+                  }`}
               >
                 {/* Rank */}
                 <div className="w-8">
-                  <span className={`text-2xl font-black ${
-                    isTop3 ? 'text-black' : 'text-black/20'
-                  }`}>
+                  <span className={`text-2xl font-black ${isTop3 ? 'text-black' : 'text-black/20'
+                    }`}>
                     {index + 1}
                   </span>
                 </div>
-                
+
                 {/* Team indicator */}
-                <div 
+                <div
                   className="w-1 h-8"
                   style={{ backgroundColor: teamColor }}
                 />
-                
+
                 {/* Name */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -161,7 +107,7 @@ function Leaderboard() {
                   </div>
                   <div className="text-xs text-black/40">{p.captures || 0} captures</div>
                 </div>
-                
+
                 {/* Score */}
                 <div className="text-right">
                   <div className="text-xl font-black text-black">{p.score}</div>
@@ -169,7 +115,7 @@ function Leaderboard() {
               </motion.div>
             )
           })}
-          
+
           {sortedPlayers.length === 0 && (
             <div className="py-12 text-center">
               <div className="text-6xl font-black text-black/5 mb-2">0</div>
