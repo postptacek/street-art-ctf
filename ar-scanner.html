@@ -94,6 +94,24 @@
       letter-spacing: 0.1em;
     }
 
+    .zoom-btn {
+      width: 44px;
+      height: 44px;
+      background: #FAFAFA;
+      border: none;
+      color: black;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 900;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s;
+    }
+
+    .zoom-btn.active {
+      background: black;
+      color: white;
+    }
+
     /* Target info - White card */
     #target-info {
       position: fixed;
@@ -455,7 +473,10 @@
 
   <div id="header">
     <button class="back-btn" onclick="goBack()">&larr;</button>
-    <div class="team-badge" id="team-badge">TEAM RED</div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="zoom-btn" id="zoom-btn" onclick="toggleZoom()">1x</button>
+      <div class="team-badge" id="team-badge">TEAM RED</div>
+    </div>
   </div>
 
   <div id="target-info">
@@ -467,7 +488,7 @@
   </div>
 
   <div id="hint">POINT CAMERA AT STREET ART</div>
-  <div id="zoom-hint">Pinch to zoom for small chomps</div>
+  <div id="zoom-hint">Tap 1x button to zoom for small chomps</div>
 
   <div id="capture-area">
     <div id="status">SEARCHING</div>
@@ -567,6 +588,35 @@
 
     function goBack() {
       window.location.href = window.location.pathname.replace('/ar-scanner.html', '') + '/#/';
+    }
+
+    function toggleZoom() {
+      if (!window.videoTrack || !window.zoomRange) {
+        console.log('Zoom not available');
+        return;
+      }
+
+      var btn = document.getElementById('zoom-btn');
+
+      // Cycle between 1x and 2x
+      if (window.currentZoomLevel === 1) {
+        window.currentZoomLevel = 2;
+        var targetZoom = window.zoomRange.min + (window.zoomRange.max - window.zoomRange.min) * 0.3;
+        window.videoTrack.applyConstraints({ advanced: [{ zoom: targetZoom }] })
+          .then(function () {
+            btn.textContent = '2x';
+            btn.classList.add('active');
+          })
+          .catch(function (err) { console.log('Zoom error:', err); });
+      } else {
+        window.currentZoomLevel = 1;
+        window.videoTrack.applyConstraints({ advanced: [{ zoom: window.zoomRange.min }] })
+          .then(function () {
+            btn.textContent = '1x';
+            btn.classList.remove('active');
+          })
+          .catch(function (err) { console.log('Zoom error:', err); });
+      }
     }
 
     let isRecapture = false;
@@ -867,53 +917,23 @@
       console.log('AR Ready');
       document.getElementById('loading').classList.add('hidden');
 
-      // Pinch to zoom functionality
+      // Setup zoom toggle functionality
       var video = document.querySelector('video');
-      if (video) {
-        var currentZoom = 1;
-        var initialDistance = 0;
-        var videoTrack = null;
-
-        // Get the video track for zoom capability
-        if (video.srcObject) {
-          var tracks = video.srcObject.getVideoTracks();
-          if (tracks.length > 0) {
-            videoTrack = tracks[0];
+      if (video && video.srcObject) {
+        var tracks = video.srcObject.getVideoTracks();
+        if (tracks.length > 0) {
+          window.videoTrack = tracks[0];
+          // Check zoom capability
+          var capabilities = window.videoTrack.getCapabilities ? window.videoTrack.getCapabilities() : {};
+          if (capabilities.zoom) {
+            window.zoomRange = capabilities.zoom;
+            window.currentZoomLevel = 1;
+            console.log('Zoom available:', window.zoomRange);
+          } else {
+            console.log('Zoom not supported on this device');
+            document.getElementById('zoom-btn').style.opacity = '0.3';
           }
         }
-
-        document.addEventListener('touchstart', function (e) {
-          if (e.touches.length === 2) {
-            initialDistance = Math.hypot(
-              e.touches[0].pageX - e.touches[1].pageX,
-              e.touches[0].pageY - e.touches[1].pageY
-            );
-          }
-        }, { passive: true });
-
-        document.addEventListener('touchmove', function (e) {
-          if (e.touches.length === 2 && videoTrack) {
-            var currentDistance = Math.hypot(
-              e.touches[0].pageX - e.touches[1].pageX,
-              e.touches[0].pageY - e.touches[1].pageY
-            );
-
-            var scale = currentDistance / initialDistance;
-            var newZoom = Math.min(Math.max(currentZoom * scale, 1), 5);
-
-            // Try to apply zoom via MediaStreamTrack constraints
-            var capabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : {};
-            if (capabilities.zoom) {
-              var zoomRange = capabilities.zoom;
-              var actualZoom = zoomRange.min + (newZoom - 1) * (zoomRange.max - zoomRange.min) / 4;
-              actualZoom = Math.min(Math.max(actualZoom, zoomRange.min), zoomRange.max);
-              videoTrack.applyConstraints({ advanced: [{ zoom: actualZoom }] }).catch(function () { });
-            }
-
-            initialDistance = currentDistance;
-            currentZoom = newZoom;
-          }
-        }, { passive: true });
       }
     });
 
