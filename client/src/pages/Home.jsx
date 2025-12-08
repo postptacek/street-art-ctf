@@ -198,9 +198,12 @@ function Home() {
         transition={{ delay: 0.4 }}
         className="px-6 pb-32"
       >
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-start mb-4">
           <p className="text-sm tracking-widest text-black/40">ACTIVITY</p>
-          <p className="text-[10px] text-black/20">First +50% · Steal +25%</p>
+          <div className="text-right text-[9px] text-black/20 leading-tight">
+            <div>Size: S25 M50 L100 XL200</div>
+            <div>First +50% · Steal +25%</div>
+          </div>
         </div>
 
         {recentCaptures.length === 0 ? (

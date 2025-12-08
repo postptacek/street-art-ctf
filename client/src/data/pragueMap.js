@@ -6,7 +6,7 @@ export const HOODS = {
   praha: {
     id: 'praha',
     name: 'Praha',
-    center: [50.095, 14.465],
+    center: [50.105, 14.490],
     zoom: 14,
     description: 'Prague city - includes Centrum, Palmovka, Vysočany, Karlín, Libeň'
   },
