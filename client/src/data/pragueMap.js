@@ -1,28 +1,14 @@
 // Street Art CTF Map Data
 // Dynamic territory system - each captured point expands team territory
 
-// Neighborhoods (hoods) - ordered left to right geographically
+// Neighborhoods (hoods) - consolidated to two main regions
 export const HOODS = {
-  centrum: {
-    id: 'centrum',
-    name: 'Centrum',
-    center: [50.085, 14.425],
-    zoom: 15,
-    description: 'Prague city center'
-  },
-  palmovka: {
-    id: 'palmovka',
-    name: 'Palmovka',
-    center: [50.1036, 14.4700],
-    zoom: 15,
-    description: 'Prague metro hub'
-  },
-  vysocany: {
-    id: 'vysocany',
-    name: 'Vysočany',
-    center: [50.1090, 14.5050],
-    zoom: 15,
-    description: 'Prague industrial district'
+  praha: {
+    id: 'praha',
+    name: 'Praha',
+    center: [50.095, 14.465],
+    zoom: 14,
+    description: 'Prague city - includes Centrum, Palmovka, Vysočany, Karlín, Libeň'
   },
   podebrady: {
     id: 'podebrady',
@@ -33,8 +19,8 @@ export const HOODS = {
   }
 }
 
-// Default to centrum
-export const DEFAULT_HOOD = 'centrum'
+// Default to Praha
+export const DEFAULT_HOOD = 'praha'
 export const MAP_CENTER = HOODS[DEFAULT_HOOD].center
 export const DEFAULT_ZOOM = 15
 export const MIN_ZOOM = 13
@@ -94,46 +80,46 @@ export const METRO_B = [
 // mhd: nearby public transport (tram12, metroB, or null)
 export const ART_POINTS = [
   // Vysočany / Hloubětín cluster (many photos here)
-  { id: 'art-01', name: 'Kolbenova 1', location: [50.110192, 14.503811], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-02', name: 'Kolbenova 2', location: [50.110203, 14.503764], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-03', name: 'Kolbenova 3', location: [50.109847, 14.504250], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-04', name: 'Kolbenova 4', location: [50.109981, 14.504933], size: 'sticker', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-05', name: 'Kolbenova 5', location: [50.109764, 14.505742], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-06', name: 'Kolbenova 6', location: [50.109672, 14.505847], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-07', name: 'Hloubětín 1', location: [50.110383, 14.508192], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'vysocany' },
-  { id: 'art-08', name: 'Hloubětín 2', location: [50.110508, 14.509567], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'vysocany' },
-  { id: 'art-09', name: 'Vysočany 1', location: [50.110817, 14.505475], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-10', name: 'Vysočany 2', location: [50.110986, 14.504672], size: 'small', status: 'ghost', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-11', name: 'Vysočany 3', location: [50.110706, 14.504081], size: 'sticker', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-12', name: 'Vysočany 4', location: [50.110217, 14.503650], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-13', name: 'Vysočany 5', location: [50.109600, 14.505878], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-14', name: 'Vysočany 6', location: [50.109736, 14.508125], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-15', name: 'Vysočany 7', location: [50.109908, 14.508189], size: 'medium', status: 'ghost', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-16', name: 'Vysočany 8', location: [50.109517, 14.509489], size: 'sticker', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-17', name: 'Hloubětín 3', location: [50.110383, 14.509569], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'vysocany' },
-  { id: 'art-18', name: 'Hloubětín 4', location: [50.110369, 14.509569], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'vysocany' },
-  { id: 'art-19', name: 'Hloubětín 5', location: [50.110717, 14.509906], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'vysocany' },
-  { id: 'art-20', name: 'Harfa', location: [50.109428, 14.498994], size: 'medium', status: 'active', mhd: 'tram12', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-21', name: 'Harfa 2', location: [50.110039, 14.504783], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  
+  { id: 'art-01', name: 'Kolbenova 1', location: [50.110192, 14.503811], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-02', name: 'Kolbenova 2', location: [50.110203, 14.503764], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-03', name: 'Kolbenova 3', location: [50.109847, 14.504250], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-04', name: 'Kolbenova 4', location: [50.109981, 14.504933], size: 'sticker', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-05', name: 'Kolbenova 5', location: [50.109764, 14.505742], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-06', name: 'Kolbenova 6', location: [50.109672, 14.505847], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-07', name: 'Hloubětín 1', location: [50.110383, 14.508192], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'praha' },
+  { id: 'art-08', name: 'Hloubětín 2', location: [50.110508, 14.509567], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'praha' },
+  { id: 'art-09', name: 'Vysočany 1', location: [50.110817, 14.505475], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-10', name: 'Vysočany 2', location: [50.110986, 14.504672], size: 'small', status: 'ghost', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-11', name: 'Vysočany 3', location: [50.110706, 14.504081], size: 'sticker', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-12', name: 'Vysočany 4', location: [50.110217, 14.503650], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-13', name: 'Vysočany 5', location: [50.109600, 14.505878], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-14', name: 'Vysočany 6', location: [50.109736, 14.508125], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-15', name: 'Vysočany 7', location: [50.109908, 14.508189], size: 'medium', status: 'ghost', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-16', name: 'Vysočany 8', location: [50.109517, 14.509489], size: 'sticker', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-17', name: 'Hloubětín 3', location: [50.110383, 14.509569], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'praha' },
+  { id: 'art-18', name: 'Hloubětín 4', location: [50.110369, 14.509569], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'praha' },
+  { id: 'art-19', name: 'Hloubětín 5', location: [50.110717, 14.509906], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'praha' },
+  { id: 'art-20', name: 'Harfa', location: [50.109428, 14.498994], size: 'medium', status: 'active', mhd: 'tram12', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-21', name: 'Harfa 2', location: [50.110039, 14.504783], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+
   // Karlín area (near Palmovka)
-  { id: 'art-22', name: 'Karlín', location: [50.091603, 14.440019], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Karlín', hood: 'palmovka' },
-  
+  { id: 'art-22', name: 'Karlín', location: [50.091603, 14.440019], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Karlín', hood: 'praha' },
+
   // Palmovka / Libeň area
-  { id: 'art-23', name: 'Palmovka 1', location: [50.103611, 14.464650], size: 'medium', status: 'active', mhd: 'tram12', capturedBy: null, area: 'Palmovka', hood: 'palmovka' },
-  { id: 'art-24', name: 'Libeň 1', location: [50.110244, 14.477544], size: 'small', status: 'active', mhd: 'tram12', capturedBy: null, area: 'Libeň', hood: 'palmovka' },
-  { id: 'art-25', name: 'Palmovka 2', location: [50.103378, 14.472653], size: 'medium', status: 'ghost', mhd: 'metroB', capturedBy: null, area: 'Palmovka', hood: 'palmovka' },
-  { id: 'art-26', name: 'Palmovka 3', location: [50.103625, 14.470758], size: 'sticker', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Palmovka', hood: 'palmovka' },
-  { id: 'art-27', name: 'Palmovka 4', location: [50.103608, 14.470750], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Palmovka', hood: 'palmovka' },
-  
+  { id: 'art-23', name: 'Palmovka 1', location: [50.103611, 14.464650], size: 'medium', status: 'active', mhd: 'tram12', capturedBy: null, area: 'Palmovka', hood: 'praha' },
+  { id: 'art-24', name: 'Libeň 1', location: [50.110244, 14.477544], size: 'small', status: 'active', mhd: 'tram12', capturedBy: null, area: 'Libeň', hood: 'praha' },
+  { id: 'art-25', name: 'Palmovka 2', location: [50.103378, 14.472653], size: 'medium', status: 'ghost', mhd: 'metroB', capturedBy: null, area: 'Palmovka', hood: 'praha' },
+  { id: 'art-26', name: 'Palmovka 3', location: [50.103625, 14.470758], size: 'sticker', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Palmovka', hood: 'praha' },
+  { id: 'art-27', name: 'Palmovka 4', location: [50.103608, 14.470750], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Palmovka', hood: 'praha' },
+
   // Additional photos
-  { id: 'art-28', name: 'Vysočany 9', location: [50.111042, 14.503097], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-29', name: 'Hloubětín 6', location: [50.108322, 14.507908], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'vysocany' },
-  { id: 'art-30', name: 'Prosek', location: [50.112683, 14.499019], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Prosek', hood: 'vysocany' },
-  { id: 'art-31', name: 'Hloubětín 7', location: [50.108422, 14.507728], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'vysocany' },
-  { id: 'art-32', name: 'Vysočany 10', location: [50.109811, 14.504333], size: 'sticker', status: 'ghost', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
-  { id: 'art-33', name: 'Palmovka 5', location: [50.103458, 14.463819], size: 'medium', status: 'active', mhd: 'tram12', capturedBy: null, area: 'Palmovka', hood: 'palmovka' },
-  
+  { id: 'art-28', name: 'Vysočany 9', location: [50.111042, 14.503097], size: 'large', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-29', name: 'Hloubětín 6', location: [50.108322, 14.507908], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'praha' },
+  { id: 'art-30', name: 'Prosek', location: [50.112683, 14.499019], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Prosek', hood: 'praha' },
+  { id: 'art-31', name: 'Hloubětín 7', location: [50.108422, 14.507728], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Hloubětín', hood: 'praha' },
+  { id: 'art-32', name: 'Vysočany 10', location: [50.109811, 14.504333], size: 'sticker', status: 'ghost', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
+  { id: 'art-33', name: 'Palmovka 5', location: [50.103458, 14.463819], size: 'medium', status: 'active', mhd: 'tram12', capturedBy: null, area: 'Palmovka', hood: 'praha' },
+
   // Poděbrady - real photos from IMG_6003-6022
   { id: 'art-34', name: 'Poděbrady 1', location: [50.145850, 15.117822], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Poděbrady', hood: 'podebrady' },
   { id: 'art-35', name: 'Poděbrady 2', location: [50.147622, 15.118736], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Poděbrady', hood: 'podebrady' },
@@ -147,20 +133,20 @@ export const ART_POINTS = [
   { id: 'art-43', name: 'Poděbrady 10', location: [50.145967, 15.124406], size: 'large', status: 'active', mhd: null, capturedBy: null, area: 'Poděbrady', hood: 'podebrady' },
   { id: 'art-44', name: 'Poděbrady 11', location: [50.143106, 15.121906], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Poděbrady', hood: 'podebrady' },
   { id: 'art-45', name: 'Poděbrady 12', location: [50.143394, 15.116619], size: 'small', status: 'active', mhd: null, capturedBy: null, area: 'Poděbrady', hood: 'podebrady' },
-  
+
   // Centrum - real photos from IMG_6186-6223 (251207)
-  { id: 'art-46', name: 'Centrum 1', location: [50.091525, 14.440142], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Florenc', hood: 'centrum' },
-  { id: 'art-47', name: 'Centrum 2', location: [50.089364, 14.437222], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Florenc', hood: 'centrum' },
-  { id: 'art-48', name: 'Centrum 3', location: [50.087811, 14.432578], size: 'large', status: 'active', mhd: null, capturedBy: null, area: 'Karlín', hood: 'centrum' },
-  { id: 'art-49', name: 'Centrum 4', location: [50.084514, 14.429217], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Karlín', hood: 'centrum' },
-  { id: 'art-50', name: 'Centrum 5', location: [50.083103, 14.426833], size: 'small', status: 'active', mhd: null, capturedBy: null, area: 'Karlín', hood: 'centrum' },
-  { id: 'art-51', name: 'Centrum 6', location: [50.080575, 14.423917], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
-  { id: 'art-52', name: 'Centrum 7', location: [50.079044, 14.422033], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
-  { id: 'art-53', name: 'Centrum 8', location: [50.082172, 14.418336], size: 'large', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
-  { id: 'art-54', name: 'Centrum 9', location: [50.081775, 14.416789], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
-  { id: 'art-55', name: 'Centrum 10', location: [50.081547, 14.413769], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'centrum' },
-  { id: 'art-56', name: 'Centrum 11', location: [50.092544, 14.444431], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Florenc', hood: 'centrum' },
-  { id: 'art-57', name: 'Vysočany 11', location: [50.110867, 14.516553], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'vysocany' },
+  { id: 'art-46', name: 'Centrum 1', location: [50.091525, 14.440142], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Florenc', hood: 'praha' },
+  { id: 'art-47', name: 'Centrum 2', location: [50.089364, 14.437222], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Florenc', hood: 'praha' },
+  { id: 'art-48', name: 'Centrum 3', location: [50.087811, 14.432578], size: 'large', status: 'active', mhd: null, capturedBy: null, area: 'Karlín', hood: 'praha' },
+  { id: 'art-49', name: 'Centrum 4', location: [50.084514, 14.429217], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Karlín', hood: 'praha' },
+  { id: 'art-50', name: 'Centrum 5', location: [50.083103, 14.426833], size: 'small', status: 'active', mhd: null, capturedBy: null, area: 'Karlín', hood: 'praha' },
+  { id: 'art-51', name: 'Centrum 6', location: [50.080575, 14.423917], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'praha' },
+  { id: 'art-52', name: 'Centrum 7', location: [50.079044, 14.422033], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'praha' },
+  { id: 'art-53', name: 'Centrum 8', location: [50.082172, 14.418336], size: 'large', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'praha' },
+  { id: 'art-54', name: 'Centrum 9', location: [50.081775, 14.416789], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'praha' },
+  { id: 'art-55', name: 'Centrum 10', location: [50.081547, 14.413769], size: 'medium', status: 'active', mhd: null, capturedBy: null, area: 'Centrum', hood: 'praha' },
+  { id: 'art-56', name: 'Centrum 11', location: [50.092544, 14.444431], size: 'small', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Florenc', hood: 'praha' },
+  { id: 'art-57', name: 'Vysočany 11', location: [50.110867, 14.516553], size: 'medium', status: 'active', mhd: 'metroB', capturedBy: null, area: 'Vysočany', hood: 'praha' },
 ]
 
 // Get points based on size
@@ -210,18 +196,18 @@ function distance(p1, p2) {
 function clusterPoints(points, maxDistance = 0.003) {
   const clusters = []
   const visited = new Set()
-  
+
   points.forEach((point, idx) => {
     if (visited.has(idx)) return
-    
+
     const cluster = [point]
     visited.add(idx)
-    
+
     // Find all nearby unvisited points
     const queue = [point]
     while (queue.length > 0) {
       const current = queue.shift()
-      
+
       points.forEach((other, otherIdx) => {
         if (visited.has(otherIdx)) return
         if (distance(current.location, other.location) <= maxDistance) {
@@ -231,17 +217,17 @@ function clusterPoints(points, maxDistance = 0.003) {
         }
       })
     }
-    
+
     clusters.push(cluster)
   })
-  
+
   return clusters
 }
 
 // Merge overlapping hexagons into one shape
 function mergeHexagons(hexagons) {
   if (hexagons.length === 1) return hexagons[0]
-  
+
   // For multiple hexagons, create a convex hull around all points
   const allPoints = hexagons.flat()
   return convexHull([...allPoints])
@@ -250,24 +236,24 @@ function mergeHexagons(hexagons) {
 // Convex hull algorithm (Graham scan)
 function convexHull(points) {
   if (points.length < 3) return points
-  
+
   let start = 0
   for (let i = 1; i < points.length; i++) {
-    if (points[i][0] < points[start][0] || 
-       (points[i][0] === points[start][0] && points[i][1] < points[start][1])) {
+    if (points[i][0] < points[start][0] ||
+      (points[i][0] === points[start][0] && points[i][1] < points[start][1])) {
       start = i
     }
   }
-  
+
   [points[0], points[start]] = [points[start], points[0]]
   const pivot = points[0]
-  
+
   const sorted = points.slice(1).sort((a, b) => {
     const angleA = Math.atan2(a[1] - pivot[1], a[0] - pivot[0])
     const angleB = Math.atan2(b[1] - pivot[1], b[0] - pivot[0])
     return angleA - angleB
   })
-  
+
   const hull = [pivot]
   for (const p of sorted) {
     while (hull.length > 1) {
@@ -279,17 +265,17 @@ function convexHull(points) {
     }
     hull.push(p)
   }
-  
+
   return hull
 }
 
 // Expand a polygon outward
 function expandPolygon(polygon, buffer) {
   if (polygon.length < 3) return polygon
-  
+
   const cx = polygon.reduce((s, p) => s + p[0], 0) / polygon.length
   const cy = polygon.reduce((s, p) => s + p[1], 0) / polygon.length
-  
+
   return polygon.map(p => {
     const dx = p[0] - cx
     const dy = p[1] - cy
@@ -305,22 +291,22 @@ function expandPolygon(polygon, buffer) {
 export function generateTeamTerritories(artPoints) {
   const territories = {}
   TEAMS.forEach(team => territories[team] = [])
-  
+
   // Each captured point gets its own circle territory
   artPoints.forEach(point => {
     if (point.capturedBy && territories[point.capturedBy]) {
       // Size based on point value - larger points = bigger influence
-      const baseRadius = point.size === 'large' ? 0.002 : 
-                         point.size === 'medium' ? 0.0015 :
-                         point.size === 'small' ? 0.0012 : 0.001
-      
+      const baseRadius = point.size === 'large' ? 0.002 :
+        point.size === 'medium' ? 0.0015 :
+          point.size === 'small' ? 0.0012 : 0.001
+
       territories[point.capturedBy].push({
         polygon: createCircle(point.location[0], point.location[1], baseRadius),
         points: [point]
       })
     }
   })
-  
+
   return territories
 }
 
@@ -328,33 +314,33 @@ export function generateTeamTerritories(artPoints) {
 export function generateTeamLines(artPoints, maxDistance = 0.008) {
   const lines = {}
   TEAMS.forEach(team => lines[team] = [])
-  
+
   // Group points by team
   const teamPoints = {}
   TEAMS.forEach(team => teamPoints[team] = [])
-  
+
   artPoints.forEach(point => {
     if (point.capturedBy && teamPoints[point.capturedBy]) {
       teamPoints[point.capturedBy].push(point)
     }
   })
-  
+
   // For each team, connect nearby points
   TEAMS.forEach(team => {
     const points = teamPoints[team]
     const connected = new Set()
-    
+
     for (let i = 0; i < points.length; i++) {
       for (let j = i + 1; j < points.length; j++) {
         const p1 = points[i]
         const p2 = points[j]
         const key = `${p1.id}-${p2.id}`
-        
+
         // Calculate distance
         const dx = p1.location[0] - p2.location[0]
         const dy = (p1.location[1] - p2.location[1]) * 1.6
         const dist = Math.sqrt(dx * dx + dy * dy)
-        
+
         // Connect if within range
         if (dist <= maxDistance && !connected.has(key)) {
           connected.add(key)
@@ -367,7 +353,7 @@ export function generateTeamLines(artPoints, maxDistance = 0.008) {
       }
     }
   })
-  
+
   return lines
 }
 
@@ -387,7 +373,7 @@ export function getTeamColor(team) {
 export function calculateTeamScores(artPoints) {
   const scores = {}
   TEAMS.forEach(team => scores[team] = 0)
-  
+
   artPoints.forEach(point => {
     if (point.capturedBy && scores[point.capturedBy] !== undefined) {
       // Use size-based point value, ignore ghost points (half value)

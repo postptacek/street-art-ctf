@@ -4,8 +4,8 @@ import { MapContainer, TileLayer, Polygon, CircleMarker, Polyline, Marker, useMa
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useGame } from '../context/GameContext'
-import { 
-  MAP_CENTER, 
+import {
+  MAP_CENTER,
   DEFAULT_ZOOM,
   MIN_ZOOM,
   MAX_ZOOM,
@@ -52,11 +52,11 @@ const calculateDecay = (capturedAt) => {
 const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false, decayLevel = 0, isBattleMode = false, isSoloMode = false) => {
   // Determine the CSS filter based on capture state
   let filter = ''
-  
+
   // Apply decay as desaturation (max 50% gray at full decay)
   const decaySaturation = 1 - (decayLevel * 0.5)
   const decayOpacity = 1 - (decayLevel * 0.3)
-  
+
   if (isGhost) {
     // Ghost/archived markers - very faint (10% opacity)
     filter = 'grayscale(100%) opacity(0.1)'
@@ -72,7 +72,7 @@ const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false, de
     // Blue team - apply decay
     filter = `saturate(${decaySaturation}) opacity(${decayOpacity})`
   }
-  
+
   return L.divIcon({
     html: `<div style="position:relative;"><img src="${CHUMPER_URL}" style="width: 32px; height: 32px; filter: ${filter};" /></div>`,
     className: 'chumper-marker',
@@ -86,7 +86,7 @@ const createChumperIcon = (capturedBy, isGhost = false, isDiscovered = false, de
 function ZoomDisplay({ devMode }) {
   const [zoom, setZoom] = useState(DEFAULT_ZOOM)
   const [center, setCenter] = useState(MAP_CENTER)
-  
+
   useMapEvents({
     zoomend: (e) => setZoom(e.target.getZoom()),
     moveend: (e) => {
@@ -94,9 +94,9 @@ function ZoomDisplay({ devMode }) {
       setCenter([c.lat.toFixed(6), c.lng.toFixed(6)])
     }
   })
-  
+
   if (!devMode) return null
-  
+
   return (
     <div className="absolute bottom-24 left-4 z-[1000] bg-purple-500 shadow-lg px-3 py-2 font-nohemi">
       <div className="text-[10px] font-mono text-white">
@@ -111,27 +111,27 @@ function ZoomDisplay({ devMode }) {
 // Fly to hood component
 function FlyToHood({ hood }) {
   const map = useMap()
-  
+
   useEffect(() => {
     if (hood) {
       map.flyTo(hood.center, hood.zoom, { duration: 1.5 })
     }
   }, [hood, map])
-  
+
   return null
 }
 
 // Fly to last capture location when returning to map
 function LastCaptureHandler() {
   const map = useMap()
-  
+
   useEffect(() => {
     const stored = localStorage.getItem('streetart-ctf-lastCapture')
     if (stored) {
       try {
         const data = JSON.parse(stored)
         localStorage.removeItem('streetart-ctf-lastCapture')
-        
+
         // Fly to the capture location if valid
         if (data.location && Array.isArray(data.location) && data.location.length === 2) {
           setTimeout(() => {
@@ -143,7 +143,7 @@ function LastCaptureHandler() {
       }
     }
   }, [map])
-  
+
   return null
 }
 
@@ -151,13 +151,13 @@ function LastCaptureHandler() {
 function LocationButton() {
   const map = useMap()
   const [locating, setLocating] = useState(false)
-  
+
   const handleLocate = () => {
     setLocating(true)
     map.locate({ setView: true, maxZoom: 16 })
     setTimeout(() => setLocating(false), 2000)
   }
-  
+
   return (
     <motion.button
       onClick={handleLocate}
@@ -179,7 +179,7 @@ function PointPanel({ point, onClose, isDiscovered, isSoloView }) {
   const teamColor = point.capturedBy ? (TEAM_CONFIG[point.capturedBy]?.color || '#888') : null
   const pts = getPointValue(point)
   const isGhost = point.status === 'ghost'
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 100 }}
@@ -189,13 +189,13 @@ function PointPanel({ point, onClose, isDiscovered, isSoloView }) {
       className="absolute bottom-20 left-4 right-4 z-[1000] font-nohemi"
     >
       <div className="bg-[#FAFAFA] p-5 shadow-2xl">
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-black/30 hover:text-black transition-colors"
         >
           <X size={20} />
         </button>
-        
+
         <div className="pr-8">
           {/* Status tag */}
           <div className="flex items-center gap-2 mb-2">
@@ -218,11 +218,11 @@ function PointPanel({ point, onClose, isDiscovered, isSoloView }) {
               )
             )}
           </div>
-          
+
           {/* Name */}
           <h3 className="text-2xl font-bold text-black tracking-tight mb-1">{point.name}</h3>
           <p className="text-black/40 mb-4">{point.area}</p>
-          
+
           {/* Stats row */}
           <div className="flex items-center gap-6">
             <div>
@@ -242,7 +242,7 @@ function PointPanel({ point, onClose, isDiscovered, isSoloView }) {
               </div>
             )}
           </div>
-          
+
           {/* Captured by */}
           {!isSoloView && point.capturedByPlayer && (
             <div className="mt-4 pt-4 border-t border-black/10">
@@ -265,15 +265,15 @@ const TERRITORY_MODES = ['off', 'circles', 'squares', 'hexagons']
 // Generate territory shapes around captured points
 const generateTerritoryShapes = (points, mode) => {
   if (mode === 'off') return []
-  
+
   const capturedPoints = points.filter(p => p.capturedBy && p.status !== 'ghost')
   const shapes = []
-  
+
   capturedPoints.forEach(point => {
     const [lat, lng] = point.location
     const radius = 0.002 // ~200m radius
     const team = point.capturedBy
-    
+
     if (mode === 'circles') {
       // Circle approximation with many sides
       const sides = 32
@@ -312,7 +312,7 @@ const generateTerritoryShapes = (points, mode) => {
       shapes.push({ team, coords, pointId: point.id, capturedAt: point.capturedAt })
     }
   })
-  
+
   return shapes
 }
 
@@ -322,20 +322,20 @@ export default function PragueMap() {
   const [selectedPoint, setSelectedPoint] = useState(null)
   const [devMode, setDevMode] = useState(false)
   const [localArtPoints, setLocalArtPoints] = useState(artPoints)
-  const [currentHood, setCurrentHood] = useState(HOODS.centrum)
-  
+  const [currentHood, setCurrentHood] = useState(HOODS.praha)
+
   // View mode: 'solo' shows only your discoveries, 'multi' shows team captures
   const [viewMode, setViewMode] = useState('solo')
-  
+
   // Map settings (simplified)
   const [showLines, setShowLines] = useState(false)
   const [territoryMode, setTerritoryMode] = useState('circles')
-  
+
   // Sync with context
   useEffect(() => {
     setLocalArtPoints(artPoints)
   }, [artPoints])
-  
+
   // Dev mode: cycle through teams when clicking a point
   const handlePointClick = (point) => {
     if (devMode) {
@@ -352,80 +352,72 @@ export default function PragueMap() {
       setSelectedPoint(point)
     }
   }
-  
+
   // Reset local points (dev mode only)
   const handleReset = () => {
     setLocalArtPoints(artPoints.map(p => ({ ...p, capturedBy: null })))
   }
-  
+
   // Use local points for dev mode, context points otherwise
   const displayPoints = devMode ? localArtPoints : artPoints
-  
+
   // Generate lines connecting team points
   const teamLines = useMemo(() => {
     return generateTeamLines(displayPoints)
   }, [displayPoints])
-  
+
   // Generate territory shapes
   const territoryShapes = useMemo(() => {
     return generateTerritoryShapes(displayPoints, territoryMode)
   }, [displayPoints, territoryMode])
-  
+
   // Calculate scores
   const teamScores = useMemo(() => {
     return calculateTeamScores(displayPoints)
   }, [displayPoints])
-  
+
   const totalScore = Object.values(teamScores).reduce((a, b) => a + b, 0) || 1
-  
+
   // Personal discovery stats
   const discoveryCount = Object.keys(discoveries).length
   const totalArtCount = ART_POINTS.length
-  
+
   // Current hood discovery stats - filter by hood field, not area
   const hoodDiscoveryStats = useMemo(() => {
     const hoodArt = ART_POINTS.filter(art => art.hood === currentHood.id)
     const discovered = hoodArt.filter(art => discoveries[art.id])
     return { found: discovered.length, total: hoodArt.length }
   }, [discoveries, currentHood])
-  
+
   const isSoloView = viewMode === 'solo'
-  
+
   return (
     <div className="relative w-full h-full">
       {/* Top bar - White mode with safe area, two rows */}
       <div className="absolute top-0 left-0 right-0 pt-safe px-3 pb-2 z-[1000] flex flex-col gap-2 font-nohemi" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
-        {/* Row 1: Mode toggle + Stats */}
+        {/* Row 1: Hood Selector + Stats */}
         <div className="flex items-center gap-2">
-          {/* View mode toggle */}
+          {/* Hood selector - just Praha and Poděbrady */}
           <div className="flex bg-[#FAFAFA] shadow-lg">
-            <button
-              onClick={() => setViewMode('solo')}
-              className={`px-3 py-2 text-xs font-bold tracking-wide transition-all ${
-                isSoloView 
+            {Object.values(HOODS).map(hood => (
+              <button
+                key={hood.id}
+                onClick={() => setCurrentHood(hood)}
+                className={`px-4 py-2 text-xs font-bold transition-all whitespace-nowrap ${currentHood.id === hood.id
                   ? 'bg-black text-white'
                   : 'text-black/40'
-              }`}
-            >
-              SOLO
-            </button>
-            <button
-              onClick={() => setViewMode('multi')}
-              className={`px-3 py-2 text-xs font-bold tracking-wide transition-all ${
-                !isSoloView 
-                  ? 'bg-black text-white'
-                  : 'text-black/40'
-              }`}
-            >
-              BATTLE
-            </button>
+                  }`}
+              >
+                {hood.name.toUpperCase()}
+              </button>
+            ))}
           </div>
-          
+
           {/* Stats pill */}
-          <div className="ml-auto flex items-center gap-3 bg-[#FAFAFA] shadow-lg px-4 py-2">
+          <div className="ml-auto flex items-center gap-2 bg-[#FAFAFA] shadow-lg px-4 py-2">
             {isSoloView ? (
               <>
-                <span className="text-xs font-bold" style={{ color: TEAM_CONFIG[player.team]?.color }}>
+                <span className="text-sm font-black" style={{ color: TEAM_CONFIG[player.team]?.color }}>
                   {hoodDiscoveryStats.found}
                 </span>
                 <span className="text-xs text-black/30">/ {hoodDiscoveryStats.total}</span>
@@ -440,21 +432,26 @@ export default function PragueMap() {
           </div>
         </div>
 
-        {/* Row 2: Hood Selector - scrollable */}
-        <div className="flex overflow-x-auto bg-[#FAFAFA] shadow-lg -mx-1">
-          {Object.values(HOODS).map(hood => (
-            <button
-              key={hood.id}
-              onClick={() => setCurrentHood(hood)}
-              className={`px-3 py-2 text-xs font-bold transition-all whitespace-nowrap ${
-                currentHood.id === hood.id
-                  ? 'text-black'
-                  : 'text-black/30'
+        {/* Row 2: Large SOLO/BATTLE toggle */}
+        <div className="flex bg-[#FAFAFA] shadow-lg">
+          <button
+            onClick={() => setViewMode('solo')}
+            className={`flex-1 px-6 py-3 text-sm font-black tracking-wide transition-all ${isSoloView
+              ? 'bg-black text-white'
+              : 'text-black/30'
               }`}
-            >
-              {hood.name.toUpperCase()}
-            </button>
-          ))}
+          >
+            SOLO
+          </button>
+          <button
+            onClick={() => setViewMode('multi')}
+            className={`flex-1 px-6 py-3 text-sm font-black tracking-wide transition-all ${!isSoloView
+              ? 'bg-black text-white'
+              : 'text-black/30'
+              }`}
+          >
+            BATTLE
+          </button>
         </div>
       </div>
 
@@ -462,16 +459,15 @@ export default function PragueMap() {
       <div className="absolute bottom-24 right-4 z-[1000] flex flex-col gap-2">
         <motion.button
           onClick={() => setDevMode(!devMode)}
-          className={`w-10 h-10 shadow-lg flex items-center justify-center transition-colors ${
-            devMode 
-              ? 'bg-purple-500 text-white' 
-              : 'bg-[#FAFAFA] text-black/30'
-          }`}
+          className={`w-10 h-10 shadow-lg flex items-center justify-center transition-colors ${devMode
+            ? 'bg-purple-500 text-white'
+            : 'bg-[#FAFAFA] text-black/30'
+            }`}
           whileTap={{ scale: 0.95 }}
         >
           <Code size={16} />
         </motion.button>
-        
+
         {devMode && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
@@ -516,12 +512,12 @@ export default function PragueMap() {
           url={MAP_STYLE.tileUrl}
           attribution={MAP_STYLE.attribution}
         />
-        
+
         <LocationButton />
         <ZoomDisplay devMode={devMode} />
         <FlyToHood hood={currentHood} />
         <LastCaptureHandler />
-        
+
         {/* Metro B line */}
         <Polyline
           positions={METRO_B.map(s => s.location)}
@@ -531,7 +527,7 @@ export default function PragueMap() {
             opacity: 0.6
           }}
         />
-        
+
         {/* Metro B stations */}
         {METRO_B.map(station => (
           <CircleMarker
@@ -546,14 +542,14 @@ export default function PragueMap() {
             }}
           />
         ))}
-        
+
         {/* Territory shapes - only in multi view, with decay */}
         {!isSoloView && territoryShapes.map((shape, idx) => {
           const decayLevel = shape.capturedAt ? calculateDecay(shape.capturedAt) : 0
           // Territory fades as it decays
           const fillOpacity = 0.15 * (1 - decayLevel * 0.7)
           const strokeOpacity = 0.4 * (1 - decayLevel * 0.5)
-          
+
           return (
             <Polygon
               key={`territory-${shape.pointId}`}
@@ -568,9 +564,9 @@ export default function PragueMap() {
             />
           )
         })}
-        
+
         {/* Team connection lines - only in multi view */}
-        {!isSoloView && showLines && Object.entries(teamLines).map(([team, lines]) => 
+        {!isSoloView && showLines && Object.entries(teamLines).map(([team, lines]) =>
           lines.map((line, idx) => (
             <Polyline
               key={`${team}-line-${idx}`}
@@ -586,45 +582,45 @@ export default function PragueMap() {
             />
           ))
         )}
-        
+
         {/* Art point markers - rendered last (above territories) */}
         {displayPoints
           // In battle mode, hide ghost markers completely
           .filter(point => isSoloView || point.status !== 'ghost')
           .map(point => {
-          const isGhost = point.status === 'ghost'
-          const isDiscovered = discoveries[point.id]
-          // In solo view: show YOUR team color for discovered, gray for not found
-          // In multi view: show capturing team's color with decay
-          const markerTeam = isSoloView 
-            ? (isDiscovered ? player.team : null)
-            : point.capturedBy
-          // Calculate decay only for multi view captured points
-          const decayLevel = (!isSoloView && point.capturedBy && point.capturedAt) 
-            ? calculateDecay(point.capturedAt) 
-            : 0
-          const icon = createChumperIcon(markerTeam, isGhost, isDiscovered, decayLevel, !isSoloView, isSoloView)
-          
-          return (
-            <Marker
-              key={`${point.id}-${markerTeam || 'none'}-${Math.floor(decayLevel * 10)}`}
-              position={point.location}
-              icon={icon}
-              eventHandlers={{
-                click: (e) => {
-                  e.originalEvent.stopPropagation()
-                  handlePointClick(point)
-                }
-              }}
-            />
-          )
-        })}
+            const isGhost = point.status === 'ghost'
+            const isDiscovered = discoveries[point.id]
+            // In solo view: show YOUR team color for discovered, gray for not found
+            // In multi view: show capturing team's color with decay
+            const markerTeam = isSoloView
+              ? (isDiscovered ? player.team : null)
+              : point.capturedBy
+            // Calculate decay only for multi view captured points
+            const decayLevel = (!isSoloView && point.capturedBy && point.capturedAt)
+              ? calculateDecay(point.capturedAt)
+              : 0
+            const icon = createChumperIcon(markerTeam, isGhost, isDiscovered, decayLevel, !isSoloView, isSoloView)
+
+            return (
+              <Marker
+                key={`${point.id}-${markerTeam || 'none'}-${Math.floor(decayLevel * 10)}`}
+                position={point.location}
+                icon={icon}
+                eventHandlers={{
+                  click: (e) => {
+                    e.originalEvent.stopPropagation()
+                    handlePointClick(point)
+                  }
+                }}
+              />
+            )
+          })}
       </MapContainer>
 
       {/* Point detail panel */}
       <AnimatePresence>
         {selectedPoint && (
-          <PointPanel 
+          <PointPanel
             point={selectedPoint}
             onClose={() => setSelectedPoint(null)}
             isDiscovered={discoveries[selectedPoint.id]}
