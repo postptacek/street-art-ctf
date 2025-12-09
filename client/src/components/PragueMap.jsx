@@ -360,17 +360,17 @@ export default function PragueMap() {
 
   // Handle navigation from activity feed - select target point and fly to it
   useEffect(() => {
-    if (location.state?.targetArtId) {
-      const targetPoint = localArtPoints.find(p => p.id === location.state.targetArtId)
+    if (location.state?.targetArtId && artPoints.length > 0) {
+      const targetPoint = artPoints.find(p => p.id === location.state.targetArtId)
       if (targetPoint) {
         setSelectedPoint(targetPoint)
         setViewMode('multi') // Switch to battle mode to show captures
         setFlyToLocation(targetPoint.location) // Fly to the point
+        // Clear the state only after successful processing
+        window.history.replaceState({}, document.title)
       }
-      // Clear the state so it doesn't re-trigger
-      window.history.replaceState({}, document.title)
     }
-  }, [location.state, localArtPoints])
+  }, [location.state, artPoints])
 
   // Dev mode: cycle through teams when clicking a point
   const handlePointClick = (point) => {
