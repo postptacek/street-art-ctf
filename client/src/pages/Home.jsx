@@ -185,7 +185,7 @@ function Home() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.45 + index * 0.03 }}
-                  onClick={() => navigate('/map', { state: { targetArtId: capture.artId } })}
+                  onClick={() => navigate('/map', { state: { targetArtId: capture.id } })}
                   className={`flex items-center gap-3 py-3 border-b border-black/5 cursor-pointer active:bg-black/5 ${isYou ? 'bg-black/[0.02] -mx-3 px-3' : ''}`}
                 >
                   <div
