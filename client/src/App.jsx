@@ -11,7 +11,7 @@ import Profile from './pages/Profile'
 import Achievements from './pages/Achievements'
 import Admin from './pages/Admin'
 import Navigation from './components/Navigation'
-import { RARITY_CONFIG } from './data/achievements'
+import { getAchievementHue } from './data/achievements'
 
 const TEAM_CONFIG = {
   red: { color: '#E53935', name: 'RED' },
@@ -281,7 +281,7 @@ function AchievementNotification() {
             alt=""
             className="w-full h-full object-contain"
             style={{
-              filter: `hue-rotate(${RARITY_CONFIG[achievementNotification.rarity]?.hue || '200deg'}) saturate(1.3)`
+              filter: `hue-rotate(${getAchievementHue(achievementNotification)}) saturate(1.3)`
             }}
           />
         </motion.div>

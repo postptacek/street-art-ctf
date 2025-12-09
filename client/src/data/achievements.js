@@ -1,7 +1,8 @@
 /**
  * Achievement Definitions
- * Each achievement has an id, name, description, icon, category, rarity, and check function
+ * Each achievement has an id, name, description, icon, category, rarity, hueOffset, and check function
  * Rarity levels: 1 (common/blue), 2 (uncommon/green), 3 (rare/purple), 4 (epic/orange), 5 (legendary/gold)
+ * hueOffset: unique offset in degrees for each achievement within its rarity tier
  */
 
 export const ACHIEVEMENT_CATEGORIES = {
@@ -12,14 +13,21 @@ export const ACHIEVEMENT_CATEGORIES = {
     SOCIAL: 'social'
 }
 
-// Rarity hue-rotate values (base image is pink/red-ish)
+// Rarity base hue values (base image is pink/red-ish)
 // 1 = blue (200deg), 2 = green (120deg), 3 = purple (270deg), 4 = orange (30deg), 5 = gold (50deg)
 export const RARITY_CONFIG = {
-    1: { name: 'Common', hue: '200deg', color: '#3b82f6' },     // Blue
-    2: { name: 'Uncommon', hue: '120deg', color: '#22c55e' },   // Green
-    3: { name: 'Rare', hue: '270deg', color: '#a855f7' },       // Purple
-    4: { name: 'Epic', hue: '30deg', color: '#f97316' },        // Orange
-    5: { name: 'Legendary', hue: '50deg', color: '#eab308' }    // Gold
+    1: { name: 'Common', baseHue: 200, color: '#3b82f6' },     // Blue
+    2: { name: 'Uncommon', baseHue: 120, color: '#22c55e' },   // Green
+    3: { name: 'Rare', baseHue: 270, color: '#a855f7' },       // Purple
+    4: { name: 'Epic', baseHue: 30, color: '#f97316' },        // Orange
+    5: { name: 'Legendary', baseHue: 50, color: '#eab308' }    // Gold
+}
+
+// Helper to get final hue for an achievement (base rarity + unique offset)
+export function getAchievementHue(achievement) {
+    const base = RARITY_CONFIG[achievement.rarity]?.baseHue || 200
+    const offset = achievement.hueOffset || 0
+    return `${base + offset}deg`
 }
 
 export const ACHIEVEMENTS = [
@@ -31,6 +39,7 @@ export const ACHIEVEMENTS = [
         icon: '🔍',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
         rarity: 1,
+        hueOffset: 0,
         check: (player) => player.discoveryCount >= 1
     },
     {
@@ -40,6 +49,7 @@ export const ACHIEVEMENTS = [
         icon: '🗺️',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
         rarity: 2,
+        hueOffset: 0,
         check: (player) => player.discoveryCount >= 10
     },
     {
@@ -49,6 +59,7 @@ export const ACHIEVEMENTS = [
         icon: '📦',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
         rarity: 3,
+        hueOffset: 0,
         check: (player) => player.discoveryCount >= 25
     },
 
@@ -60,6 +71,7 @@ export const ACHIEVEMENTS = [
         icon: '🚶',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
         rarity: 2,
+        hueOffset: 15,
         check: (player) => (player.uniqueAreasVisited?.length || 0) >= 3
     },
     {
@@ -69,6 +81,7 @@ export const ACHIEVEMENTS = [
         icon: '🌍',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
         rarity: 4,
+        hueOffset: 0,
         check: (player) => (player.uniqueAreasVisited?.length || 0) >= 6
     },
 
@@ -80,6 +93,7 @@ export const ACHIEVEMENTS = [
         icon: '🔥',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
         rarity: 1,
+        hueOffset: 15,
         check: (player) => player.streak >= 3
     },
     {
@@ -89,6 +103,7 @@ export const ACHIEVEMENTS = [
         icon: '🔥',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
         rarity: 2,
+        hueOffset: 30,
         check: (player) => player.streak >= 5
     },
     {
@@ -98,6 +113,7 @@ export const ACHIEVEMENTS = [
         icon: '💥',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
         rarity: 4,
+        hueOffset: 15,
         check: (player) => player.streak >= 10
     },
 
@@ -109,6 +125,7 @@ export const ACHIEVEMENTS = [
         icon: '⚔️',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
         rarity: 1,
+        hueOffset: 30,
         check: (player) => player.captureCount >= 1
     },
     {
@@ -118,6 +135,7 @@ export const ACHIEVEMENTS = [
         icon: '🗡️',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
         rarity: 2,
+        hueOffset: 45,
         check: (player) => player.captureCount >= 10
     },
     {
@@ -127,6 +145,7 @@ export const ACHIEVEMENTS = [
         icon: '👑',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
         rarity: 5,
+        hueOffset: 0,
         check: (player) => player.captureCount >= 50
     },
 
@@ -138,6 +157,7 @@ export const ACHIEVEMENTS = [
         icon: '🦊',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
         rarity: 1,
+        hueOffset: 45,
         check: (player) => player.recaptureCount >= 1
     },
     {
@@ -147,6 +167,7 @@ export const ACHIEVEMENTS = [
         icon: '🏴‍☠️',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
         rarity: 3,
+        hueOffset: 15,
         check: (player) => player.recaptureCount >= 10
     },
     {
@@ -156,6 +177,7 @@ export const ACHIEVEMENTS = [
         icon: '💀',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
         rarity: 4,
+        hueOffset: 30,
         check: (player) => player.recaptureCount >= 25
     },
 
@@ -167,6 +189,7 @@ export const ACHIEVEMENTS = [
         icon: '🤝',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
         rarity: 2,
+        hueOffset: 60,
         check: (player) => player.score >= 500
     },
     {
@@ -176,6 +199,7 @@ export const ACHIEVEMENTS = [
         icon: '⭐',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
         rarity: 4,
+        hueOffset: 45,
         check: (player) => player.score >= 2000
     },
     {
@@ -185,6 +209,7 @@ export const ACHIEVEMENTS = [
         icon: '🌟',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
         rarity: 5,
+        hueOffset: 20,
         check: (player) => player.score >= 5000
     },
 
@@ -196,6 +221,7 @@ export const ACHIEVEMENTS = [
         icon: '🚀',
         category: ACHIEVEMENT_CATEGORIES.SPECIAL,
         rarity: 3,
+        hueOffset: 30,
         check: (player) => player.firstCaptureCount >= 1
     },
     {
@@ -205,6 +231,7 @@ export const ACHIEVEMENTS = [
         icon: '🌅',
         category: ACHIEVEMENT_CATEGORIES.SPECIAL,
         rarity: 3,
+        hueOffset: 45,
         check: (player) => player.hasEarlyCapture === true
     },
     {
@@ -214,6 +241,7 @@ export const ACHIEVEMENTS = [
         icon: '🦉',
         category: ACHIEVEMENT_CATEGORIES.SPECIAL,
         rarity: 3,
+        hueOffset: 60,
         check: (player) => player.hasNightCapture === true
     }
 ]
