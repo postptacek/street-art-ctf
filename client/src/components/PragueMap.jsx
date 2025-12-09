@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MapContainer, TileLayer, Polygon, CircleMarker, Polyline, Marker, useMap, useMapEvents, Tooltip } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useLocation } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import {
   MAP_CENTER,
@@ -318,6 +319,7 @@ const generateTerritoryShapes = (points, mode) => {
 
 // Main Prague Map component
 export default function PragueMap() {
+  const location = useLocation()
   const { player, artPoints, captureArt, discoveries } = useGame()
   const [selectedPoint, setSelectedPoint] = useState(null)
   const [devMode, setDevMode] = useState(false)
@@ -335,6 +337,19 @@ export default function PragueMap() {
   useEffect(() => {
     setLocalArtPoints(artPoints)
   }, [artPoints])
+
+  // Handle navigation from activity feed - select target point
+  useEffect(() => {
+    if (location.state?.targetArtId) {
+      const targetPoint = localArtPoints.find(p => p.id === location.state.targetArtId)
+      if (targetPoint) {
+        setSelectedPoint(targetPoint)
+        setViewMode('multi') // Switch to battle mode to show captures
+      }
+      // Clear the state so it doesn't re-trigger
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state, localArtPoints])
 
   // Dev mode: cycle through teams when clicking a point
   const handlePointClick = (point) => {

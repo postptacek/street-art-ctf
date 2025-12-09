@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 
 const TEAM_CONFIG = {
@@ -18,6 +19,7 @@ function timeAgo(date) {
 }
 
 function Home() {
+  const navigate = useNavigate()
   const { player, recentCaptures, isOnline, artPoints } = useGame()
 
   // Count chomps held by each team (no decay)
@@ -183,7 +185,8 @@ function Home() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.45 + index * 0.03 }}
-                  className={`flex items-center gap-3 py-3 border-b border-black/5 ${isYou ? 'bg-black/[0.02] -mx-3 px-3' : ''}`}
+                  onClick={() => navigate('/map', { state: { targetArtId: capture.artId } })}
+                  className={`flex items-center gap-3 py-3 border-b border-black/5 cursor-pointer active:bg-black/5 ${isYou ? 'bg-black/[0.02] -mx-3 px-3' : ''}`}
                 >
                   <div
                     className="w-1 h-8 flex-shrink-0"
@@ -191,10 +194,10 @@ function Home() {
                   />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-black truncate">
-                      {capture.artName}
-                    </div>
-                    <div className="text-xs text-black/40">
                       {isYou ? 'You' : capture.playerName}
+                    </div>
+                    <div className="text-xs text-black/40 truncate">
+                      {capture.artName}
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
