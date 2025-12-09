@@ -197,10 +197,26 @@ export default function About() {
                         </motion.div>
                     </div>
 
-                    <p className="text-black/60 text-lg">
+                    <p className="text-black/60 text-lg mb-8">
                         Two teams. <span className="text-[#E53935] font-bold">Red</span> vs <span className="text-[#1E88E5] font-bold">Blue</span>.
                         Every Chomp you find is a territory to claim.
                     </p>
+
+                    {/* Features */}
+                    <div className="text-left max-w-md mx-auto space-y-4 mb-8">
+                        <div className="flex items-start gap-4">
+                            <div className="w-2 h-2 bg-black mt-2 flex-shrink-0"></div>
+                            <p className="text-black/60"><span className="text-black font-bold">Battle Mode</span> — Team scoring, steal territories from opponents, leaderboard</p>
+                        </div>
+                        <div className="flex items-start gap-4">
+                            <div className="w-2 h-2 bg-black mt-2 flex-shrink-0"></div>
+                            <p className="text-black/60"><span className="text-black font-bold">Solo Collection</span> — Build your personal gallery of discovered Chomps</p>
+                        </div>
+                        <div className="flex items-start gap-4">
+                            <div className="w-2 h-2 bg-black mt-2 flex-shrink-0"></div>
+                            <p className="text-black/60"><span className="text-black font-bold">Achievements</span> — Unlock badges for milestones, streaks, and special actions</p>
+                        </div>
+                    </div>
                 </motion.div>
             </div>
 
