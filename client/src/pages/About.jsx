@@ -282,6 +282,14 @@ export default function About() {
 
             {/* Footer */}
             <div className="p-8 text-center border-t border-black/10">
+                <motion.a
+                    href="#/"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="inline-block bg-black text-white font-bold text-lg px-12 py-4 mb-6"
+                >
+                    PLAY
+                </motion.a>
                 <p className="text-black/40 text-sm">
                     A street art project by <span className="text-black font-bold">PTACEK</span>
                 </p>
