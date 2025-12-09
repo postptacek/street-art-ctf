@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { ART_POINTS, getPointValue } from '../data/pragueMap'
 import { BADGE_LIST, TOTAL_BADGES, getBadge } from '../data/badges'
+import { ACHIEVEMENTS } from '../data/achievements'
 
 // Check if running as PWA (standalone mode)
 const isStandalone = () => {
@@ -225,6 +227,27 @@ function Profile() {
           )}
         </motion.div>
       )}
+
+      {/* Achievements Link */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="px-6 mb-8"
+      >
+        <Link to="/achievements">
+          <div className="flex items-center justify-between p-4 bg-white border-2 border-black">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🏆</span>
+              <div>
+                <p className="font-bold text-black">Achievements</p>
+                <p className="text-xs text-black/40">View all achievements</p>
+              </div>
+            </div>
+            <div className="text-black/40">→</div>
+          </div>
+        </Link>
+      </motion.div>
 
       {/* Collection Progress */}
       <motion.div

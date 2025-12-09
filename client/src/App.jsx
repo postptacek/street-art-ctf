@@ -8,6 +8,7 @@ import Map from './pages/Map'
 import Scanner from './pages/Scanner'
 import Leaderboard from './pages/Leaderboard'
 import Profile from './pages/Profile'
+import Achievements from './pages/Achievements'
 import Admin from './pages/Admin'
 import Navigation from './components/Navigation'
 
@@ -21,7 +22,7 @@ function EatAnimation() {
   const [frame, setFrame] = useState(0)
   const [currentVariant, setCurrentVariant] = useState('a')
   const totalFrames = 41
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setFrame(f => {
@@ -36,14 +37,14 @@ function EatAnimation() {
     }, 42) // ~24fps
     return () => clearInterval(interval)
   }, [])
-  
+
   const folder = currentVariant === 'a' ? 'eat_a' : 'eat_b'
   const frameNum = String(frame).padStart(5, '0')
   const src = `animation/${folder}/eat_${currentVariant}_${frameNum}.png`
-  
+
   return (
-    <img 
-      src={src} 
+    <img
+      src={src}
       alt="Chomp animation"
       className="w-48 h-48 object-contain"
     />
@@ -53,24 +54,24 @@ function EatAnimation() {
 // Full-screen capture notification - White mode redesign
 function CaptureNotification() {
   const { captureNotification, player } = useGame()
-  
+
   if (!captureNotification) return null
-  
+
   const teamColor = TEAM_CONFIG[captureNotification.team]?.color || '#888'
   const teamName = TEAM_CONFIG[captureNotification.team]?.name || '?'
   const points = captureNotification.points || 100
   const streak = captureNotification.streak || 0
-  
+
   // Check if current player is the one who made the capture
   const isActivePlayer = captureNotification.playerId === player.id
   // Check if current player lost their territory (steal)
   const isVictim = captureNotification.isRecapture && captureNotification.prevOwner === player.team && captureNotification.team !== player.team
-  
+
   // For non-active users: only show notification when it's a steal that affects them
   if (!isActivePlayer && !isVictim) {
     return null
   }
-  
+
   // Determine what to show
   let label, title
   if (isActivePlayer) {
@@ -86,13 +87,13 @@ function CaptureNotification() {
     label = captureNotification.isRecapture ? 'TERRITORY CHANGED' : 'NEW CAPTURE'
     title = 'CLAIMED'
   }
-  
+
   // Only show points to the active player who made the capture
   const showPoints = isActivePlayer
-  
+
   // Always show eat animation (loops between A and B)
   const showEatAnimation = true
-  
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -101,14 +102,14 @@ function CaptureNotification() {
       className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none overflow-hidden bg-[#FAFAFA] font-nohemi"
     >
       {/* Top accent bar */}
-      <motion.div 
+      <motion.div
         className="absolute top-0 left-0 right-0 h-2"
         style={{ backgroundColor: isVictim ? '#888' : teamColor }}
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ duration: 0.3 }}
       />
-      
+
       <motion.div
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -124,9 +125,9 @@ function CaptureNotification() {
         >
           {label}
         </motion.p>
-        
+
         {/* Main title */}
-        <motion.h1 
+        <motion.h1
           className="text-5xl font-black text-black tracking-tight mb-2"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -134,7 +135,7 @@ function CaptureNotification() {
         >
           {title}
         </motion.h1>
-        
+
         {/* Art name */}
         <motion.p
           initial={{ opacity: 0 }}
@@ -144,7 +145,7 @@ function CaptureNotification() {
         >
           {captureNotification.artName}
         </motion.p>
-        
+
         {/* Eat animation - always show, loops A → B → A... */}
         {showEatAnimation && (
           <motion.div
@@ -156,7 +157,7 @@ function CaptureNotification() {
             <EatAnimation />
           </motion.div>
         )}
-        
+
         {/* Points - only show to active player */}
         {showPoints && (
           <>
@@ -166,14 +167,14 @@ function CaptureNotification() {
               transition={{ delay: 0.3, type: 'spring', stiffness: 150 }}
               className="mb-2"
             >
-              <span 
+              <span
                 className="text-8xl font-black"
                 style={{ color: teamColor }}
               >
                 +{points}
               </span>
             </motion.div>
-            
+
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -184,10 +185,10 @@ function CaptureNotification() {
             </motion.p>
           </>
         )}
-        
+
         {/* Spacer when no points */}
         {!showPoints && <div className="mb-6" />}
-        
+
         {/* Streak badge - only for active player */}
         {isActivePlayer && streak > 1 && (
           <motion.div
@@ -199,7 +200,7 @@ function CaptureNotification() {
             <span className="font-black text-black">STREAK x{streak}</span>
           </motion.div>
         )}
-        
+
         {/* Player info */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -208,7 +209,7 @@ function CaptureNotification() {
           className="flex items-center justify-center gap-2"
         >
           <span className="font-bold text-black">{captureNotification.playerName}</span>
-          <span 
+          <span
             className="px-3 py-1 text-xs font-black text-white"
             style={{ backgroundColor: teamColor }}
           >
@@ -220,15 +221,86 @@ function CaptureNotification() {
   )
 }
 
+// Achievement unlock notification popup
+function AchievementNotification() {
+  const { achievementNotification } = useGame()
+
+  if (!achievementNotification) return null
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -100 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -100 }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none overflow-hidden bg-[#FAFAFA] font-nohemi"
+    >
+      {/* Top accent bar - gold */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 h-2 bg-yellow-500"
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 0.3 }}
+      />
+
+      <motion.div
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1, type: 'spring', stiffness: 100 }}
+        className="text-center px-8"
+      >
+        {/* Label */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-sm tracking-widest text-black/30 mb-4"
+        >
+          ACHIEVEMENT UNLOCKED
+        </motion.p>
+
+        {/* Icon */}
+        <motion.div
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: 0.25, type: 'spring', stiffness: 150 }}
+          className="text-7xl mb-4"
+        >
+          {achievementNotification.icon}
+        </motion.div>
+
+        {/* Achievement name */}
+        <motion.h1
+          className="text-4xl font-black text-black tracking-tight mb-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+        >
+          {achievementNotification.name}
+        </motion.h1>
+
+        {/* Description */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45 }}
+          className="text-lg text-black/50"
+        >
+          {achievementNotification.description}
+        </motion.p>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 // Wrapper to check if user is onboarded
 function RequireOnboarding({ children }) {
   const { player } = useGame()
   const isOnboarded = player.team && player.name && player.name !== 'Street Artist'
-  
+
   if (!isOnboarded) {
     return <Navigate to="/onboarding" replace />
   }
-  
+
   return children
 }
 
@@ -237,14 +309,19 @@ function AppContent() {
   const { player } = useGame()
   const isOnboarded = player.team && player.name && player.name !== 'Street Artist'
   const hideNav = location.pathname === '/onboarding' || location.pathname === '/admin'
-  
+
   return (
     <div className="h-full w-full flex flex-col">
       {/* Real-time capture notifications */}
       <AnimatePresence>
         <CaptureNotification />
       </AnimatePresence>
-      
+
+      {/* Achievement unlock notifications */}
+      <AnimatePresence>
+        <AchievementNotification />
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/onboarding" element={<Onboarding />} />
@@ -253,6 +330,7 @@ function AppContent() {
           <Route path="/scanner" element={<RequireOnboarding><Scanner /></RequireOnboarding>} />
           <Route path="/leaderboard" element={<RequireOnboarding><Leaderboard /></RequireOnboarding>} />
           <Route path="/profile" element={<RequireOnboarding><Profile /></RequireOnboarding>} />
+          <Route path="/achievements" element={<RequireOnboarding><Achievements /></RequireOnboarding>} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </AnimatePresence>

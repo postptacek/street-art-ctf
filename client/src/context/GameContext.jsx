@@ -3,6 +3,7 @@ import { doc, setDoc, onSnapshot, collection, getDocs, deleteDoc } from 'firebas
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth'
 import { db, auth } from '../config/firebase'
 import { ART_POINTS, TEAMS, getPointValue, calculateTeamScores } from '../data/pragueMap'
+import { checkAchievements, getNewlyUnlocked, getAchievement } from '../data/achievements'
 
 const GameContext = createContext(null)
 
@@ -11,7 +12,8 @@ const STORAGE_KEYS = {
   player: 'streetart-ctf-player',
   captures: 'streetart-ctf-captures',
   discoveries: 'streetart-discoveries', // Personal discoveries (permanent)
-  gameMode: 'streetart-game-mode' // 'solo' or 'team'
+  gameMode: 'streetart-game-mode', // 'solo' or 'team'
+  achievements: 'streetart-achievements' // Unlocked achievements
 }
 
 // Game modes
@@ -121,6 +123,12 @@ export function GameProvider({ children }) {
   const [captureNotification, setCaptureNotification] = useState(null)
   const [recentCaptures, setRecentCaptures] = useState([])
   const prevCapturesRef = useRef({})
+
+  // Achievements state
+  const [unlockedAchievements, setUnlockedAchievements] = useState(() =>
+    loadFromStorage(STORAGE_KEYS.achievements, [])
+  )
+  const [achievementNotification, setAchievementNotification] = useState(null)
 
   // Subscribe to captures collection (real-time sync) - works without auth
   useEffect(() => {
@@ -277,6 +285,26 @@ export function GameProvider({ children }) {
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.player, player)
   }, [player])
+
+  // Check for new achievements when player state changes
+  useEffect(() => {
+    const currentUnlocked = checkAchievements(player, discoveries, artPoints, {})
+    const newlyUnlocked = getNewlyUnlocked(unlockedAchievements, currentUnlocked)
+
+    if (newlyUnlocked.length > 0) {
+      // Update unlocked achievements
+      const allUnlocked = [...new Set([...unlockedAchievements, ...newlyUnlocked])]
+      setUnlockedAchievements(allUnlocked)
+      saveToStorage(STORAGE_KEYS.achievements, allUnlocked)
+
+      // Show notification for first new achievement
+      const achievement = getAchievement(newlyUnlocked[0])
+      if (achievement) {
+        setAchievementNotification(achievement)
+        setTimeout(() => setAchievementNotification(null), 4000)
+      }
+    }
+  }, [player.score, player.captureCount, player.recaptureCount, player.discoveryCount, player.streak, player.firstCaptureCount])
 
   // Sync a single capture to Firebase with full details
   const syncCaptureToFirebase = useCallback(async (artId, captureData) => {
@@ -705,6 +733,10 @@ export function GameProvider({ children }) {
     gameMode,
     discoveries,
     discoveryCount: Object.keys(discoveries).length,
+
+    // Achievements
+    unlockedAchievements,
+    achievementNotification,
 
     // Actions
     setGameMode,
