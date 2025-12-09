@@ -1,15 +1,11 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useGame } from '../context/GameContext'
-import { getPointValue } from '../data/pragueMap'
 
 const TEAM_CONFIG = {
   red: { color: '#E53935', name: 'RED' },
   blue: { color: '#1E88E5', name: 'BLUE' }
 }
-
-// 24 hour decay
-const DECAY_DURATION = 24 * 60 * 60 * 1000
 
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000)
@@ -21,40 +17,44 @@ function timeAgo(date) {
   return `${Math.floor(hours / 24)}d`
 }
 
-// Check if capture is still active (not fully decayed)
-function isActiveCapture(capturedAt) {
-  if (!capturedAt) return false
-  const captureTime = capturedAt.toDate ? capturedAt.toDate() : new Date(capturedAt)
-  const elapsed = Date.now() - captureTime.getTime()
-  return elapsed < DECAY_DURATION
-}
-
 function Home() {
-  const { player, teamScores, recentCaptures, isOnline, artPoints } = useGame()
+  const { player, recentCaptures, isOnline, artPoints } = useGame()
 
-  // Calculate effective scores - only count active (non-decayed) captures
-  const effectiveScores = useMemo(() => {
-    let red = 0, blue = 0
-    artPoints?.forEach(p => {
-      if (p.capturedBy && p.status !== 'ghost' && isActiveCapture(p.capturedAt)) {
-        const points = getPointValue(p)
-        if (p.capturedBy === 'red') red += points
-        if (p.capturedBy === 'blue') blue += points
-      }
-    })
-    return { red, blue }
+  // Count chomps held by each team (no decay)
+  const teamStats = useMemo(() => {
+    const activePoints = artPoints?.filter(p => p.status !== 'ghost') || []
+    const total = activePoints.length
+    const red = activePoints.filter(p => p.capturedBy === 'red').length
+    const blue = activePoints.filter(p => p.capturedBy === 'blue').length
+    const unclaimed = total - red - blue
+
+    const redPercent = total > 0 ? Math.round((red / total) * 100) : 0
+    const bluePercent = total > 0 ? Math.round((blue / total) * 100) : 0
+
+    return { total, red, blue, unclaimed, redPercent, bluePercent }
   }, [artPoints])
 
-  const totalScore = effectiveScores.red + effectiveScores.blue
-  const redPercent = totalScore > 0 ? Math.round((effectiveScores.red / totalScore) * 100) : 50
-  const bluePercent = 100 - redPercent
-  const leading = effectiveScores.red > effectiveScores.blue ? 'red' : effectiveScores.blue > effectiveScores.red ? 'blue' : null
+  // Determine who's winning and by how much
+  const getStatusMessage = () => {
+    if (!player.team) return ''
 
-  // Count current chomps held by each team (only active, non-decayed)
-  const redChomps = artPoints?.filter(p => p.capturedBy === 'red' && p.status !== 'ghost' && isActiveCapture(p.capturedAt)).length || 0
-  const blueChomps = artPoints?.filter(p => p.capturedBy === 'blue' && p.status !== 'ghost' && isActiveCapture(p.capturedAt)).length || 0
-  const totalChomps = artPoints?.filter(p => p.status !== 'ghost').length || 0
-  const unclaimed = totalChomps - redChomps - blueChomps
+    const diff = Math.abs(teamStats.redPercent - teamStats.bluePercent)
+    const redLeading = teamStats.red > teamStats.blue
+    const blueLeading = teamStats.blue > teamStats.red
+    const yourTeamLeading = (player.team === 'red' && redLeading) || (player.team === 'blue' && blueLeading)
+
+    if (diff === 0 && teamStats.red === teamStats.blue) {
+      return teamStats.red === 0 ? 'No territory claimed yet' : 'Teams are tied!'
+    }
+
+    if (yourTeamLeading) {
+      return diff >= 20 ? `Dominating by ${diff}%!` : `Leading by ${diff}%`
+    } else {
+      return diff >= 20 ? `Behind by ${diff}%` : `Trailing by ${diff}%`
+    }
+  }
+
+  const yourTeamColor = TEAM_CONFIG[player.team]?.color || '#888'
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#FAFAFA] font-nohemi">
@@ -63,7 +63,7 @@ function Home() {
         <motion.p
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-sm tracking-widest text-black/40 mb-1"
+          className="text-xs tracking-widest text-black/30 mb-1"
         >
           {isOnline ? 'LIVE' : 'OFFLINE'}
         </motion.p>
@@ -71,173 +71,138 @@ function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-4xl font-bold text-black tracking-tight"
+          className="text-3xl font-bold text-black tracking-tight"
         >
-          Battle Room
+          Battle
         </motion.h1>
       </div>
 
-      {/* Score Battle */}
+      {/* Territory Control - THE primary metric */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="px-6 mb-8"
+        className="px-6 mb-6"
       >
-        {/* Active scores (current round) */}
-        <div className="flex justify-between items-end mb-3">
-          <div>
-            <div className="text-xs text-black/30 mb-1">RED</div>
-            <div
+        {/* Percentage display */}
+        <div className="flex justify-between items-baseline mb-2">
+          <div className="flex items-baseline gap-2">
+            <span
               className="text-4xl font-black"
-              style={{ color: leading === 'red' ? TEAM_CONFIG.red.color : 'rgba(0,0,0,0.2)' }}
+              style={{ color: TEAM_CONFIG.red.color }}
             >
-              {effectiveScores.red}
-            </div>
+              {teamStats.redPercent}%
+            </span>
           </div>
-          <div className="text-xl font-bold text-black/20 pb-1">vs</div>
-          <div className="text-right">
-            <div className="text-xs text-black/30 mb-1">BLUE</div>
-            <div
+          <div className="flex items-baseline gap-2">
+            <span
               className="text-4xl font-black"
-              style={{ color: leading === 'blue' ? TEAM_CONFIG.blue.color : 'rgba(0,0,0,0.2)' }}
+              style={{ color: TEAM_CONFIG.blue.color }}
             >
-              {effectiveScores.blue}
-            </div>
+              {teamStats.bluePercent}%
+            </span>
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="h-2 bg-black/5 flex overflow-hidden">
+        {/* Territory bar */}
+        <div className="h-3 bg-black/10 flex overflow-hidden mb-3">
           <motion.div
             className="h-full"
             style={{ backgroundColor: TEAM_CONFIG.red.color }}
-            initial={{ width: '50%' }}
-            animate={{ width: `${redPercent}%` }}
+            initial={{ width: '0%' }}
+            animate={{ width: `${teamStats.redPercent}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           />
+          {teamStats.unclaimed > 0 && (
+            <div
+              className="h-full bg-black/5"
+              style={{ width: `${100 - teamStats.redPercent - teamStats.bluePercent}%` }}
+            />
+          )}
           <motion.div
             className="h-full"
             style={{ backgroundColor: TEAM_CONFIG.blue.color }}
-            initial={{ width: '50%' }}
-            animate={{ width: `${bluePercent}%` }}
+            initial={{ width: '0%' }}
+            animate={{ width: `${teamStats.bluePercent}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           />
         </div>
 
-        {/* Chomps owned */}
-        <div className="flex justify-between mt-4 pt-4 border-t border-black/5">
-          <div className="text-center">
-            <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.red.color }}>{redChomps}</div>
-            <div className="text-[10px] text-black/30">{redChomps === 1 ? 'chomp' : 'chomps'}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-black/20">{unclaimed}</div>
-            <div className="text-[10px] text-black/30">unclaimed</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.blue.color }}>{blueChomps}</div>
-            <div className="text-[10px] text-black/30">{blueChomps === 1 ? 'chomp' : 'chomps'}</div>
-          </div>
+        {/* Chomps count */}
+        <div className="flex justify-between text-xs text-black/40">
+          <span>{teamStats.red} chomps</span>
+          {teamStats.unclaimed > 0 && (
+            <span className="text-black/20">{teamStats.unclaimed} unclaimed</span>
+          )}
+          <span>{teamStats.blue} chomps</span>
         </div>
       </motion.div>
 
-      {/* Total Team Scores */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-        className="px-6 mb-6"
-      >
-        <p className="text-sm tracking-widest text-black/40 mb-3">TOTAL SCORES</p>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-8" style={{ backgroundColor: TEAM_CONFIG.red.color }} />
-            <div>
-              <div className="text-2xl font-black" style={{ color: TEAM_CONFIG.red.color }}>{teamScores.red}</div>
-              <div className="text-xs text-black/30">all time</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div>
-              <div className="text-2xl font-black text-right" style={{ color: TEAM_CONFIG.blue.color }}>{teamScores.blue}</div>
-              <div className="text-xs text-black/30 text-right">all time</div>
-            </div>
-            <div className="w-2 h-8" style={{ backgroundColor: TEAM_CONFIG.blue.color }} />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Player Card */}
+      {/* Status message */}
       {player.team && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="mx-6 mb-8 p-5"
-          style={{ backgroundColor: TEAM_CONFIG[player.team].color }}
+          className="px-6 mb-8"
         >
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="text-white/60 text-xs tracking-widest mb-1">YOU</div>
-              <div className="text-2xl font-bold text-white">{player.name}</div>
-              <div className="text-white/60 text-sm mt-1">Team {TEAM_CONFIG[player.team].name}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-4xl font-black text-white">{player.score}</div>
-              <div className="text-white/60 text-xs">points</div>
-            </div>
+          <div
+            className="text-center py-3 text-sm font-bold"
+            style={{
+              color: yourTeamColor,
+              backgroundColor: `${yourTeamColor}10`
+            }}
+          >
+            {getStatusMessage()}
           </div>
         </motion.div>
       )}
 
-      {/* Live Activity */}
+      {/* Activity Feed */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
         className="px-6 pb-32"
       >
-        <p className="text-sm tracking-widest text-black/40 mb-4">ACTIVITY</p>
+        <p className="text-xs tracking-widest text-black/30 mb-4">ACTIVITY</p>
 
         {recentCaptures.length === 0 ? (
           <div className="py-12 text-center">
-            <div className="text-6xl font-black text-black/5 mb-2">0</div>
-            <div className="text-black/30">No captures yet</div>
-            <div className="text-black/20 text-sm">Be the first to claim territory</div>
+            <div className="text-5xl font-black text-black/5 mb-2">0</div>
+            <div className="text-black/30 text-sm">No captures yet</div>
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-0">
             {recentCaptures.map((capture, index) => {
-              const config = TEAM_CONFIG[capture.team] || { color: '#888', name: '?' }
-              // Build score explanation
-              const sizeLabel = capture.size ? capture.size.charAt(0).toUpperCase() : ''
-              const bonusLabel = capture.isFirstCapture ? '+50%' : capture.isRecapture ? '+25%' : ''
-              const bonusType = capture.isFirstCapture ? 'first' : capture.isRecapture ? 'steal' : ''
+              const config = TEAM_CONFIG[capture.team] || { color: '#888' }
+              const isYou = capture.playerName === player.name
               return (
                 <motion.div
                   key={capture.id}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + index * 0.05 }}
-                  className="flex items-center gap-4 py-3 border-b border-black/5"
+                  transition={{ delay: 0.45 + index * 0.03 }}
+                  className={`flex items-center gap-3 py-3 border-b border-black/5 ${isYou ? 'bg-black/[0.02] -mx-3 px-3' : ''}`}
                 >
                   <div
-                    className="w-1 h-10 flex-shrink-0"
+                    className="w-1 h-8 flex-shrink-0"
                     style={{ backgroundColor: config.color }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-black truncate">{capture.artName}</div>
-                    <div className="text-sm text-black/40">
-                      {capture.playerName} · {capture.area}
+                    <div className="text-sm font-medium text-black truncate">
+                      {capture.artName}
+                    </div>
+                    <div className="text-xs text-black/40">
+                      {isYou ? 'You' : capture.playerName}
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="font-bold" style={{ color: config.color }}>+{capture.points}</div>
+                    <div className="text-sm font-bold" style={{ color: config.color }}>
+                      +{capture.points}
+                    </div>
                     <div className="text-[10px] text-black/30">
-                      {sizeLabel && <span>{sizeLabel}</span>}
-                      {bonusLabel && <span> {bonusLabel} {bonusType}</span>}
-                      {!sizeLabel && !bonusLabel && <span>{timeAgo(capture.capturedAt)}</span>}
+                      {timeAgo(capture.capturedAt)}
                     </div>
                   </div>
                 </motion.div>
