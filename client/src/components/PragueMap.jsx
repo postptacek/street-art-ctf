@@ -122,13 +122,17 @@ function FlyToHood({ hood }) {
   return null
 }
 
-// Fly to specific point (for activity navigation)
+// Fly to specific point (for activity navigation) - uses delay to override FlyToHood
 function FlyToPoint({ location, zoom = 17 }) {
   const map = useMap()
 
   useEffect(() => {
     if (location && Array.isArray(location) && location.length === 2) {
-      map.flyTo(location, zoom, { duration: 1 })
+      // Use timeout to ensure this runs after FlyToHood
+      const timer = setTimeout(() => {
+        map.flyTo(location, zoom, { duration: 1 })
+      }, 100)
+      return () => clearTimeout(timer)
     }
   }, [location, zoom, map])
 
