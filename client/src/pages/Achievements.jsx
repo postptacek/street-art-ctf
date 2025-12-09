@@ -85,8 +85,8 @@ function Achievements() {
                 <button
                     onClick={() => setSelectedCategory(null)}
                     className={`px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-all ${selectedCategory === null
-                            ? 'bg-black text-white'
-                            : 'bg-black/5 text-black/60'
+                        ? 'bg-black text-white'
+                        : 'bg-black/5 text-black/60'
                         }`}
                 >
                     ALL
@@ -96,8 +96,8 @@ function Achievements() {
                         key={key}
                         onClick={() => setSelectedCategory(key)}
                         className={`px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-all ${selectedCategory === key
-                                ? 'text-white'
-                                : 'bg-black/5 text-black/60'
+                            ? 'text-white'
+                            : 'bg-black/5 text-black/60'
                             }`}
                         style={selectedCategory === key ? { backgroundColor: color } : {}}
                     >
@@ -126,18 +126,22 @@ function Achievements() {
                                 transition={{ delay: 0.3 + index * 0.02 }}
                                 onClick={() => handleAchievementClick(achievement, isUnlocked)}
                                 className={`aspect-square flex flex-col items-center justify-center p-3 border-2 ${isUnlocked
-                                        ? 'bg-white border-black cursor-pointer active:bg-black/5'
-                                        : 'bg-black/5 border-transparent'
+                                    ? 'bg-white border-black cursor-pointer active:bg-black/5'
+                                    : 'bg-black/5 border-transparent'
                                     }`}
                             >
-                                {/* Text-based icon marker */}
-                                <div
-                                    className={`w-10 h-10 flex items-center justify-center mb-2 ${isUnlocked ? 'bg-black' : 'bg-black/20'
-                                        }`}
-                                >
-                                    <span className={`text-xs font-black ${isUnlocked ? 'text-white' : 'text-black/30'}`}>
-                                        {achievement.name.charAt(0)}
-                                    </span>
+                                {/* Chomp icon */}
+                                <div className="w-12 h-12 mb-2 relative flex items-center justify-center">
+                                    <img
+                                        src={`${import.meta.env.BASE_URL}animation/eat_a/eat_a_00000.png`}
+                                        alt=""
+                                        className="w-full h-full object-contain"
+                                        style={{
+                                            filter: isUnlocked
+                                                ? `hue-rotate(${player.team === 'red' ? '0deg' : '200deg'}) saturate(1.5)`
+                                                : 'grayscale(100%) opacity(0.3)'
+                                        }}
+                                    />
                                 </div>
                                 <div
                                     className={`text-[10px] font-bold text-center leading-tight ${isUnlocked ? 'text-black' : 'text-black/30'
@@ -176,11 +180,16 @@ function Achievements() {
                             className="bg-[#FAFAFA] p-8 max-w-sm w-full text-center"
                             onClick={e => e.stopPropagation()}
                         >
-                            {/* Large icon marker */}
-                            <div className="w-20 h-20 bg-black mx-auto mb-4 flex items-center justify-center">
-                                <span className="text-2xl font-black text-white">
-                                    {selectedAchievement.name.charAt(0)}
-                                </span>
+                            {/* Large chomp icon */}
+                            <div className="w-24 h-24 mx-auto mb-4">
+                                <img
+                                    src={`${import.meta.env.BASE_URL}animation/eat_a/eat_a_00000.png`}
+                                    alt=""
+                                    className="w-full h-full object-contain"
+                                    style={{
+                                        filter: `hue-rotate(${player.team === 'red' ? '0deg' : '200deg'}) saturate(1.5)`
+                                    }}
+                                />
                             </div>
 
                             <h2 className="text-2xl font-black text-black mb-2">

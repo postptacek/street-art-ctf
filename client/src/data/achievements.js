@@ -41,8 +41,8 @@ export const ACHIEVEMENTS = [
 
     // === SOLO MODE - Area Achievements ===
     {
-        id: 'tourist',
-        name: 'Tourist',
+        id: 'traveller',
+        name: 'Traveller',
         description: 'Visit 3 different areas',
         icon: '🚶',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
