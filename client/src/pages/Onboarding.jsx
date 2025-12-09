@@ -379,7 +379,7 @@ export default function Onboarding() {
               <img
                 src={`${import.meta.env.BASE_URL}animations/scan.gif`}
                 alt="Scanning"
-                className="w-28 h-28 object-contain border-2 border-black"
+                className="w-48 h-48 object-contain border-2 border-black"
                 style={{ filter: 'hue-rotate(140deg)' }}
               />
             </motion.div>

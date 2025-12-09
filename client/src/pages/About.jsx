@@ -178,8 +178,13 @@ export default function About() {
                             whileHover={{ scale: 1.05 }}
                             className="p-6 bg-white border-2 border-black"
                         >
-                            <div className="w-12 h-12 mb-4 mx-auto bg-black flex items-center justify-center">
-                                <span className="text-xl font-black text-white">2</span>
+                            <div className="w-20 h-20 mb-4 mx-auto">
+                                <img
+                                    src={`${import.meta.env.BASE_URL}animations/scan.gif`}
+                                    alt="Scanning"
+                                    className="w-full h-full object-contain border border-black"
+                                    style={{ filter: 'hue-rotate(140deg)' }}
+                                />
                             </div>
                             <h3 className="font-bold text-black mb-2">SCAN</h3>
                             <p className="text-black/60 text-sm">Use AR to scan and discover the hidden Chomp character in each location.</p>
