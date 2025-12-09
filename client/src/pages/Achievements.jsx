@@ -130,15 +130,15 @@ function Achievements() {
                                     : 'bg-black/5 border-transparent'
                                     }`}
                             >
-                                {/* Chomp icon */}
-                                <div className="w-12 h-12 mb-2 relative flex items-center justify-center">
+                                {/* Chumper icon */}
+                                <div className="w-16 h-16 mb-2 relative flex items-center justify-center">
                                     <img
-                                        src={`${import.meta.env.BASE_URL}animation/eat_a/eat_a_00000.png`}
+                                        src={`${import.meta.env.BASE_URL}chumper.png`}
                                         alt=""
                                         className="w-full h-full object-contain"
                                         style={{
                                             filter: isUnlocked
-                                                ? `hue-rotate(${player.team === 'red' ? '0deg' : '200deg'}) saturate(1.5)`
+                                                ? `hue-rotate(${player.team === 'red' ? '0deg' : '200deg'}) saturate(1.2)`
                                                 : 'grayscale(100%) opacity(0.3)'
                                         }}
                                     />
@@ -180,14 +180,14 @@ function Achievements() {
                             className="bg-[#FAFAFA] p-8 max-w-sm w-full text-center"
                             onClick={e => e.stopPropagation()}
                         >
-                            {/* Large chomp icon */}
-                            <div className="w-24 h-24 mx-auto mb-4">
+                            {/* Large chumper icon */}
+                            <div className="w-28 h-28 mx-auto mb-4">
                                 <img
-                                    src={`${import.meta.env.BASE_URL}animation/eat_a/eat_a_00000.png`}
+                                    src={`${import.meta.env.BASE_URL}chumper.png`}
                                     alt=""
                                     className="w-full h-full object-contain"
                                     style={{
-                                        filter: `hue-rotate(${player.team === 'red' ? '0deg' : '200deg'}) saturate(1.5)`
+                                        filter: `hue-rotate(${player.team === 'red' ? '0deg' : '200deg'}) saturate(1.2)`
                                     }}
                                 />
                             </div>

@@ -297,14 +297,27 @@ export function GameProvider({ children }) {
       setUnlockedAchievements(allUnlocked)
       saveToStorage(STORAGE_KEYS.achievements, allUnlocked)
 
-      // Show notification for first new achievement
-      const achievement = getAchievement(newlyUnlocked[0])
-      if (achievement) {
-        setAchievementNotification(achievement)
-        setTimeout(() => setAchievementNotification(null), 4000)
-      }
+      // Queue all new achievements for notification
+      const newAchievements = newlyUnlocked.map(id => getAchievement(id)).filter(Boolean)
+      showAchievementQueue(newAchievements)
     }
   }, [player.score, player.captureCount, player.recaptureCount, player.discoveryCount, player.streak, player.firstCaptureCount])
+
+  // Show achievement notifications one by one
+  const showAchievementQueue = useCallback((achievements) => {
+    if (achievements.length === 0) return
+
+    const [first, ...rest] = achievements
+    setAchievementNotification(first)
+
+    setTimeout(() => {
+      setAchievementNotification(null)
+      // Show next achievement after a short delay
+      if (rest.length > 0) {
+        setTimeout(() => showAchievementQueue(rest), 500)
+      }
+    }, 4000)
+  }, [])
 
   // Sync a single capture to Firebase with full details
   const syncCaptureToFirebase = useCallback(async (artId, captureData) => {

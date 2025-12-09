@@ -223,9 +223,11 @@ function CaptureNotification() {
 
 // Achievement unlock notification popup
 function AchievementNotification() {
-  const { achievementNotification } = useGame()
+  const { achievementNotification, player } = useGame()
 
   if (!achievementNotification) return null
+
+  const teamColor = player.team === 'red' ? '#E53935' : '#1E88E5'
 
   return (
     <motion.div
@@ -234,9 +236,10 @@ function AchievementNotification() {
       exit={{ opacity: 0, y: -100 }}
       className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none overflow-hidden bg-[#FAFAFA] font-nohemi"
     >
-      {/* Top accent bar - gold */}
+      {/* Top accent bar - team color */}
       <motion.div
-        className="absolute top-0 left-0 right-0 h-2 bg-yellow-500"
+        className="absolute top-0 left-0 right-0 h-2"
+        style={{ backgroundColor: teamColor }}
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ duration: 0.3 }}
@@ -253,17 +256,41 @@ function AchievementNotification() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-sm tracking-widest text-black/30 mb-6"
+          className="text-sm tracking-widest text-black/30 mb-4"
         >
           ACHIEVEMENT UNLOCKED
         </motion.p>
+
+        {/* Animated chumper icon with bounce */}
+        <motion.div
+          initial={{ scale: 0, rotate: -20 }}
+          animate={{
+            scale: 1,
+            rotate: 0,
+            y: [0, -10, 0, -5, 0]
+          }}
+          transition={{
+            duration: 0.6,
+            y: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+          }}
+          className="w-28 h-28 mx-auto mb-4"
+        >
+          <img
+            src={`${import.meta.env.BASE_URL}chumper.png`}
+            alt=""
+            className="w-full h-full object-contain"
+            style={{
+              filter: `hue-rotate(${player.team === 'red' ? '0deg' : '200deg'}) saturate(1.2)`
+            }}
+          />
+        </motion.div>
 
         {/* Achievement name */}
         <motion.h1
           className="text-5xl font-black text-black tracking-tight mb-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.3 }}
         >
           {achievementNotification.name}
         </motion.h1>
@@ -272,7 +299,7 @@ function AchievementNotification() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.35 }}
+          transition={{ delay: 0.4 }}
           className="text-lg text-black/50"
         >
           {achievementNotification.description}
