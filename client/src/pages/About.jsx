@@ -167,16 +167,20 @@ export default function About() {
                             whileHover={{ scale: 1.05 }}
                             className="p-6 bg-white border-2 border-black"
                         >
-                            <div className="text-4xl mb-4">🗺️</div>
+                            <div className="w-12 h-12 mb-4 mx-auto border-2 border-black flex items-center justify-center">
+                                <span className="text-xl font-black">1</span>
+                            </div>
                             <h3 className="font-bold text-black mb-2">EXPLORE</h3>
-                            <p className="text-black/60 text-sm">Walk the streets of Prague and find Chomp paste-ups hidden in plain sight.</p>
+                            <p className="text-black/60 text-sm">Walk the streets and find Chomp paste-ups hidden in plain sight.</p>
                         </motion.div>
 
                         <motion.div
                             whileHover={{ scale: 1.05 }}
                             className="p-6 bg-white border-2 border-black"
                         >
-                            <div className="text-4xl mb-4">📱</div>
+                            <div className="w-12 h-12 mb-4 mx-auto border-2 border-black flex items-center justify-center">
+                                <span className="text-xl font-black">2</span>
+                            </div>
                             <h3 className="font-bold text-black mb-2">SCAN</h3>
                             <p className="text-black/60 text-sm">Use AR to scan and discover the hidden Chomp character in each location.</p>
                         </motion.div>
@@ -185,7 +189,9 @@ export default function About() {
                             whileHover={{ scale: 1.05 }}
                             className="p-6 bg-white border-2 border-black"
                         >
-                            <div className="text-4xl mb-4">⚔️</div>
+                            <div className="w-12 h-12 mb-4 mx-auto border-2 border-black flex items-center justify-center">
+                                <span className="text-xl font-black">3</span>
+                            </div>
                             <h3 className="font-bold text-black mb-2">BATTLE</h3>
                             <p className="text-black/60 text-sm">Join a team. Capture territories. Compete for control of the city.</p>
                         </motion.div>
@@ -241,12 +247,13 @@ export default function About() {
                     <p className="text-sm tracking-widest text-black/40 mb-6">JOIN THE HUNT</p>
 
                     <h2 className="text-3xl md:text-4xl font-bold text-black mb-6">
-                        Find Chomp in Prague
+                        Find Chomp
                     </h2>
 
                     <p className="text-black/60 text-lg mb-8">
-                        Chomp paste-ups are scattered across Prague's neighborhoods —
-                        Holešovice, Karlín, Žižkov, Vinohrady, Letná, and the city center.
+                        Chomp paste-ups are scattered across two main regions —
+                        <span className="text-black font-bold"> Praha</span> (Centrum, Palmovka, Vysočany, Karlín, Libeň)
+                        and <span className="text-black font-bold">Poděbrady</span>, a spa town east of Prague.
                     </p>
 
                     <motion.div
