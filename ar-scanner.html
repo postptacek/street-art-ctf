@@ -165,7 +165,7 @@
     /* Hint */
     #hint {
       position: fixed;
-      bottom: 160px;
+      bottom: 175px;
       left: 0;
       right: 0;
       text-align: center;
@@ -180,12 +180,12 @@
 
     #zoom-hint {
       position: fixed;
-      bottom: 130px;
+      bottom: 155px;
       left: 0;
       right: 0;
       text-align: center;
-      color: rgba(255, 255, 255, 0.4);
-      font-size: 10px;
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 9px;
       font-weight: 500;
       letter-spacing: 0.1em;
       z-index: 100;
@@ -488,7 +488,7 @@
   </div>
 
   <div id="hint">POINT CAMERA AT STREET ART</div>
-  <div id="zoom-hint">Tap 1x button to zoom for small chomps</div>
+  <div id="zoom-hint">Pinch to zoom · Tap 1x for fixed zoom</div>
 
   <div id="capture-area">
     <div id="status">SEARCHING</div>
@@ -917,7 +917,7 @@
       console.log('AR Ready');
       document.getElementById('loading').classList.add('hidden');
 
-      // Setup zoom toggle functionality
+      // Setup zoom functionality
       var video = document.querySelector('video');
       if (video && video.srcObject) {
         var tracks = video.srcObject.getVideoTracks();
@@ -929,6 +929,52 @@
             window.zoomRange = capabilities.zoom;
             window.currentZoomLevel = 1;
             console.log('Zoom available:', window.zoomRange);
+
+            // Pinch to zoom
+            var initialDistance = 0;
+            var startZoom = 1;
+
+            document.addEventListener('touchstart', function (e) {
+              if (e.touches.length === 2) {
+                initialDistance = Math.hypot(
+                  e.touches[0].pageX - e.touches[1].pageX,
+                  e.touches[0].pageY - e.touches[1].pageY
+                );
+                startZoom = window.currentZoomLevel;
+              }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', function (e) {
+              if (e.touches.length === 2 && initialDistance > 0) {
+                var currentDistance = Math.hypot(
+                  e.touches[0].pageX - e.touches[1].pageX,
+                  e.touches[0].pageY - e.touches[1].pageY
+                );
+
+                var scale = currentDistance / initialDistance;
+                var newZoom = Math.min(Math.max(startZoom * scale, 1), 4);
+
+                var actualZoom = window.zoomRange.min + (newZoom - 1) * (window.zoomRange.max - window.zoomRange.min) / 3;
+                actualZoom = Math.min(Math.max(actualZoom, window.zoomRange.min), window.zoomRange.max);
+
+                window.videoTrack.applyConstraints({ advanced: [{ zoom: actualZoom }] })
+                  .then(function () {
+                    window.currentZoomLevel = newZoom;
+                    var btn = document.getElementById('zoom-btn');
+                    btn.textContent = newZoom > 1.5 ? '2x' : '1x';
+                    if (newZoom > 1.5) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                  })
+                  .catch(function () { });
+              }
+            }, { passive: true });
+
+            document.addEventListener('touchend', function (e) {
+              if (e.touches.length < 2) {
+                initialDistance = 0;
+              }
+            }, { passive: true });
+
           } else {
             console.log('Zoom not supported on this device');
             document.getElementById('zoom-btn').style.opacity = '0.3';
