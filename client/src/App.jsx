@@ -10,6 +10,7 @@ import Leaderboard from './pages/Leaderboard'
 import Profile from './pages/Profile'
 import Achievements from './pages/Achievements'
 import Admin from './pages/Admin'
+import About from './pages/About'
 import Navigation from './components/Navigation'
 import { getAchievementHue } from './data/achievements'
 
@@ -350,6 +351,7 @@ function AppContent() {
           <Route path="/profile" element={<RequireOnboarding><Profile /></RequireOnboarding>} />
           <Route path="/achievements" element={<RequireOnboarding><Achievements /></RequireOnboarding>} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/about" element={<About />} />
         </Routes>
       </AnimatePresence>
       {!hideNav && isOnboarded && <Navigation />}
