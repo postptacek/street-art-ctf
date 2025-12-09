@@ -167,8 +167,8 @@ export default function About() {
                             whileHover={{ scale: 1.05 }}
                             className="p-6 bg-white border-2 border-black"
                         >
-                            <div className="w-12 h-12 mb-4 mx-auto border-2 border-black flex items-center justify-center">
-                                <span className="text-xl font-black">1</span>
+                            <div className="w-12 h-12 mb-4 mx-auto bg-black flex items-center justify-center">
+                                <span className="text-xl font-black text-white">1</span>
                             </div>
                             <h3 className="font-bold text-black mb-2">EXPLORE</h3>
                             <p className="text-black/60 text-sm">Walk the streets and find Chomp paste-ups hidden in plain sight.</p>
@@ -178,8 +178,8 @@ export default function About() {
                             whileHover={{ scale: 1.05 }}
                             className="p-6 bg-white border-2 border-black"
                         >
-                            <div className="w-12 h-12 mb-4 mx-auto border-2 border-black flex items-center justify-center">
-                                <span className="text-xl font-black">2</span>
+                            <div className="w-12 h-12 mb-4 mx-auto bg-black flex items-center justify-center">
+                                <span className="text-xl font-black text-white">2</span>
                             </div>
                             <h3 className="font-bold text-black mb-2">SCAN</h3>
                             <p className="text-black/60 text-sm">Use AR to scan and discover the hidden Chomp character in each location.</p>
@@ -189,8 +189,8 @@ export default function About() {
                             whileHover={{ scale: 1.05 }}
                             className="p-6 bg-white border-2 border-black"
                         >
-                            <div className="w-12 h-12 mb-4 mx-auto border-2 border-black flex items-center justify-center">
-                                <span className="text-xl font-black">3</span>
+                            <div className="w-12 h-12 mb-4 mx-auto bg-black flex items-center justify-center">
+                                <span className="text-xl font-black text-white">3</span>
                             </div>
                             <h3 className="font-bold text-black mb-2">BATTLE</h3>
                             <p className="text-black/60 text-sm">Join a team. Capture territories. Compete for control of the city.</p>
@@ -274,22 +274,24 @@ export default function About() {
                         />
                     </motion.div>
 
-                    <p className="text-black/40 text-sm">
+                    <p className="text-black/40 text-sm mb-12">
                         Open your eyes. Chomp is hungry.
                     </p>
+
+                    {/* Play button */}
+                    <motion.a
+                        href="#/"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="inline-block bg-black text-white font-bold text-lg px-16 py-5"
+                    >
+                        PLAY
+                    </motion.a>
                 </motion.div>
             </div>
 
             {/* Footer */}
             <div className="p-8 text-center border-t border-black/10">
-                <motion.a
-                    href="#/"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="inline-block bg-black text-white font-bold text-lg px-12 py-4 mb-6"
-                >
-                    PLAY
-                </motion.a>
                 <p className="text-black/40 text-sm">
                     A street art project by <span className="text-black font-bold">PTACEK</span>
                 </p>
