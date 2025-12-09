@@ -37,7 +37,7 @@ const DISTRICTS = {
 }
 
 function Profile() {
-  const { player, artPoints, resetAll, discoveries } = useGame()
+  const { player, artPoints, resetAll, discoveries, unlockedAchievements } = useGame()
   const [isRandomizing, setIsRandomizing] = useState(false)
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
   const [isPWA, setIsPWA] = useState(false)
@@ -238,7 +238,12 @@ function Profile() {
         <Link to="/achievements" className="block">
           <div className="flex items-center justify-between py-3 border-b border-black/10">
             <p className="text-sm tracking-widest text-black/40">ACHIEVEMENTS</p>
-            <p className="text-sm text-black/40">→</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-black/40">
+                <span className="font-bold text-black">{unlockedAchievements?.length || 0}</span>/{ACHIEVEMENTS.length}
+              </p>
+              <span className="text-sm text-black/40">→</span>
+            </div>
           </div>
         </Link>
       </motion.div>
