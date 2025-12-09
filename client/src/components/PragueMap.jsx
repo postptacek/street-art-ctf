@@ -122,6 +122,19 @@ function FlyToHood({ hood }) {
   return null
 }
 
+// Fly to specific point (for activity navigation)
+function FlyToPoint({ location, zoom = 17 }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (location && Array.isArray(location) && location.length === 2) {
+      map.flyTo(location, zoom, { duration: 1 })
+    }
+  }, [location, zoom, map])
+
+  return null
+}
+
 // Fly to last capture location when returning to map
 function LastCaptureHandler() {
   const map = useMap()
@@ -333,18 +346,22 @@ export default function PragueMap() {
   const [showLines, setShowLines] = useState(false)
   const [territoryMode, setTerritoryMode] = useState('circles')
 
+  // Fly to specific location (set by activity navigation)
+  const [flyToLocation, setFlyToLocation] = useState(null)
+
   // Sync with context
   useEffect(() => {
     setLocalArtPoints(artPoints)
   }, [artPoints])
 
-  // Handle navigation from activity feed - select target point
+  // Handle navigation from activity feed - select target point and fly to it
   useEffect(() => {
     if (location.state?.targetArtId) {
       const targetPoint = localArtPoints.find(p => p.id === location.state.targetArtId)
       if (targetPoint) {
         setSelectedPoint(targetPoint)
         setViewMode('multi') // Switch to battle mode to show captures
+        setFlyToLocation(targetPoint.location) // Fly to the point
       }
       // Clear the state so it doesn't re-trigger
       window.history.replaceState({}, document.title)
@@ -553,6 +570,7 @@ export default function PragueMap() {
         <LocationButton />
         <ZoomDisplay devMode={devMode} />
         <FlyToHood hood={currentHood} />
+        <FlyToPoint location={flyToLocation} />
         <LastCaptureHandler />
 
         {/* Metro B line */}
