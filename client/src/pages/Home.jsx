@@ -201,8 +201,8 @@ function Home() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-sm font-bold" style={{ color: config.color }}>
-                      +{capture.points}
+                    <div className="text-xs font-medium" style={{ color: config.color }}>
+                      {capture.isRecapture ? 'Stole' : 'Captured'}
                     </div>
                     <div className="text-[10px] text-black/30">
                       {timeAgo(capture.capturedAt)}
