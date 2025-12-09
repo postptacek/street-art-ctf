@@ -1,7 +1,7 @@
 /**
  * Achievement Definitions
- * Each achievement has an id, name, description, icon, category, and check function
- * The check function receives (player, discoveries, artPoints, teamStats) and returns true if unlocked
+ * Each achievement has an id, name, description, icon, category, rarity, and check function
+ * Rarity levels: 1 (common/blue), 2 (uncommon/green), 3 (rare/purple), 4 (epic/orange), 5 (legendary/gold)
  */
 
 export const ACHIEVEMENT_CATEGORIES = {
@@ -12,6 +12,16 @@ export const ACHIEVEMENT_CATEGORIES = {
     SOCIAL: 'social'
 }
 
+// Rarity hue-rotate values (base image is pink/red-ish)
+// 1 = blue (200deg), 2 = green (120deg), 3 = purple (270deg), 4 = orange (30deg), 5 = gold (50deg)
+export const RARITY_CONFIG = {
+    1: { name: 'Common', hue: '200deg', color: '#3b82f6' },     // Blue
+    2: { name: 'Uncommon', hue: '120deg', color: '#22c55e' },   // Green
+    3: { name: 'Rare', hue: '270deg', color: '#a855f7' },       // Purple
+    4: { name: 'Epic', hue: '30deg', color: '#f97316' },        // Orange
+    5: { name: 'Legendary', hue: '50deg', color: '#eab308' }    // Gold
+}
+
 export const ACHIEVEMENTS = [
     // === SOLO MODE - Discovery Milestones ===
     {
@@ -20,6 +30,7 @@ export const ACHIEVEMENTS = [
         description: 'Discover your first street art',
         icon: '🔍',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
+        rarity: 1,
         check: (player) => player.discoveryCount >= 1
     },
     {
@@ -28,6 +39,7 @@ export const ACHIEVEMENTS = [
         description: 'Discover 10 pieces of street art',
         icon: '🗺️',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
+        rarity: 2,
         check: (player) => player.discoveryCount >= 10
     },
     {
@@ -36,6 +48,7 @@ export const ACHIEVEMENTS = [
         description: 'Discover 25 pieces of street art',
         icon: '📦',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
+        rarity: 3,
         check: (player) => player.discoveryCount >= 25
     },
 
@@ -46,6 +59,7 @@ export const ACHIEVEMENTS = [
         description: 'Visit 3 different areas',
         icon: '🚶',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
+        rarity: 2,
         check: (player) => (player.uniqueAreasVisited?.length || 0) >= 3
     },
     {
@@ -54,6 +68,7 @@ export const ACHIEVEMENTS = [
         description: 'Visit all areas',
         icon: '🌍',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
+        rarity: 4,
         check: (player) => (player.uniqueAreasVisited?.length || 0) >= 6
     },
 
@@ -64,6 +79,7 @@ export const ACHIEVEMENTS = [
         description: '3 captures in one day',
         icon: '🔥',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
+        rarity: 1,
         check: (player) => player.streak >= 3
     },
     {
@@ -72,6 +88,7 @@ export const ACHIEVEMENTS = [
         description: '5 captures in one day',
         icon: '🔥',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
+        rarity: 2,
         check: (player) => player.streak >= 5
     },
     {
@@ -80,6 +97,7 @@ export const ACHIEVEMENTS = [
         description: '10 captures in one day',
         icon: '💥',
         category: ACHIEVEMENT_CATEGORIES.SOLO,
+        rarity: 4,
         check: (player) => player.streak >= 10
     },
 
@@ -90,6 +108,7 @@ export const ACHIEVEMENTS = [
         description: 'Capture your first territory',
         icon: '⚔️',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
+        rarity: 1,
         check: (player) => player.captureCount >= 1
     },
     {
@@ -98,6 +117,7 @@ export const ACHIEVEMENTS = [
         description: 'Capture 10 territories',
         icon: '🗡️',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
+        rarity: 2,
         check: (player) => player.captureCount >= 10
     },
     {
@@ -106,6 +126,7 @@ export const ACHIEVEMENTS = [
         description: 'Capture 50 territories',
         icon: '👑',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
+        rarity: 5,
         check: (player) => player.captureCount >= 50
     },
 
@@ -116,6 +137,7 @@ export const ACHIEVEMENTS = [
         description: 'Steal your first territory',
         icon: '🦊',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
+        rarity: 1,
         check: (player) => player.recaptureCount >= 1
     },
     {
@@ -124,6 +146,7 @@ export const ACHIEVEMENTS = [
         description: 'Steal 10 territories',
         icon: '🏴‍☠️',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
+        rarity: 3,
         check: (player) => player.recaptureCount >= 10
     },
     {
@@ -132,6 +155,7 @@ export const ACHIEVEMENTS = [
         description: 'Steal 25 territories',
         icon: '💀',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
+        rarity: 4,
         check: (player) => player.recaptureCount >= 25
     },
 
@@ -142,6 +166,7 @@ export const ACHIEVEMENTS = [
         description: 'Contribute 500 points to your team',
         icon: '🤝',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
+        rarity: 2,
         check: (player) => player.score >= 500
     },
     {
@@ -150,6 +175,7 @@ export const ACHIEVEMENTS = [
         description: 'Contribute 2000 points to your team',
         icon: '⭐',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
+        rarity: 4,
         check: (player) => player.score >= 2000
     },
     {
@@ -158,6 +184,7 @@ export const ACHIEVEMENTS = [
         description: 'Contribute 5000 points to your team',
         icon: '🌟',
         category: ACHIEVEMENT_CATEGORIES.BATTLE,
+        rarity: 5,
         check: (player) => player.score >= 5000
     },
 
@@ -168,6 +195,7 @@ export const ACHIEVEMENTS = [
         description: 'Be the first to capture a territory',
         icon: '🚀',
         category: ACHIEVEMENT_CATEGORIES.SPECIAL,
+        rarity: 3,
         check: (player) => player.firstCaptureCount >= 1
     },
     {
@@ -176,6 +204,7 @@ export const ACHIEVEMENTS = [
         description: 'Capture before 7 AM',
         icon: '🌅',
         category: ACHIEVEMENT_CATEGORIES.SPECIAL,
+        rarity: 3,
         check: (player) => player.hasEarlyCapture === true
     },
     {
@@ -184,6 +213,7 @@ export const ACHIEVEMENTS = [
         description: 'Capture after 10 PM',
         icon: '🦉',
         category: ACHIEVEMENT_CATEGORIES.SPECIAL,
+        rarity: 3,
         check: (player) => player.hasNightCapture === true
     }
 ]

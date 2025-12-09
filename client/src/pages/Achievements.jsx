@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORIES, checkAchievements } from '../data/achievements'
+import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORIES, RARITY_CONFIG, checkAchievements } from '../data/achievements'
 
 const CATEGORY_LABELS = {
     [ACHIEVEMENT_CATEGORIES.SOLO]: { label: 'SOLO', color: '#10b981' },
@@ -138,7 +138,7 @@ function Achievements() {
                                         className="w-full h-full object-contain"
                                         style={{
                                             filter: isUnlocked
-                                                ? `hue-rotate(${player.team === 'red' ? '0deg' : '200deg'}) saturate(1.2)`
+                                                ? `hue-rotate(${RARITY_CONFIG[achievement.rarity]?.hue || '200deg'}) saturate(1.3)`
                                                 : 'grayscale(100%) opacity(0.3)'
                                         }}
                                     />
@@ -187,7 +187,7 @@ function Achievements() {
                                     alt=""
                                     className="w-full h-full object-contain"
                                     style={{
-                                        filter: `hue-rotate(${player.team === 'red' ? '0deg' : '200deg'}) saturate(1.2)`
+                                        filter: `hue-rotate(${RARITY_CONFIG[selectedAchievement.rarity]?.hue || '200deg'}) saturate(1.3)`
                                     }}
                                 />
                             </div>
