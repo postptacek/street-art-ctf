@@ -61,7 +61,7 @@ function AnimatedLetters({ text, className = '', delay = 0 }) {
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const { player, joinTeam, setPlayerName, allPlayers, teamScores } = useGame()
+  const { player, joinTeam, setPlayerName, allPlayers, teamScores, artPoints } = useGame()
   const [step, setStep] = useState(0)
   const [name, setName] = useState(() => player.name && player.name !== 'Street Artist' ? player.name : generateRandomName())
   const [assignedTeam, setAssignedTeam] = useState(null)
@@ -72,33 +72,39 @@ export default function Onboarding() {
     }
   }, [])
 
-  // Weighted team assignment based on score imbalance + randomness
+  // Team assignment based on score + current chomp count imbalance
   const assignTeamOnce = () => {
     if (assignedTeam) return assignedTeam // Already assigned
 
-    const IMBALANCE_WEIGHT = 0.6
-    const RANDOM_WEIGHT = 0.4
+    const SCORE_WEIGHT = 0.5    // 50% weight on total score
+    const CHOMPS_WEIGHT = 0.3   // 30% weight on current chomp counts
+    const RANDOM_WEIGHT = 0.2   // 20% random
 
+    // Get total scores
     const redScore = teamScores?.red || 0
     const blueScore = teamScores?.blue || 0
     const totalScore = redScore + blueScore
 
+    // Get current chomp counts
+    const activePoints = artPoints?.filter(p => p.capturedBy) || []
+    const redChomps = activePoints.filter(p => p.capturedBy === 'red').length
+    const blueChomps = activePoints.filter(p => p.capturedBy === 'blue').length
+    const totalChomps = redChomps + blueChomps
+
     let redProbability = 0.5 // Default: equal chance
 
-    if (totalScore > 0) {
-      // Calculate red dominance (0 to 1)
-      const redDominance = redScore / totalScore
+    // Calculate red dominance from score (0 to 1)
+    const scoreFactor = totalScore > 0 ? (1 - redScore / totalScore) : 0.5
 
-      // Invert: if red is dominant, lower chance to join red
-      const imbalanceFactor = 1 - redDominance
-      const randomFactor = 0.5
+    // Calculate red dominance from chomp count (0 to 1)
+    const chompsFactor = totalChomps > 0 ? (1 - redChomps / totalChomps) : 0.5
 
-      redProbability = (imbalanceFactor * IMBALANCE_WEIGHT) + (randomFactor * RANDOM_WEIGHT)
-    }
+    // Combine all factors
+    redProbability = (scoreFactor * SCORE_WEIGHT) + (chompsFactor * CHOMPS_WEIGHT) + (0.5 * RANDOM_WEIGHT)
 
     const team = Math.random() < redProbability ? 'red' : 'blue'
 
-    console.log(`Team Assignment: Red=${redScore} Blue=${blueScore} → P(Red)=${(redProbability * 100).toFixed(0)}% → Assigned: ${team}`)
+    console.log(`Team Assignment: Score(R${redScore}/B${blueScore}) Chomps(R${redChomps}/B${blueChomps}) → P(Red)=${(redProbability * 100).toFixed(0)}% → ${team}`)
 
     return team
   }
