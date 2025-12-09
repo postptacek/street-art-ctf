@@ -270,7 +270,8 @@ export function GameProvider({ children }) {
             name: data.name,
             team: data.team,
             score: data.score || 0,
-            captures: data.captures || 0
+            captures: data.captures || 0,
+            lastActiveAt: data.lastActiveAt?.toDate?.() || data.lastActiveAt || null
           })
         }
       })
@@ -370,7 +371,8 @@ export function GameProvider({ children }) {
         team: playerData.team,
         score: playerData.score || 0,
         captures: playerData.captureCount || 0,
-        joinedAt: new Date()
+        joinedAt: new Date(),
+        lastActiveAt: new Date()
       }, { merge: true })
     } catch (err) {
       console.warn('Failed to sync player to Firebase:', err)

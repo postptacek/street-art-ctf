@@ -72,13 +72,14 @@ export default function Onboarding() {
     }
   }, [])
 
-  // Team assignment based on score + current chomp count imbalance
+  // Team assignment based on score + chomps + active players
   const assignTeamOnce = () => {
     if (assignedTeam) return assignedTeam // Already assigned
 
-    const SCORE_WEIGHT = 0.5    // 50% weight on total score
-    const CHOMPS_WEIGHT = 0.3   // 30% weight on current chomp counts
-    const RANDOM_WEIGHT = 0.2   // 20% random
+    const SCORE_WEIGHT = 0.35   // 35% weight on total score
+    const CHOMPS_WEIGHT = 0.35  // 35% weight on current chomp counts  
+    const PLAYERS_WEIGHT = 0.15 // 15% weight on active player count
+    const RANDOM_WEIGHT = 0.15  // 15% random
 
     // Get total scores
     const redScore = teamScores?.red || 0
@@ -91,20 +92,28 @@ export default function Onboarding() {
     const blueChomps = activePoints.filter(p => p.capturedBy === 'blue').length
     const totalChomps = redChomps + blueChomps
 
-    let redProbability = 0.5 // Default: equal chance
+    // Get active players (last 7 days)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const activePlayers = allPlayers?.filter(p => {
+      if (!p.lastActiveAt) return false
+      const lastActive = p.lastActiveAt instanceof Date ? p.lastActiveAt : new Date(p.lastActiveAt)
+      return lastActive > sevenDaysAgo
+    }) || []
+    const redActive = activePlayers.filter(p => p.team === 'red').length
+    const blueActive = activePlayers.filter(p => p.team === 'blue').length
+    const totalActive = redActive + blueActive
 
-    // Calculate red dominance from score (0 to 1)
+    // Calculate factors (inverted - lower probability to join dominant team)
     const scoreFactor = totalScore > 0 ? (1 - redScore / totalScore) : 0.5
-
-    // Calculate red dominance from chomp count (0 to 1)
     const chompsFactor = totalChomps > 0 ? (1 - redChomps / totalChomps) : 0.5
+    const playersFactor = totalActive > 0 ? (1 - redActive / totalActive) : 0.5
 
     // Combine all factors
-    redProbability = (scoreFactor * SCORE_WEIGHT) + (chompsFactor * CHOMPS_WEIGHT) + (0.5 * RANDOM_WEIGHT)
+    const redProbability = (scoreFactor * SCORE_WEIGHT) + (chompsFactor * CHOMPS_WEIGHT) + (playersFactor * PLAYERS_WEIGHT) + (0.5 * RANDOM_WEIGHT)
 
     const team = Math.random() < redProbability ? 'red' : 'blue'
 
-    console.log(`Team Assignment: Score(R${redScore}/B${blueScore}) Chomps(R${redChomps}/B${blueChomps}) → P(Red)=${(redProbability * 100).toFixed(0)}% → ${team}`)
+    console.log(`Team Assignment: Score(R${redScore}/B${blueScore}) Chomps(R${redChomps}/B${blueChomps}) Active(R${redActive}/B${blueActive}) → P(Red)=${(redProbability * 100).toFixed(0)}% → ${team}`)
 
     return team
   }
