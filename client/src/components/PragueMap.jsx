@@ -360,9 +360,13 @@ export default function PragueMap() {
 
   // Handle navigation from activity feed - select target point and fly to it
   useEffect(() => {
+    console.log('[Nav Debug] location.state:', location.state, 'artPoints.length:', artPoints.length)
     if (location.state?.targetArtId && artPoints.length > 0) {
+      console.log('[Nav Debug] Looking for:', location.state.targetArtId)
       const targetPoint = artPoints.find(p => p.id === location.state.targetArtId)
+      console.log('[Nav Debug] Found point:', targetPoint)
       if (targetPoint) {
+        console.log('[Nav Debug] Setting selectedPoint, viewMode=multi, flyToLocation')
         setSelectedPoint(targetPoint)
         setViewMode('multi') // Switch to battle mode to show captures
         setFlyToLocation(targetPoint.location) // Fly to the point
