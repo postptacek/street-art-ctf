@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORIES, checkAchievements } from '../data/achievements'
@@ -16,6 +16,7 @@ function Achievements() {
     const navigate = useNavigate()
     const { player, discoveries, artPoints, unlockedAchievements } = useGame()
     const [selectedCategory, setSelectedCategory] = useState(null)
+    const [selectedAchievement, setSelectedAchievement] = useState(null)
 
     // Calculate which achievements should be unlocked based on current state
     const currentlyUnlocked = useMemo(() => {
@@ -36,6 +37,12 @@ function Achievements() {
 
     const unlockedCount = allUnlocked.length
     const totalCount = ACHIEVEMENTS.length
+
+    const handleAchievementClick = (achievement, isUnlocked) => {
+        if (isUnlocked) {
+            setSelectedAchievement(achievement)
+        }
+    }
 
     return (
         <div className="flex-1 overflow-y-auto bg-[#FAFAFA] font-nohemi">
@@ -116,16 +123,21 @@ function Achievements() {
                                 key={achievement.id}
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.3 + index * 0.03 }}
+                                transition={{ delay: 0.3 + index * 0.02 }}
+                                onClick={() => handleAchievementClick(achievement, isUnlocked)}
                                 className={`aspect-square flex flex-col items-center justify-center p-3 border-2 ${isUnlocked
-                                        ? 'bg-white border-black'
+                                        ? 'bg-white border-black cursor-pointer active:bg-black/5'
                                         : 'bg-black/5 border-transparent'
                                     }`}
                             >
+                                {/* Text-based icon marker */}
                                 <div
-                                    className={`text-3xl mb-2 ${isUnlocked ? '' : 'grayscale opacity-30'}`}
+                                    className={`w-10 h-10 flex items-center justify-center mb-2 ${isUnlocked ? 'bg-black' : 'bg-black/20'
+                                        }`}
                                 >
-                                    {achievement.icon}
+                                    <span className={`text-xs font-black ${isUnlocked ? 'text-white' : 'text-black/30'}`}>
+                                        {achievement.name.charAt(0)}
+                                    </span>
                                 </div>
                                 <div
                                     className={`text-[10px] font-bold text-center leading-tight ${isUnlocked ? 'text-black' : 'text-black/30'
@@ -146,6 +158,56 @@ function Achievements() {
                     })}
                 </div>
             </motion.div>
+
+            {/* Achievement Detail Modal */}
+            <AnimatePresence>
+                {selectedAchievement && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50"
+                        onClick={() => setSelectedAchievement(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-[#FAFAFA] p-8 max-w-sm w-full text-center"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Large icon marker */}
+                            <div className="w-20 h-20 bg-black mx-auto mb-4 flex items-center justify-center">
+                                <span className="text-2xl font-black text-white">
+                                    {selectedAchievement.name.charAt(0)}
+                                </span>
+                            </div>
+
+                            <h2 className="text-2xl font-black text-black mb-2">
+                                {selectedAchievement.name}
+                            </h2>
+
+                            <p className="text-black/50 mb-4">
+                                {selectedAchievement.description}
+                            </p>
+
+                            <div
+                                className="inline-block px-3 py-1 text-xs font-bold text-white mb-6"
+                                style={{ backgroundColor: CATEGORY_LABELS[selectedAchievement.category]?.color }}
+                            >
+                                {CATEGORY_LABELS[selectedAchievement.category]?.label}
+                            </div>
+
+                            <button
+                                onClick={() => setSelectedAchievement(null)}
+                                className="block w-full py-3 bg-black text-white font-bold text-sm"
+                            >
+                                CLOSE
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

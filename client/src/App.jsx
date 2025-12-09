@@ -253,27 +253,17 @@ function AchievementNotification() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-sm tracking-widest text-black/30 mb-4"
+          className="text-sm tracking-widest text-black/30 mb-6"
         >
           ACHIEVEMENT UNLOCKED
         </motion.p>
 
-        {/* Icon */}
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.25, type: 'spring', stiffness: 150 }}
-          className="text-7xl mb-4"
-        >
-          {achievementNotification.icon}
-        </motion.div>
-
         {/* Achievement name */}
         <motion.h1
-          className="text-4xl font-black text-black tracking-tight mb-2"
+          className="text-5xl font-black text-black tracking-tight mb-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
+          transition={{ delay: 0.25 }}
         >
           {achievementNotification.name}
         </motion.h1>
@@ -282,7 +272,7 @@ function AchievementNotification() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.45 }}
+          transition={{ delay: 0.35 }}
           className="text-lg text-black/50"
         >
           {achievementNotification.description}

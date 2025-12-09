@@ -233,18 +233,12 @@ function Profile() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="px-6 mb-8"
+        className="px-6 mb-4"
       >
-        <Link to="/achievements">
-          <div className="flex items-center justify-between p-4 bg-white border-2 border-black">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🏆</span>
-              <div>
-                <p className="font-bold text-black">Achievements</p>
-                <p className="text-xs text-black/40">View all achievements</p>
-              </div>
-            </div>
-            <div className="text-black/40">→</div>
+        <Link to="/achievements" className="block">
+          <div className="flex items-center justify-between py-3 border-b border-black/10">
+            <p className="text-sm tracking-widest text-black/40">ACHIEVEMENTS</p>
+            <p className="text-sm text-black/40">→</p>
           </div>
         </Link>
       </motion.div>
