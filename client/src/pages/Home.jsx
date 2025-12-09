@@ -201,11 +201,10 @@ function Home() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-xs font-medium" style={{ color: config.color }}>
-                      {capture.isRecapture ? 'Stole' : 'Captured'}
-                    </div>
-                    <div className="text-[10px] text-black/30">
-                      {timeAgo(capture.capturedAt)}
+                    <div className="text-xs text-black/40">
+                      {capture.isRecapture && capture.prevPlayerName
+                        ? `Stole from ${capture.prevPlayerName}`
+                        : timeAgo(capture.capturedAt)}
                     </div>
                   </div>
                 </motion.div>
@@ -219,3 +218,4 @@ function Home() {
 }
 
 export default Home
+

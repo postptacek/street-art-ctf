@@ -55,17 +55,17 @@ export function GameProvider({ children }) {
   // Firebase auth state
   const [firebaseUser, setFirebaseUser] = useState(null)
   const [isOnline, setIsOnline] = useState(true)
-  
+
   // Game mode - 'solo' (default) or 'team'
-  const [gameMode, setGameModeState] = useState(() => 
+  const [gameMode, setGameModeState] = useState(() =>
     loadFromStorage(STORAGE_KEYS.gameMode, GAME_MODES.SOLO)
   )
-  
+
   // Personal discoveries - permanent, independent of team control
-  const [discoveries, setDiscoveries] = useState(() => 
+  const [discoveries, setDiscoveries] = useState(() =>
     loadFromStorage(STORAGE_KEYS.discoveries, {})
   )
-  
+
   // Player state - persisted with game stats
   const [player, setPlayer] = useState(() => loadFromStorage(STORAGE_KEYS.player, {
     id: `player-${Date.now()}`,
@@ -86,7 +86,7 @@ export function GameProvider({ children }) {
     discoveryCount: 0,
     uniqueAreasVisited: []
   }))
-  
+
   // Art points state - merged with real data
   const [artPoints, setArtPoints] = useState(() => {
     const savedCaptures = loadFromStorage(STORAGE_KEYS.captures, {})
@@ -95,7 +95,7 @@ export function GameProvider({ children }) {
       capturedBy: savedCaptures[point.id] || null
     }))
   })
-  
+
   // Scan state
   const [scanResult, setScanResult] = useState(null)
   const [isScanning, setIsScanning] = useState(false)
@@ -121,18 +121,18 @@ export function GameProvider({ children }) {
   const [captureNotification, setCaptureNotification] = useState(null)
   const [recentCaptures, setRecentCaptures] = useState([])
   const prevCapturesRef = useRef({})
-  
+
   // Subscribe to captures collection (real-time sync) - works without auth
   useEffect(() => {
     let isFirstLoad = true
-    
+
     // Listen to all captures
     const capturesRef = collection(db, CAPTURES_COLLECTION)
     const unsubscribe = onSnapshot(capturesRef, (snapshot) => {
       const firebaseCaptures = {}
       const firebaseStatuses = {} // Track status overrides from Firebase
       const allCaptures = []
-      
+
       snapshot.forEach(doc => {
         const data = doc.data()
         // Store status if present (from admin panel)
@@ -146,6 +146,7 @@ export function GameProvider({ children }) {
             capturedAt: data.capturedAt?.toDate?.() || null
           }
           const artPoint = ART_POINTS.find(p => p.id === doc.id)
+          const prevCapture = prevCapturesRef.current[doc.id]
           allCaptures.push({
             id: doc.id,
             artName: artPoint?.name || doc.id,
@@ -154,22 +155,24 @@ export function GameProvider({ children }) {
             playerName: data.playerName || 'Unknown',
             capturedAt: data.capturedAt?.toDate?.() || new Date(),
             points: data.points || 100,
-            isRecapture: data.isRecapture || false
+            isRecapture: data.isRecapture || false,
+            prevPlayerName: prevCapture?.playerName || null,
+            prevTeam: prevCapture?.team || null
           })
         }
       })
-      
+
       // Sort by date and keep last 10
       const sorted = allCaptures.sort((a, b) => b.capturedAt - a.capturedAt).slice(0, 10)
       setRecentCaptures(sorted)
-      
+
       // Check for new captures (not on first load)
       if (!isFirstLoad) {
         snapshot.docChanges().forEach(change => {
           if (change.type === 'added' || change.type === 'modified') {
             const data = change.doc.data()
             const prevOwner = prevCapturesRef.current[change.doc.id]?.team
-            
+
             // Show notification if territory changed hands
             if (data.capturedBy && prevOwner !== data.capturedBy) {
               const artPoint = ART_POINTS.find(p => p.id === change.doc.id)
@@ -194,10 +197,10 @@ export function GameProvider({ children }) {
           }
         })
       }
-      
+
       isFirstLoad = false
       prevCapturesRef.current = firebaseCaptures
-      
+
       // Merge Firebase captures and status with local art points
       setArtPoints(ART_POINTS.map(point => {
         const capture = firebaseCaptures[point.id]
@@ -210,23 +213,23 @@ export function GameProvider({ children }) {
           status: firebaseStatuses[point.id] || point.status
         }
       }))
-      
+
       // Also save to localStorage as backup
       saveToStorage(STORAGE_KEYS.captures, firebaseCaptures)
       setIsOnline(true)
-      
+
       console.log('Firebase: Synced', Object.keys(firebaseCaptures).length, 'captures')
     }, (error) => {
       console.warn('Firestore sync error:', error)
       setIsOnline(false)
     })
-    
+
     return () => unsubscribe()
   }, [])
-  
+
   // Subscribe to team scores
   const [globalTeamScores, setGlobalTeamScores] = useState({ red: 0, blue: 0 })
-  
+
   useEffect(() => {
     const teamsRef = collection(db, TEAMS_COLLECTION)
     const unsubscribe = onSnapshot(teamsRef, (snapshot) => {
@@ -240,13 +243,13 @@ export function GameProvider({ children }) {
       setGlobalTeamScores(scores)
       console.log('Team scores:', scores)
     })
-    
+
     return () => unsubscribe()
   }, [])
-  
+
   // Subscribe to all players for leaderboard
   const [allPlayers, setAllPlayers] = useState([])
-  
+
   useEffect(() => {
     const playersRef = collection(db, PLAYERS_COLLECTION)
     const unsubscribe = onSnapshot(playersRef, (snapshot) => {
@@ -266,7 +269,7 @@ export function GameProvider({ children }) {
       setAllPlayers(players.sort((a, b) => b.score - a.score))
       console.log('Players loaded:', players.length)
     })
-    
+
     return () => unsubscribe()
   }, [])
 
@@ -319,7 +322,7 @@ export function GameProvider({ children }) {
     if (!playerData.name || playerData.name === 'Street Artist') return
     // Don't sync if no team yet
     if (!playerData.team) return
-    
+
     try {
       await setDoc(doc(db, PLAYERS_COLLECTION, playerData.id), {
         name: playerData.name,
@@ -336,18 +339,18 @@ export function GameProvider({ children }) {
   // Join a team and sync to Firebase
   const joinTeam = useCallback(async (teamColor) => {
     if (!TEAMS.includes(teamColor)) return
-    
+
     // Use functional update to get latest player state
     setPlayer(prev => {
       const updatedPlayer = { ...prev, team: teamColor }
       // Save directly to localStorage to ensure persistence
       saveToStorage(STORAGE_KEYS.player, updatedPlayer)
       // Fire and forget Firebase sync
-      syncPlayerToFirebase(updatedPlayer).catch(() => {})
+      syncPlayerToFirebase(updatedPlayer).catch(() => { })
       return updatedPlayer
     })
   }, [syncPlayerToFirebase])
-  
+
   // Set player name and sync to Firebase
   const setPlayerName = useCallback(async (name) => {
     // Use functional update to get latest player state
@@ -356,7 +359,7 @@ export function GameProvider({ children }) {
       // Save directly to localStorage to ensure persistence
       saveToStorage(STORAGE_KEYS.player, updatedPlayer)
       // Fire and forget Firebase sync
-      syncPlayerToFirebase(updatedPlayer).catch(() => {})
+      syncPlayerToFirebase(updatedPlayer).catch(() => { })
       return updatedPlayer
     })
   }, [syncPlayerToFirebase])
@@ -365,19 +368,19 @@ export function GameProvider({ children }) {
   const findNearestArt = useCallback((lat, lng, maxDistanceMeters = 50) => {
     let nearest = null
     let minDist = Infinity
-    
+
     artPoints.forEach(point => {
       // Haversine-ish distance in meters (approximate)
       const dLat = (point.location[0] - lat) * 111000
       const dLng = (point.location[1] - lng) * 111000 * Math.cos(lat * Math.PI / 180)
       const dist = Math.sqrt(dLat * dLat + dLng * dLng)
-      
+
       if (dist < minDist && dist <= maxDistanceMeters) {
         minDist = dist
         nearest = { ...point, distance: Math.round(dist) }
       }
     })
-    
+
     return nearest
   }, [artPoints])
 
@@ -393,14 +396,14 @@ export function GameProvider({ children }) {
     const basePoints = getPointValue(art)
     const bonuses = []
     let totalPoints = basePoints
-    
+
     const isRecapture = art.capturedBy && art.capturedBy !== playerState.team
     const isFirstCapture = !art.capturedBy
     const now = Date.now()
-    const timeSinceLastCapture = playerState.lastCaptureTime 
+    const timeSinceLastCapture = playerState.lastCaptureTime
       ? (now - playerState.lastCaptureTime) / 1000 / 60 // minutes
       : Infinity
-    
+
     // 1. Streak Bonus: +10% per streak level, max +100%
     const currentStreak = playerState.streak || 0
     if (currentStreak > 0) {
@@ -411,28 +414,28 @@ export function GameProvider({ children }) {
         bonuses.push({ type: 'streak', label: `${currentStreak}x Streak`, points: streakBonus })
       }
     }
-    
+
     // 2. Recapture Bonus: +50% for stealing from enemy
     if (isRecapture) {
       const recaptureBonus = Math.round(basePoints * 0.5)
       totalPoints += recaptureBonus
       bonuses.push({ type: 'recapture', label: 'Recapture', points: recaptureBonus })
     }
-    
+
     // 3. First Capture Bonus: +25% for virgin territory
     if (isFirstCapture) {
       const firstBonus = Math.round(basePoints * 0.25)
       totalPoints += firstBonus
       bonuses.push({ type: 'first', label: 'First Capture', points: firstBonus })
     }
-    
+
     // 4. Speed Bonus: +20% if captured within 5 minutes of last capture
     if (timeSinceLastCapture < 5) {
       const speedBonus = Math.round(basePoints * 0.2)
       totalPoints += speedBonus
       bonuses.push({ type: 'speed', label: 'Speed Bonus', points: speedBonus })
     }
-    
+
     // 5. Distance Bonus: +5pts per 100m walked from last capture (max +50)
     if (location && playerState.lastCaptureLocation) {
       const distance = calculateDistance(
@@ -447,29 +450,29 @@ export function GameProvider({ children }) {
         }
       }
     }
-    
+
     return { basePoints, totalPoints, bonuses, isRecapture, isFirstCapture }
   }, [calculateDistance])
 
   // Capture art point with enhanced scoring
   const captureArt = useCallback((artId, location = null) => {
     if (!player.team) return { success: false, message: 'Join a team first!' }
-    
+
     const art = artPoints.find(a => a.id === artId)
     if (!art) return { success: false, message: 'Art not found' }
     if (art.capturedBy === player.team) return { success: false, message: 'Already yours!' }
     if (art.status === 'ghost') return { success: false, message: 'This art no longer exists' }
-    
+
     // Calculate score with all bonuses
     const captureLocation = location || art.location
     const scoreResult = calculateScoreWithBonuses(art, player, captureLocation)
     const previousTeam = art.capturedBy
-    
+
     // Update art points locally
-    setArtPoints(prev => prev.map(a => 
+    setArtPoints(prev => prev.map(a =>
       a.id === artId ? { ...a, capturedBy: player.team } : a
     ))
-    
+
     // Update player with new stats
     const newStreak = player.streak + 1
     setPlayer(prev => ({
@@ -483,11 +486,11 @@ export function GameProvider({ children }) {
       captureCount: prev.captureCount + 1,
       recaptureCount: scoreResult.isRecapture ? prev.recaptureCount + 1 : prev.recaptureCount,
       firstCaptureCount: scoreResult.isFirstCapture ? prev.firstCaptureCount + 1 : prev.firstCaptureCount,
-      totalDistance: prev.totalDistance + (location && prev.lastCaptureLocation 
+      totalDistance: prev.totalDistance + (location && prev.lastCaptureLocation
         ? calculateDistance(prev.lastCaptureLocation[0], prev.lastCaptureLocation[1], location[0], location[1])
         : 0)
     }))
-    
+
     // Sync to Firebase with full details
     syncCaptureToFirebase(artId, {
       team: player.team,
@@ -496,14 +499,14 @@ export function GameProvider({ children }) {
       isFirstCapture: scoreResult.isFirstCapture,
       isRecapture: scoreResult.isRecapture
     })
-    
+
     // Save locally as backup
     const currentCaptures = loadFromStorage(STORAGE_KEYS.captures, {})
     saveToStorage(STORAGE_KEYS.captures, { ...currentCaptures, [artId]: player.team })
-    
-    return { 
-      success: true, 
-      art, 
+
+    return {
+      success: true,
+      art,
       points: scoreResult.totalPoints,
       basePoints: scoreResult.basePoints,
       bonuses: scoreResult.bonuses,
@@ -515,30 +518,30 @@ export function GameProvider({ children }) {
   // Start capture flow - user takes photo, we verify location
   const startCapture = useCallback(async (photoData, location) => {
     setIsScanning(true)
-    
+
     // Find nearest art to user's location
     const nearestArt = findNearestArt(location.lat, location.lng, 100) // 100m radius
-    
+
     if (!nearestArt) {
       setIsScanning(false)
       setScanResult({ success: false, message: 'No street art nearby. Get closer!' })
       return
     }
-    
+
     // Set pending capture for confirmation
     setPendingCapture({
       art: nearestArt,
       photo: photoData,
       location
     })
-    
+
     setIsScanning(false)
   }, [findNearestArt])
 
   // Confirm capture after photo verification
   const confirmCapture = useCallback(() => {
     if (!pendingCapture) return
-    
+
     const result = captureArt(pendingCapture.art.id)
     setScanResult(result)
     setPendingCapture(null)
@@ -562,12 +565,12 @@ export function GameProvider({ children }) {
   const discoverArt = useCallback(async (artId, location = null) => {
     const art = artPoints.find(a => a.id === artId)
     if (!art) return { success: false, message: 'Art not found' }
-    
+
     // Check if already discovered
     if (discoveries[artId]) {
       return { success: false, message: 'Already discovered!', alreadyDiscovered: true }
     }
-    
+
     const now = new Date()
     const discoveryData = {
       artId,
@@ -578,12 +581,12 @@ export function GameProvider({ children }) {
       discoveredAt: now.toISOString(),
       location: location || art.location
     }
-    
+
     // Update discoveries
     const newDiscoveries = { ...discoveries, [artId]: discoveryData }
     setDiscoveries(newDiscoveries)
     saveToStorage(STORAGE_KEYS.discoveries, newDiscoveries)
-    
+
     // Update player stats
     const uniqueAreas = new Set([...player.uniqueAreasVisited, art.area])
     setPlayer(prev => ({
@@ -594,7 +597,7 @@ export function GameProvider({ children }) {
       lastCaptureTime: now.getTime(),
       lastCaptureLocation: location || art.location
     }))
-    
+
     // Sync to Firebase
     if (isOnline && player.id) {
       try {
@@ -607,9 +610,9 @@ export function GameProvider({ children }) {
         console.warn('Failed to sync discovery to Firebase:', err)
       }
     }
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: 'Discovered!',
       discovery: discoveryData
     }
@@ -618,7 +621,7 @@ export function GameProvider({ children }) {
   // Reset all data (for testing) - clears ALL Firebase data
   const resetAll = useCallback(async () => {
     console.log('Resetting all data...')
-    
+
     // Clear all localStorage
     localStorage.removeItem(STORAGE_KEYS.player)
     localStorage.removeItem(STORAGE_KEYS.captures)
@@ -630,7 +633,7 @@ export function GameProvider({ children }) {
         localStorage.removeItem(key)
       }
     })
-    
+
     // Reset Firebase data
     if (isOnline) {
       try {
@@ -639,13 +642,13 @@ export function GameProvider({ children }) {
         const captureDeletes = capturesSnapshot.docs.map(d => deleteDoc(doc(db, CAPTURES_COLLECTION, d.id)))
         await Promise.all(captureDeletes)
         console.log('Deleted', capturesSnapshot.size, 'captures')
-        
+
         // Delete all players
         const playersSnapshot = await getDocs(collection(db, PLAYERS_COLLECTION))
         const playerDeletes = playersSnapshot.docs.map(d => deleteDoc(doc(db, PLAYERS_COLLECTION, d.id)))
         await Promise.all(playerDeletes)
         console.log('Deleted', playersSnapshot.size, 'players')
-        
+
         // Reset team scores to 0
         await setDoc(doc(db, TEAMS_COLLECTION, 'red'), { score: 0 })
         await setDoc(doc(db, TEAMS_COLLECTION, 'blue'), { score: 0 })
@@ -654,7 +657,7 @@ export function GameProvider({ children }) {
         console.warn('Failed to reset Firebase:', err)
       }
     }
-    
+
     // Reset local state
     setPlayer({
       id: firebaseUser?.uid || `player-${Date.now()}`,
@@ -676,9 +679,9 @@ export function GameProvider({ children }) {
     setScanResult(null)
     setPendingCapture(null)
     setRecentCaptures([])
-    
+
     console.log('Reset complete!')
-    
+
     // Reload the page to ensure clean state
     window.location.reload()
   }, [firebaseUser, isOnline])
@@ -697,12 +700,12 @@ export function GameProvider({ children }) {
     pendingCapture,
     isOnline,
     teams: TEAMS,
-    
+
     // Game mode
     gameMode,
     discoveries,
     discoveryCount: Object.keys(discoveries).length,
-    
+
     // Actions
     setGameMode,
     joinTeam,
@@ -715,7 +718,7 @@ export function GameProvider({ children }) {
     findNearestArt,
     setScanResult,
     resetAll,
-    
+
     // Helpers
     TEAM_COLORS,
     GAME_MODES
